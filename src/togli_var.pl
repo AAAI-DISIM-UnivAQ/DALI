@@ -1,3 +1,8 @@
+% Licensed with Apache Public License
+% by AAAI Research Group
+% Department of Information Engineering and Computer Science and Mathematics
+% University of L'Aquila, ITALY
+% http://www.disim.univaq.it
 
 togli_var(F):-leggiFile_var(F,Fi),tokenize(Fi,L),take_meta_var(L,F).
 togli_var_fil(F):-leggiFile_var(F,Fi),tokenize(Fi,L),take_meta_var_fil(L,F).

@@ -1,3 +1,9 @@
+% Licensed with Apache Public License
+% by AAAI Research Group
+% Department of Information Engineering and Computer Science and Mathematics
+% University of L'Aquila, ITALY
+% http://www.disim.univaq.it
+
 :- multifile user:term_expansion/6.
 user:term_expansion((X,Y),[],[], ([X,Y]),[],[]).
 user:term_expansion([X,Y],[],[], ([(X,Y)]),[],[]).

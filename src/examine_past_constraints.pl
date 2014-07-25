@@ -1,3 +1,9 @@
+% Licensed with Apache Public License
+% by AAAI Research Group
+% Department of Information Engineering and Computer Science and Mathematics
+% University of L'Aquila, ITALY
+% http://www.disim.univaq.it
+
 decompose(H,B):-decompose1(H,B),!,write_del_items(H).
 
 decompose1(H,B):-go_var(H),

@@ -1,3 +1,8 @@
+% Licensed with Apache Public License
+% by AAAI Research Group
+% Department of Information Engineering and Computer Science and Mathematics
+% University of L'Aquila, ITALY
+% http://www.disim.univaq.it
 
 gest_learn(var_H):-clause(past(learn(var_H),var_T,var_U),_),learn_if(var_H,var_T,var_U).
 evi(gest_learn(var_H)):-retractall(past(learn(var_H),_,_)),

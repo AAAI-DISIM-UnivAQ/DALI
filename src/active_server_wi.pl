@@ -1,3 +1,9 @@
+% Licensed with Apache Public License
+% by AAAI Research Group
+% Department of Information Engineering and Computer Science and Mathematics
+% University of L'Aquila, ITALY
+% http://www.disim.univaq.it
+
 :-use_module(library('linda/server')),use_module(library('linda/client')),use_module(library('lists')).
 
 

@@ -1,3 +1,4 @@
+
 ontology(pippo,piove,cade_acqua).
 ontology(pippo,a,b).
 symmetric(ama).
