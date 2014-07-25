@@ -1,0 +1,29 @@
+Piattaforma di test 1: 
+-SICSTUS 4.0.8
+-Linux 
+
+27 Novembre 2009 :- 
+	- Portato l'interprete su piattaforma LINUX.
+	- Aggiunta libreria "File_systems" per prendere il predicato "file_exists".
+	- "nth" sostituito con "nth1"
+	- "get0" sostituita con "get_code"
+	- "term_expansion/2" (hook) sostituito con l'hook "term_expansion/6"
+
+28 Novembre 2009 :-
+	- "remove_duplicates" substituted with "remove_dups"
+	- "arg" in sicstus 4 genera un'eccezione quando riceve l'end_of_file come parametro. Fixato con un "if" nella
+ 	   definizione di "man_go" in "active_dali_wi.pl"
+	- Il predicato "substitute" è stato eliminato in sicstus4. Scritto un predicato "substitute".
+	- "delete_file/2" non è stato mantenuto nel 4. Sostituito con "delete_file/1".
+
+29 Novembre 2009 :-
+	- Poichè il predicato "arg" da' errore se il suo secondo argomento è una lista vuota, messo un check per 
+	  evitare che cio' accada nel predicato "prendi_action_normal1" in "active_dali_wi.pl"
+	- Portato l'interprete su piattaforma "Microsoft Windows XP"
+	- Portato l'interprete su piattaforma "Microsoft Windows Vista"
+
+Gennaio 2010 :- 
+	- Sostituito il sistema delle ontologie. Leggere documentazione.
+
+July 2014 :-
+	- Started github repository. All subsequent changes will be logged via github.
