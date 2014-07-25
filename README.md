@@ -1,4 +1,4 @@
 DALI
 ====
 
-DALI Multi Agent System Framework
+DALI Multi Agent Systems Framework
