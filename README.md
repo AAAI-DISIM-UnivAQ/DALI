@@ -16,6 +16,12 @@ As example see
 * start a Prolog FIPA client (active_user_wi.pl) 
 * start 1 instance of DALI metaintepreter for each agent (active_dali_wi.pl)
 
+
+### Dependencies 
+
+* [Sicstus](http://sicstus.sics.se) Prolog Interpeter 
+
+
 ## References
 
 * COSTANTINI S, TOCCHIO A. *The DALI logic programming agent-oriented language.* In Logics in Artificial Intelligence Springer Berlin Heidelberg, 2004, pp:685-688.
@@ -25,3 +31,4 @@ As example see
 * DE GASPERIS, G, BEVAR V, COSTANTINI S, TOCCHIO A, PAOLUCCI A. *Demonstrator of a multi-agent system for industrial fault detection and repair.* In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:237-240.
 * [DALI 1.0](http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI)
 * DALI 14.07 Release [![DOI](https://zenodo.org/badge/5311/AAAI-DISIM-UnivAQ/DALI.png)](http://dx.doi.org/10.5281/zenodo.11042)
+
