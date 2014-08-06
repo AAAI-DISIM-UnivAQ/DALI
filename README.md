@@ -30,5 +30,5 @@ As example see
 * BEVAR V, COSTANTINI S, TOCCHIO A, DE GASPERIS G. *A multi-agent system for industrial fault detection and repair.* In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:47-55.
 * DE GASPERIS, G, BEVAR V, COSTANTINI S, TOCCHIO A, PAOLUCCI A. *Demonstrator of a multi-agent system for industrial fault detection and repair.* In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:237-240.
 * [DALI 1.0](http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI)
-* DALI 14.07 Release [![DOI](https://zenodo.org/badge/5311/AAAI-DISIM-UnivAQ/DALI.png)](http://dx.doi.org/10.5281/zenodo.11042)
+* DALI 14.08a Release [![DOI](http://zenodo.org/record/11198/DALI.png)](http://dx.doi.org/10.5281/zenodo.11198)
 
