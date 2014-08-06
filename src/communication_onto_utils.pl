@@ -76,7 +76,7 @@ do_query(QueryCodes,HostPort,Response):-
         fetch_url( http(Host,Port,QueryCodes),[host(HostPort),accept('application/sparql-results+xml, */*;q=0.5')],Response).
 
 query(Query,ArgList,Mode):-
-        see('../interpreter/owl/query.conf'),
+        see('owl/query.conf'),
         search_label(Mode),
         read(Q),
         seen,

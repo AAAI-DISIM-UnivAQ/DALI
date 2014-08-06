@@ -13,7 +13,7 @@
 user.
 
 % apri in lettura il file, Stream è la variabile dove metto lo stream e le opzioni sono niente
-utente:-open('../interpreter/server.txt',read,Stream,[]),
+utente:-open('server.txt',read,Stream,[]),
               read(Stream,I),
               close(Stream),linda_client(I),
 			  out(agente_attivo(user,I)),

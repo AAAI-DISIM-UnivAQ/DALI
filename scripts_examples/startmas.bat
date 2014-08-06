@@ -4,7 +4,7 @@ title "MAS"
 set sicstus_home=C:\Program Files (x86)\SICStus Prolog 4.2.3\bin
 ::set main_home=%~dp0\..
 set main_home=..
-set dali_home=..\interpreter
+set dali_home=..\src
 set conf_dir=conf
 set prolog=%sicstus_home%\spwin.exe
 set WAIT=ping -n 4 127.0.0.1

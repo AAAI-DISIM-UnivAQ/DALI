@@ -3,7 +3,7 @@ clear # cls
 #title "MAS"
 sicstus_home=/usr/local/sicstus4.2.3
 main_home=..
-dali_home=../interpreter
+dali_home=../src
 conf_dir=conf
 prolog="$sicstus_home/bin/sicstus"
 WAIT="ping -c 4 127.0.0.1" 
@@ -27,7 +27,7 @@ done
 
 cp $build_home/*.txt work
 
-xterm -hold -e "$prolog -l $dali_home/active_server_wi.pl --goal \"go(3010,'$dali_home/server.txt').\"" & #start /B "" "%prolog%" -l "%dali_home%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
+xterm -hold -e "$prolog -l $dali_home/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%prolog%" -l "%dali_home%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
 echo Server attivato. Attivo il MAS....
 $WAIT > /dev/null # %WAIT% >nul
 
@@ -40,7 +40,7 @@ for agent_filename in $build_home/*
 do
 	agent_base="${agent_filename##*/}"
     echo "Agente: $agent_base"
-    xterm -e "./conf/makeconf.sh $agent_base" &
+    xterm -e "./conf/makeconf.sh $agent_base $dali_home" &
     xterm -hold -e "./conf/startagent.sh $agent_base $prolog $dali_home" &
     $WAIT > /dev/null # %WAIT% >nul
 done

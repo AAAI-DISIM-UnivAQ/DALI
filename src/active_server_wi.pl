@@ -23,14 +23,3 @@ my_pred(Host,Port,Path):-open(Path,write,Stream,[]),
               write(Stream,'.'),nl(Stream),
               close(Stream).
 
-%CARICA UNA ONTOLOGIA 
-carica_ontologia(F):-see(F), 
-	     repeat,
-		read(T),
-                            if(T=end_of_file,true,
-                            out(T)),
-                		T == end_of_file,
-	     !,
-	     seen.
-
-
