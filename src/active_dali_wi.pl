@@ -82,44 +82,24 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-dynamic eve/1.
 :-dynamic eve_cond/1.
 
-
-
-
-
-start0(FI):-set_prolog_flag(redefine_warnings,off),set_prolog_flag(discontiguous_warnings,off),
-            attiva_agenti(FI).
-							
-attiva_agenti(FI):-open(FI,read,Stream,[]),
-               read(Stream,T),
-               assert(stringa_agente(T)),
-               close(Stream),attiva_agenti1.
-attiva_agenti1:-clause(stringa_agente(Me),_),
-                estrapola_param(Me),
-                retractall(stringa_agente(_)).
-
-estrapola_param(Me):-if(Me=end_of_file,true,estrapola_param1(Me)).
-estrapola_param1(Me):-open('server.txt',read,Stream,[]),
-	  read(Stream,T),
-	  close(Stream),
-	  arg(1,Me,File),arg(2,Me,Name),arg(5,Me,Fil),
-	  arg(6,Me,Lib),assert(librerie(Lib)),
-	  arg(3,Me,Ontolog),arg(4,Me,Lang),
-	  arg(7,Me,UP),
-	  arg(8,Me,DO),
-	  arg(9,Me,Specialization),
-	  if(UP=no,true,
-	  assert(user_profile_location(UP))),
-	  if(DO=no,true,
-	  assert(dali_onto_location(DO))),
-	  retractall(server(_)), 
-	  assert(server_obj(T)),
-	  filtra_fil(Fil),assert(specialization(Specialization)),
-	  if(Ontolog=no,true,load_ontology_file(Ontolog,Name)),
-	  assert(own_language(Lang)),
-	  linda_client(T),
-	  out(activating_agent(Name)),
-	  attiva_ag_param(File,Name,Lib,Fil).
-
+start0(FI):-set_prolog_flag(redefine_warnings,off),
+            set_prolog_flag(discontiguous_warnings,off),
+            open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
+            Me \= end_of_file,
+            agent(File, Name, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
+            open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
+            assert(librerie(Lib)),
+            if(UP=no, true, assert(user_profile_location(UP))),
+            if(DO=no,true,assert(dali_onto_location(DO))),
+            assert(server_obj(T)),
+            filtra_fil(Fil),
+            assert(specialization(Specialization)),
+            if(Ontolog=no,true,load_ontology_file(Ontolog,Name)),
+            assert(own_language(Lang)),
+            
+            linda_client(T),
+            out(activating_agent(Name)),
+            attiva_ag_param(File,Name,Lib,Fil).
 
 load_ontology_file(Ontolog,Agent):-
         open(Ontolog,read,Stream,[]),

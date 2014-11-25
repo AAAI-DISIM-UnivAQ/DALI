@@ -4,22 +4,17 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-:-use_module(library('linda/server')),use_module(library('linda/client')),use_module(library('lists')).
+% Load the package required from Linda-server
+:-use_module(library('linda/server')).
 
+% Starts a Linda-server in this SICStus. Example: linda((Host:Port)-Goal)
+% When it is started, Host and Port are bound to the server  
+% host and port respectively and Goal is called.
+go:-go(3010,'server.txt').
+go(Port,Path):- linda((Host:Port)-(user:on_open(Host,Port,Path))). 
 
-%When the linda server is started, Host and Port are bound to the server host and port respectively and the %%%goal Goal is called. A typical use of this would be to store the connection information in a file so that    %the clients can find the server to connect to. 
-%
-
-% linda(Address-Goal)
-
-go(Port,Path):-linda((Host:Port)-(user:my_pred(Host,Port,Path))). 
-
-
-% Goal è usato per scrivere su un file informazioni per permettere ai clients di trovare il server
-
-my_pred(Host,Port,Path):-open(Path,write,Stream,[]),
-              write(Stream,'\''),write(Stream,Host),write(Stream,'\''),
-              write(Stream,':'),write(Stream,Port),
-              write(Stream,'.'),nl(Stream),
-              close(Stream).
-
+% Is called for store the connection information in a file at the path Path
+% so that the clients can find the server to connect to.
+on_open(Host,Port,Path):-open(Path,write,Stream,[]),
+                         format(Stream,'\'~s\':~d.\n', [Host, Port]),
+                         close(Stream).
