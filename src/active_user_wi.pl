@@ -22,7 +22,7 @@ procedure_message(I):-nl, print('New message'),nl,
                       out(message(I,D,I,From,italian,[],F)), nl,
                       procedure_message(I).
 
-% Trigger for variables/3 rules that examines the message 
+% Trigger for variables with 3 rules that parse the message 
 % and puts fd_var front of the variables that appear in the message
 variables(T):-variables(T,_,[]).
 
@@ -35,12 +35,6 @@ variables(T,L0,L):-nonvar(T), functor(T,_,A), variables(0,A,T,L0,L).
 variables(A,A,T,L0,L):-retractall(result_format(_)),assert(result_format(T)),!,L=L0.
 variables(A0,A,T,L0,L):-A0<A, A1 is A0+1, arg(A1,T,X), variables(X,L0,L1), variables(A1,A,T,L1,L).
 
-% Performs the same operations as the next one, but can be called by the goal 'utente.'.
-utente:-open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
-        linda_client(I),
-        out(agente_attivo(user,I)),
-        procedure_message(I).
-
 % Opens the file with the linda server information, connects to this,
 % writes on the backboard that the agent 'user' is active and calls the
 % loop procedure for processing the messages.
@@ -49,3 +43,9 @@ utente:-open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
   out(agente_attivo(user,I)),
   assert(ind(I)),
   procedure_message(I).
+
+% same as before, but now it is called within the goal 'utente.'.
+utente:-open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
+        linda_client(I),
+        out(agente_attivo(user,I)),
+        procedure_message(I).
