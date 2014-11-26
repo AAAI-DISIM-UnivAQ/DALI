@@ -10,9 +10,9 @@
 
 
 %%%%%%%%%%%
-%% Procedure loop that keeps this agent continuously active and waiting for user interaction. 
-%% When user types a message an event is triggered, the agent will be associate a timestamp for the unicity. 
-%% Once the message is written on the blackboard will be discarded.
+%% Procedure loop that keeps the user agent continuously active and waiting for user interaction. 
+%% When the user types a message from the console an event is triggered, a timestamp is associated for the unicity. 
+%% Once the message is sent to the blackboard it is discarded.
 %%%%%%%%%%%
 procedure_message(I):-nl, print('New message'),nl,
                       print('Insert name of addressee'), nl, read(D),
@@ -21,8 +21,6 @@ procedure_message(I):-nl, print('New message'),nl,
                       variables(M), clause(result_format(F),_),
                       out(message(I,D,I,From,italian,[],F)), nl,
                       procedure_message(I).
-
-%%message('tir-486':3010,nessuno,'tir-486':3010,davide,italian,[],cavallo(fdvar_1,fdvar_2,fdvar_3,caspio)) 
 
 % Trigger for variables/3 rules that examines the message 
 % and puts fd_var front of the variables that appear in the message
