@@ -82,138 +82,124 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-dynamic eve/1.
 :-dynamic eve_cond/1.
 
+:-['utils.pl'].
+
 start0(FI):-set_prolog_flag(redefine_warnings,off),
             set_prolog_flag(discontiguous_warnings,off),
             open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
             Me \= end_of_file,
-            agent(File, Name, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
+            agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
             open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
-            assert(librerie(Lib)),
             if(UP=no, true, assert(user_profile_location(UP))),
             if(DO=no,true,assert(dali_onto_location(DO))),
-            assert(server_obj(T)),
+            assert(server_obj(T)), %% questo si puo togliere se si passa ad una sola funzione
             filtra_fil(Fil),
             assert(specialization(Specialization)),
-            if(Ontolog=no,true,load_ontology_file(Ontolog,Name)),
+            if(Ontolog=no,true,load_ontology_file(Ontolog,AgentName)),
             assert(own_language(Lang)),
             
             linda_client(T),
-            out(activating_agent(Name)),
-            attiva_ag_param(File,Name,Lib,Fil).
+            out(activating_agent(AgentName)),
+            
+            delete_agent_files(File),
+            token(File),
+            start1(File, AgentName, Lib, Fil).
 
 load_ontology_file(Ontolog,Agent):-
         open(Ontolog,read,Stream,[]),
         read(Stream,PrefixesC),
         read(Stream,RepositoryC),
-		  read(Stream, HostC),                                                           
+        read(Stream, HostC),                                                           
         close(Stream),
-		  name(Repository,RepositoryC),
-		  name(Prefixes,PrefixesC),
-		  name(Host,HostC),
+        name(Repository,RepositoryC),
+        name(Prefixes,PrefixesC),
+        name(Host,HostC),
         assert(ontology(Prefixes,[Repository,Host],Agent)).
-
-attiva_ag_param(F,Name,Libr,Fil):-del_files(F),
-		token(F),
-		name(F,L1),
-		append(L1,[46,112,108],Lt),name(Fi,Lt),
-		start1(Fi,F,Name,Libr,Fil).
 
 filtra_fil(FI):-arg(1,FI,File),token_fil(File),retractall(parentesi(_)),togli_var_fil(File).
 
-
-start1(F,Fe,N,Libr,Fil):-
+start1(Fe,AgentName,Libr,Fil):-
   set_prolog_flag(discontiguous_warnings,off),
   if(Libr=no,true,libreria(Fe,Libr,Fil)),
-  name(F,L),
-  append(L,[101],T),
-  name(S,T),
-  if(file_exists(S),delete_file(S),true),
+  
+  pl_from_name(Fe, FilePl),
+  ple_from_name(Fe, FilePle),
+  plv_from_name(Fe, FilePlv),
+  plf_from_name(Fe, FilePlf),
+  txt_from_name(Fe, FileTxt),
    
-  aprifile(F),
+  aprifile(FilePl),
   
-  aprifile_res(F),
+  aprifile_res(FilePl),
  
-  carica_file(F),
-  
+  carica_file(FilePl),
   
   togli_var(Fe),
   
-  
   togli_var_ple(Fe),
-  append(L,[102],Lf),
   
-  name(P,Lf),
-  if(file_exists(P),controlla_ev_all(S),
-  (inizializza_plf(S),check_messaggio(S,P))),
+  if(file_exists(FilePlf), controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
   
-  load_directives(P),
-  server_obj(Tee), 
+  load_directives(FilePlf),
+  server_obj(Tee), %% questo si puo togliere se si passa ad una sola funzione
   linda_client(Tee),
-  assert(agente(N,Tee,S,F)),
+  assert(agente(AgentName,Tee,FilePle,FilePl)),
   clause(specialization(Sp),_),  
-  out(specialized_to(N,Tee,Sp)),
-  assert(agent(N)),
-  in_noblock(activating_agent(N)),
-  out(agente_attivo(N,Tee)),
+  out(specialized_to(AgentName,Tee,Sp)),
+  assert(agent(AgentName)),
+  in_noblock(activating_agent(AgentName)),
+  out(agente_attivo(AgentName,Tee)),
   assert(time_charge(5)),
-  name(F,L),append(L,[118],L1),name(Nf,L1),
-  azioni(Nf),
 
-  cond_esterni(Nf),!,
+  azioni(FilePlv),
 
-  asser_evN(S),
+  cond_esterni(FilePlv),!,
 
-  obg_goal(Nf),
+  asser_evN(FilePle),
+  
+  obg_goal(FilePlv),
 
-  aprifile_en(F),
+  aprifile_en(FilePl),
 
   ass_internal_repeat,
 
-  ass_stringhe_mul(Nf),
+  ass_stringhe_mul(FilePlv),
 
-  set_prolog_flag(discontiguous_warnings,off),
-  compile(Nf),
-  name(F,Listz),append(Gz,[46,112,108],Listz),
-  append(Gz,[46,116,120,116],Yz),
-  name(Xz,Yz),
-  apri_learn(Xz),
+  compile(FilePlv),
+ 
+  apri_learn(FileTxt),
   start_learn,
   manage_export_past,
   manage_export_past_not_do,
   manage_export_past_do,
   check_constr_all,
-  delete_log_file(N),
-  print('..................   Actived Agent '),print(N),print(' ...................'),nl,go.
-  
-
-delete_log_file(N):-name('log/log_',L0),name(N,L1),name('.txt',L2),
-                    append(L0,L1,L01),append(L01,L2,L02),name(Q,L02),
-                    if(file_exists(Q),delete_file(Q),true).
+  delete_agent_log_file(AgentName),
+  print('..................   Actived Agent '),print(AgentName),print(' ...................'),nl,go.
 
 %L0 it should be communicationf/fipa
 libreria(F,L0,Fil):-name(F,Lf),append(Lf,[46,112,108],Ltf),
-	   append(L0,Fil,L),
-	   name(F1,Ltf),if(L=[],true,libreria1(F1,L)).
+           append(L0,Fil,L),
+           name(F1,Ltf),if(L=[],true,libreria1(F1,L)).
 
 libreria1(F,L):-last(L,U),
-		   repeat,
-			  member(Me,L),
-				  appendi_regole0(Me),
-		   Me==U,!,versa(F).
+                   repeat,
+                          member(Me,L),
+                                  appendi_regole0(Me),
+                   Me==U,!,versa(F).
 
 appendi_regole0(Me):-name(Me,L),append(L,[46,116,120,116],Ltf),
-			   name(T,Ltf),if(file_exists(T),appendi_files(T),true),
-			   append(L,[46,112,108],Ltf1),name(T1,Ltf1),
-			   if(file_exists(T1),appendi_regole(T1),true).
+                           name(T,Ltf),if(file_exists(T),appendi_files(T),true),
+                           append(L,[46,112,108],Ltf1),name(T1,Ltf1),
+                           if(file_exists(T1),appendi_regole(T1),true).
 
 appendi_files(T):-set_prolog_flag(redefine_warnings,off),compile(T).
 
 appendi_regole(Mef):-open(Mef,read,Stream,[]),
-			   repeat,
-					 read(Stream,T),if(T=end_of_file,true,
-					 assert(da_agg(T))),
-				T==end_of_file,!,
-		close(Stream).
+                           repeat,
+                                         read(Stream,T),if(T=end_of_file,true,
+                                         assert(da_agg(T))),
+                                T==end_of_file,!,
+                close(Stream).
 
 %%Write communication file
 versa(F):-findall(X,clause(da_agg(X),_),L),
@@ -224,24 +210,17 @@ versa(F):-findall(X,clause(da_agg(X),_),L),
               write(Stream,T),write(Stream,'.'),nl(Stream), 
               T==U,!,
               close(Stream),retractall(da_agg(_)).
-
-del_files(F):-name(F,L), append(L,[46,112,108],Lfl),
-              name(Pl,Lfl),if(file_exists(Pl),delete_file(Pl),true),
-             append(L,[46,112,108,118],Lf),
-              name(V,Lf),if(file_exists(V),delete_file(V),true),
-              append(L,[46,112,108,101],Lfe),
-              name(E,Lfe),if(file_exists(E),delete_file(E),true).
    
 %'
   
 aprifile(F):-see(F), 
-	     repeat,
-		read(T),expand_term(T,Te),
+             repeat,
+                read(T),expand_term(T,Te),
                             if(T=end_of_file,true,
                             assert(rule_base(Te))),
-                		T == end_of_file,
-	     !,
-	     seen,take,costruisci0(F).
+                                T == end_of_file,
+             !,
+             seen,take,costruisci0(F).
 %'
 
 take:-findall(T,clause(rule_base(T),_),L),
@@ -271,16 +250,16 @@ check_past(Me):-if(clause(past(Me,_,_),_),true,assert(no_check)).
 chiama_cong(Me):-T=..Me,append([eve],L,Me),controlla_time_ep(L,T),take_time_ep(L).
 
 controlla_time_ep(L,T):-last(L,U),repeat,member(M,L),
-				clause(past(M,Tp,_),_),asse_cosa(tep(M,Tp)),
-		 M==U,!,cont_tep1(L,T).
+                                clause(past(M,Tp,_),_),asse_cosa(tep(M,Tp)),
+                 M==U,!,cont_tep1(L,T).
 
 cont_tep1(L,T):-findall(X,clause(tep(_,X),_),Le),retractall(tep(_,_)),
-		if(clause(fatto_mul(L,Le),_),true,call(T) ).
+                if(clause(fatto_mul(L,Le),_),true,call(T) ).
 
 take_time_ep(L):-last(L,U),repeat,member(M,L),clause(past(M,Tp,_),_),asse_cosa(tep(M,Tp)),
-		 M==U,!,cont_tep(L).
+                 M==U,!,cont_tep(L).
 cont_tep(L):-findall(X,clause(tep(_,X),_),Le),retractall(tep(_,_)),
-	 if(clause(fatto_mul(_,_),_),(retractall(fatto_mul(_,_)),assert(fatto_mul(L,Le))),assert(fatto_mul(L,Le))).
+         if(clause(fatto_mul(_,_),_),(retractall(fatto_mul(_,_)),assert(fatto_mul(L,Le))),assert(fatto_mul(L,Le))).
 
 spezza(C):-arg(1,C,Head),C=..L,eve_mul_first(Head),if(member(':-',L),is_clausola(L,Head),true).
 
@@ -293,20 +272,20 @@ ejec((X;Y),Head):-expand_term((X;Y),Z),ejec(Z,Head).
 ejec((X->Y),Head):-expand_term((X->Y),Z),ejec(Z,Head).
 ejec(X,Head):-if(X=[],true,prova_spezza(X,Head)).
 prova_spezza(M,Head):-functor(M,F,_),if(F=a,(arg(1,M,Az),discriminate_learn(Az)),if(F=eve,(arg(1,M,Es),asse_cosa(even(Es))),
-	  (if(F=evi,(arg(1,M,Iv),asse_cosa(evin(Iv))),
-	  (if(F=cd,(arg(1,M,Co),asse_cosa(cond(Co))),
-	  (if(F=en,(arg(1,M,En),asse_cosa(evN(En))),if(F=rem,(arg(1,M,Re),asse_cosa(fact_rem(Re))),caso_if(M,F,Head)))))))))).
+          (if(F=evi,(arg(1,M,Iv),asse_cosa(evin(Iv))),
+          (if(F=cd,(arg(1,M,Co),asse_cosa(cond(Co))),
+          (if(F=en,(arg(1,M,En),asse_cosa(evN(En))),if(F=rem,(arg(1,M,Re),asse_cosa(fact_rem(Re))),caso_if(M,F,Head)))))))))).
 
 
 caso_if(M,F,Head):-if(F=if,go_to_if(M,Head),if(F=obg,(arg(1,M,G),asse_cosa(obt_goal(G))),
-	   if(F=tesg,(arg(1,M,Go),asse_cosa(test_goal(Go))),true))).
+           if(F=tesg,(arg(1,M,Go),asse_cosa(test_goal(Go))),true))).
 go_to_if(M,Head):-arg(2,M,A1),arg(3,M,A2),ejec(A1,Head),ejec(A2,Head).
 
 asse_cosa(C):-if(clause(C,_),true,assert(C)).
 
 discriminate_learn(Az):-functor(Az,F,_),
-		if(F=message,discriminate_learn1(Az),asse_cosa(azi(Az))).
-						
+                if(F=message,discriminate_learn1(Az),asse_cosa(azi(Az))).
+                                                
 discriminate_learn1(Az):-arg(2,Az,Pe),functor(Pe,F,_),if(F=confirm,discriminate_learn2(Pe,Az),asse_cosa(azi(Az))).
 
 discriminate_learn2(Pe,Az):-arg(1,Pe,Le),functor(Le,F,_),if(F=learn,discriminate_learn3,asse_cosa(azi(Az))).
@@ -327,54 +306,54 @@ ass_mul_first:-findall(L,clause(mul(L),_),S),last(S,E),repeat,member(Me,S),
 keep_past_ass_first(Me):- append([eve],L,Me),examine_head_ass_first(L).
 
 examine_head_ass_first(L):-last(L,U),repeat,member(Me,L),asse_cosa(even(Me)),
-		 Me==U,!.
+                 Me==U,!.
 
 %RECUPERO FUNTORI EVENTI ESTERNI%
 recupera_funE(F):-if(clause(even(_),_),(transf_eventi_esterni, recupera_fun_even(F)),lista_assente(F)).
 transf_eventi_esterni:-findall(X,clause(even(X),_),Ls),
-		last(Ls,U),
-			 repeat,
-				member(Me,Ls),
-					 functor(Me,Fu,_),
-					 assert(app_even(Fu)),
-		Me==U,!.
+                last(Ls,U),
+                         repeat,
+                                member(Me,Ls),
+                                         functor(Me,Fu,_),
+                                         assert(app_even(Fu)),
+                Me==U,!.
 
 
 
 recupera_fun_even(F):- name(F,L),
-	   append(L,[101],T),
-	   name(Y,T),
-			findall(X,clause(app_even(X),_),LA1),
-			remove_dups(LA1,LA),
-			open(Y,append,Stream,[]),
-			 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-				  retractall(app_even(_)).
+           append(L,[101],T),
+           name(Y,T),
+                        findall(X,clause(app_even(X),_),LA1),
+                        remove_dups(LA1,LA),
+                        open(Y,append,Stream,[]),
+                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                                  retractall(app_even(_)).
 
 
 %RECUPERO FUNTORI EVENTI INTERNI%
 recupera_funI(F):-if(clause(evin(_),_),recupera_fun_evin(F),lista_assente(F)).
 
 recupera_fun_evin(F):- name(F,L),
-	   append(L,[101],T),
-	   name(Y,T),
-			findall(X,clause(evin(X),_),LA1),
-			 remove_dups(LA1,LA),
-			open(Y,append,Stream,[]),
-			 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-		  retractall(evin(_)).
+           append(L,[101],T),
+           name(Y,T),
+                        findall(X,clause(evin(X),_),LA1),
+                         remove_dups(LA1,LA),
+                        open(Y,append,Stream,[]),
+                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                  retractall(evin(_)).
 
 %RECUPERO AZIONI%
 recupera_funA(F):-if(clause(azi(_),_),recupera_fun_azioni(F),lista_assente(F)).
 
 transf_message(Me):-arg(2,Me,Ar),functor(Ar,Far,_),assert(app_azi(message(Far))).
 recupera_fun_azioni(F):- name(F,L),
-	   append(L,[101],T),
-	   name(Y,T),
-			findall(X,clause(azi(X),_),LA1),
-			 remove_dups(LA1,LA),
-			open(Y,append,Stream,[]),
-			 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-		  retractall(azi(_)).
+           append(L,[101],T),
+           name(Y,T),
+                        findall(X,clause(azi(X),_),LA1),
+                         remove_dups(LA1,LA),
+                        open(Y,append,Stream,[]),
+                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                  retractall(azi(_)).
 
 
 
@@ -382,83 +361,83 @@ recupera_fun_azioni(F):- name(F,L),
 recupera_tot_cd(F):-if(clause(cond(_),_),recupera_cd(F),lista_assente(F)).
 
 recupera_cd(F):- name(F,L),
-	   append(L,[101],T),
-	   name(Y,T),
-			findall(X,clause(cond(X),_),LA1),
-			 remove_dups(LA1,LA),
-			open(Y,append,Stream,[]),
-			 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-		  retractall(cond(_)).
+           append(L,[101],T),
+           name(Y,T),
+                        findall(X,clause(cond(X),_),LA1),
+                         remove_dups(LA1,LA),
+                        open(Y,append,Stream,[]),
+                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                  retractall(cond(_)).
 
 %RECUPERO FUNTORI EVENTI PRESENTE%
 recupera_funEn(F):-if(clause(evN(_),_),(transf_eventi_presente, recupera_fun_evN(F)),lista_assente(F)).
 transf_eventi_presente:-findall(X,clause(evN(X),_),Ls),
-		last(Ls,U),
-			 repeat,
-				member(Me,Ls),
-					 functor(Me,Fu,_),
-					 assert(app_evN(Fu)),
-		Me==U,!.
+                last(Ls,U),
+                         repeat,
+                                member(Me,Ls),
+                                         functor(Me,Fu,_),
+                                         assert(app_evN(Fu)),
+                Me==U,!.
 
 recupera_fun_evN(F):- name(F,L),
-	   append(L,[101],T),
-	   name(Y,T),
-			findall(X,clause(app_evN(X),_),LA1),
-			 remove_dups(LA1,LA),
-			open(Y,append,Stream,[]),
-			 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-		  retractall(app_evN(_)),retractall(evN(_)).
+           append(L,[101],T),
+           name(Y,T),
+                        findall(X,clause(app_evN(X),_),LA1),
+                         remove_dups(LA1,LA),
+                        open(Y,append,Stream,[]),
+                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                  retractall(app_evN(_)),retractall(evN(_)).
 
 
 %RECUPERO FUNTORI GOALS DA OTTENERE%
 recupera_gol_obt(F):-if(clause(obt_goal(_),_),recupera_fun_obt_goal(F),lista_assente(F)).
 
 recupera_fun_obt_goal(F):- name(F,L),
-	   append(L,[101],T),
-	   name(Y,T),
-			findall(X,clause(obt_goal(X),_),LA1),
-			remove_dups(LA1,LA),
-			open(Y,append,Stream,[]),
-			write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-			retractall(obt_goal(_)).
+           append(L,[101],T),
+           name(Y,T),
+                        findall(X,clause(obt_goal(X),_),LA1),
+                        remove_dups(LA1,LA),
+                        open(Y,append,Stream,[]),
+                        write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                        retractall(obt_goal(_)).
 
 %RECUPERO FUNTORI GOALS DA TESTARE%
 recupera_gol_test(F):-if(clause(test_goal(_),_),(transf_tes_goal, recupera_fun_tes_goal(F)),lista_assente(F)).
 transf_tes_goal:-findall(X,clause(test_goal(X),_),Ls),last(Ls,U),
-		 repeat,
-			member(Me,Ls),
-				 functor(Me,Fu,_),
-				 assert(app_tes_goal(Fu)),
-				Me==U,!.
+                 repeat,
+                        member(Me,Ls),
+                                 functor(Me,Fu,_),
+                                 assert(app_tes_goal(Fu)),
+                                Me==U,!.
 
 recupera_fun_tes_goal(F):- name(F,L),
-		   append(L,[101],T),
-		   name(Y,T),
-				findall(X,clause(app_tes_goal(X),_),LA1),
-				 remove_dups(LA1,LA),
-				open(Y,append,Stream,[]),
-				 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
-			  retractall(app_tes_goal(_)).
+                   append(L,[101],T),
+                   name(Y,T),
+                                findall(X,clause(app_tes_goal(X),_),LA1),
+                                 remove_dups(LA1,LA),
+                                open(Y,append,Stream,[]),
+                                 write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
+                          retractall(app_tes_goal(_)).
 
 
 %RECUPERO FATTI DA RICORDARE E GESTIRE COME EVENTI DEL PASSATO%
 recupera_tot_rem(F):-
-	if(clause(fact_rem(_),_), recupera_rem(F),lista_assente(F)).
+        if(clause(fact_rem(_),_), recupera_rem(F),lista_assente(F)).
 
 recupera_rem(F):-findall(X,clause(fact_rem(X),_),Ls1), 
-	remove_dups(Ls1,Ls),
+        remove_dups(Ls1,Ls),
     name(F,L),
-	append(L,[101],T),
-	name(Y,T),
-		 open(Y,append,Stream,[]),
-		 write(Stream,Ls),write(Stream,'.'),nl(Stream), close(Stream),
-	  retractall(fact_rem(_)).
+        append(L,[101],T),
+        name(Y,T),
+                 open(Y,append,Stream,[]),
+                 write(Stream,Ls),write(Stream,'.'),nl(Stream), close(Stream),
+          retractall(fact_rem(_)).
 
 
 lista_assente(F):- name(F,L),
-	append(L,[101],T),
-	name(Y,T),open(Y,append,Stream,[]),
-		 write(Stream,[]),write(Stream,'.'),nl(Stream), close(Stream).
+        append(L,[101],T),
+        name(Y,T),open(Y,append,Stream,[]),
+                 write(Stream,[]),write(Stream,'.'),nl(Stream), close(Stream).
 
 
 %RECUPERO EVENTI ESTERNI%
@@ -467,11 +446,11 @@ recupera_E(F):-if(clause(even(_),_),recupera_tot_even(F),lista_assente(F)).
 recupera_tot_even(F):- name(F,L),
    append(L,[101],T),
    name(Y,T),
-		findall(X,clause(even(X),_),LA1),
-		 remove_dups(LA1,LA),
-		open(Y,append,Stream,[]),
-		 write(Stream,LA),write(Stream,'.'),nl(Stream),
-		 close(Stream),
+                findall(X,clause(even(X),_),LA1),
+                 remove_dups(LA1,LA),
+                open(Y,append,Stream,[]),
+                 write(Stream,LA),write(Stream,'.'),nl(Stream),
+                 close(Stream),
   retractall(even(_)).
 
 
@@ -479,18 +458,18 @@ recupera_tot_even(F):- name(F,L),
 
 inizializza_plf(F):- if(file_exists(F),leggirighe(F),true).
 leggirighe(F):-leggiriga(F,1),leggiriga(F,2),leggiriga(F,3),leggiriga(F,8),
-		 clause(eventE(Le),_),clause(evintI(Li),_),clause(az(La),_),clause(rem_fact(Lr),_),
-		 append(Le,Li,Lp1),append(Lp1,La,Lp2),append(Lp2,Lr,Lp3),
-		 remove_dups(Lp3,Lp4),smonta(Lp4,F),
-		 smonta_interno(Li,F).
+                 clause(eventE(Le),_),clause(evintI(Li),_),clause(az(La),_),clause(rem_fact(Lr),_),
+                 append(Le,Li,Lp1),append(Lp1,La,Lp2),append(Lp2,Lr,Lp3),
+                 remove_dups(Lp3,Lp4),smonta(Lp4,F),
+                 smonta_interno(Li,F).
 
 smonta(E,F):-last(E,Ls),
-	   name(F,Fe),
-	   append(L0,[101],Fe),
-	   append(L0,[102],Nf),
-	   name(Nof,Nf),
-	   priority_azi(F,Nof),
-		priority_eve(F,Nof),
+           name(F,Fe),
+           append(L0,[101],Fe),
+           append(L0,[102],Nf),
+           name(Nof,Nf),
+           priority_azi(F,Nof),
+                priority_eve(F,Nof),
            repeat,
              member(Me,E),
              open(Nof,append,Stream,[]),
@@ -508,9 +487,9 @@ smonta(E,F):-last(E,Ls),
 
 smonta_interno(E,F):- if(E=[],true,smonta_interno1(E,F)).
 smonta_interno1(E,F):- name(F,Fe),
-	   append(L0,[101],Fe),
-	   append(L0,[102],Nf),
-	   name(Nof,Nf),
+           append(L0,[101],Fe),
+           append(L0,[102],Nf),
+           name(Nof,Nf),
                      last(E,Ls),
            repeat,
              member(Me,E),
@@ -524,199 +503,199 @@ smonta_interno1(E,F):- name(F,Fe),
            Me==Ls,!.
 
 priority_azi(Fe,Ff):-leggiriga(Fe,3),
-	   clause(az(L),_),if(L=[],true,priority_azi1(L,Ff)).
+           clause(az(L),_),if(L=[],true,priority_azi1(L,Ff)).
 
 priority_azi1(L,Ff):-last(L,U),
-		repeat,
-			member(Me,L),
-				open(Ff,append,Stream,[]),
-				write(Stream,'action('),write(Stream,Me),write(Stream,','),write(Stream,'normal'),
-				write(Stream,').'),nl(Stream), 
-				
-				close(Stream),
-			Me==U,!.
+                repeat,
+                        member(Me,L),
+                                open(Ff,append,Stream,[]),
+                                write(Stream,'action('),write(Stream,Me),write(Stream,','),write(Stream,'normal'),
+                                write(Stream,').'),nl(Stream), 
+                                
+                                close(Stream),
+                        Me==U,!.
 
 priority_eve(Fe,Ff):-leggiriga(Fe,1),
-	   clause(eventE(L),_),if(L=[],true,priority_eve1(L,Ff)).
+           clause(eventE(L),_),if(L=[],true,priority_eve1(L,Ff)).
 
 priority_eve1(L,Ff):-last(L,U),
-			repeat,
-				member(Me,L),
-					open(Ff,append,Stream,[]),
-					write(Stream,'external_event('),write(Stream,Me),write(Stream,','),
-					write(Stream,'normal'),
-					write(Stream,').'),nl(Stream), 
-					
-					write(Stream,'mod('),
-					write(Stream,Me),write(Stream,',check).'),
-				 nl(Stream),close(Stream),
-						Me==U,!.
+                        repeat,
+                                member(Me,L),
+                                        open(Ff,append,Stream,[]),
+                                        write(Stream,'external_event('),write(Stream,Me),write(Stream,','),
+                                        write(Stream,'normal'),
+                                        write(Stream,').'),nl(Stream), 
+                                        
+                                        write(Stream,'mod('),
+                                        write(Stream,Me),write(Stream,',check).'),
+                                 nl(Stream),close(Stream),
+                                                Me==U,!.
 
 controlla_ev_all(F):- 
-	   leggiriga(F,2),clause(evintI(Li),_),
-	   leggiriga(F,3),clause(az(La),_),
-	   leggiriga(F,6),clause(obtgoal(Lo),_),
-	   leggiriga(F,7),clause(testgoal(Lt),_),
-	   leggiriga(F,8),clause(rem_fact(Lr),_),
-	   leggiriga(F,9),clause(even_args(Lg),_),
-	   append(Li,La,L1),append(L1,Lo,L2),append(L2,Lt,L3),
-	   append(L3,Lr,L4),append(L4,Lg,L6),
-	  
-		   name(F,Lista),append(Lista1,[101],Lista),
-		   append(Lista1,[102],Lista3),name(Plf,Lista3),
-						   
-		   see(Plf),
-			repeat,
-			read(T),
-			   assert(valori_temporanei(T)),
-			  T==end_of_file,
-			 seen,!,
-			  
-			  findall(X,clause(valori_temporanei(past_event(X,_)),_),Ls),
-			  diff(Ls,L6,Ld1),
-			 
-			  diff(L6,Ls,Ld2),
-			 
-			  append(Ld1,Ld2,Ldf),
-			  
-			  if(Ldf=[], true,             
-			  (diversi_ev_all(L6),riscrivi(F,Plf))),
-			  retractall(valori_temporanei(_)).
+           leggiriga(F,2),clause(evintI(Li),_),
+           leggiriga(F,3),clause(az(La),_),
+           leggiriga(F,6),clause(obtgoal(Lo),_),
+           leggiriga(F,7),clause(testgoal(Lt),_),
+           leggiriga(F,8),clause(rem_fact(Lr),_),
+           leggiriga(F,9),clause(even_args(Lg),_),
+           append(Li,La,L1),append(L1,Lo,L2),append(L2,Lt,L3),
+           append(L3,Lr,L4),append(L4,Lg,L6),
+          
+                   name(F,Lista),append(Lista1,[101],Lista),
+                   append(Lista1,[102],Lista3),name(Plf,Lista3),
+                                                   
+                   see(Plf),
+                        repeat,
+                        read(T),
+                           assert(valori_temporanei(T)),
+                          T==end_of_file,
+                         seen,!,
+                          
+                          findall(X,clause(valori_temporanei(past_event(X,_)),_),Ls),
+                          diff(Ls,L6,Ld1),
+                         
+                          diff(L6,Ls,Ld2),
+                         
+                          append(Ld1,Ld2,Ldf),
+                          
+                          if(Ldf=[], true,             
+                          (diversi_ev_all(L6),riscrivi(F,Plf))),
+                          retractall(valori_temporanei(_)).
 
 diversi_ev_all(L):-assert(k110055(1)),length(L,N),
-	 repeat,
-		 clause(k110055(K),_),
-		 nth1(K,L,M),
-		 scrivi_l124(M),
-		 R is K+1,assert(k110055(R)),retractall(k110055(K)),
+         repeat,
+                 clause(k110055(K),_),
+                 nth1(K,L,M),
+                 scrivi_l124(M),
+                 R is K+1,assert(k110055(R)),retractall(k110055(K)),
       K==N,!,retractall(k110055(_)).
-				 
-				 
+                                 
+                                 
 scrivi_l124(M):-if(clause(valori_temporanei(past_event(M,_)),_),true,assert(da_scrivere(M))),!.
 
                          
 riscrivi(F,Plf):-
-		findall(E1,clause(da_scrivere(E1),_),Ls1),
-		if(Ls1=[],true,scrivi_da_scr(Ls1,Plf,F)).
+                findall(E1,clause(da_scrivere(E1),_),Ls1),
+                if(Ls1=[],true,scrivi_da_scr(Ls1,Plf,F)).
 
 scrivi_da_scr(Ls1,Plf,F):-assert(k22(1)),length(Ls1,N),
-	 repeat,
-	 clause(k22(K),_),
-	 nth1(K,Ls1,X),
-			 clause(da_scrivere(X),_),
-			 open(Plf,append,Stream,[]),
-			 write(Stream,remember_event_mod(X,number(5),last)),write(Stream,'.'),nl(Stream),
-			 write(Stream,past_event(X,60)),write(Stream,'.'),nl(Stream),
-			 close(Stream),
-			 appart_set_event(X,Plf,F),
-			  R is K+1,assert(k22(R)),retractall(k22(K)),
-	 K==N,!,retractall(k11(_)),retractall(da_scrivere(_)).
+         repeat,
+         clause(k22(K),_),
+         nth1(K,Ls1,X),
+                         clause(da_scrivere(X),_),
+                         open(Plf,append,Stream,[]),
+                         write(Stream,remember_event_mod(X,number(5),last)),write(Stream,'.'),nl(Stream),
+                         write(Stream,past_event(X,60)),write(Stream,'.'),nl(Stream),
+                         close(Stream),
+                         appart_set_event(X,Plf,F),
+                          R is K+1,assert(k22(R)),retractall(k22(K)),
+         K==N,!,retractall(k11(_)),retractall(da_scrivere(_)).
 
 appart_set_event(X,Plf,F):-leggiriga(F,1),clause(eventE(Le),_),
-	leggiriga(F,2),clause(evintI(Li),_),
-	   leggiriga(F,3),clause(az(La),_),functor(X,Fun,_),
-	   if(member(Fun,Le),writ_est_event(Fun,Plf),true),
-	   if(member(X,Li),writ_int_event(X,Plf),true),
-	   if(member(X,La),writ_actn_event(X,Plf),true).
+        leggiriga(F,2),clause(evintI(Li),_),
+           leggiriga(F,3),clause(az(La),_),functor(X,Fun,_),
+           if(member(Fun,Le),writ_est_event(Fun,Plf),true),
+           if(member(X,Li),writ_int_event(X,Plf),true),
+           if(member(X,La),writ_actn_event(X,Plf),true).
 
 writ_est_event(X,Plf):-open(Plf,append,Stream,[]),
-		  write(Stream,'external_event('),write(Stream,X),write(Stream,','),
-		  write(Stream,'normal'),
-		  write(Stream,').'),nl(Stream), 
-		 write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
-		 nl(Stream),close(Stream).
+                  write(Stream,'external_event('),write(Stream,X),write(Stream,','),
+                  write(Stream,'normal'),
+                  write(Stream,').'),nl(Stream), 
+                 write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
+                 nl(Stream),close(Stream).
 
 writ_int_event(X,Plf):- open(Plf,append,Stream,[]),
-	   write(Stream,'internal_event('),write(Stream,X),write(Stream,','),
-	   write(Stream,'3'),write(Stream,','),write(Stream,forever),
-	   write(Stream,','),write(Stream,true),write(Stream,','),write(Stream,'until_cond(past('),
-	   write(Stream,X), write(Stream,'))).'),nl(Stream), close(Stream).
+           write(Stream,'internal_event('),write(Stream,X),write(Stream,','),
+           write(Stream,'3'),write(Stream,','),write(Stream,forever),
+           write(Stream,','),write(Stream,true),write(Stream,','),write(Stream,'until_cond(past('),
+           write(Stream,X), write(Stream,'))).'),nl(Stream), close(Stream).
 
 writ_actn_event(X,Plf):- functor(X,F,_),
-	 if(F=message,scr_msg_mod(X,Plf),scr_act_mod(X,Plf)).
+         if(F=message,scr_msg_mod(X,Plf),scr_act_mod(X,Plf)).
 
 scr_act_mod(X,Plf):-open(Plf,append,Stream,[]),
-	 write(Stream,'action('),write(Stream,X),write(Stream,','),
-	 write(Stream,'normal'),
-	 write(Stream,').'),nl(Stream),close(Stream). 
+         write(Stream,'action('),write(Stream,X),write(Stream,','),
+         write(Stream,'normal'),
+         write(Stream,').'),nl(Stream),close(Stream). 
 
 scr_msg_mod(X,Plf):-open(Plf,append,Stream,[]),
-	 write(Stream,'action('),write(Stream,X),write(Stream,','),
-	 write(Stream,'normal'),
-	 write(Stream,').'),nl(Stream),
-	 write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
-	 nl(Stream),close(Stream). 
+         write(Stream,'action('),write(Stream,X),write(Stream,','),
+         write(Stream,'normal'),
+         write(Stream,').'),nl(Stream),
+         write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
+         nl(Stream),close(Stream). 
         
 %DETERMINA SE UNA AZIONE (messaggio) VA SOTTOPOSTA(check) O MENO A CONTROLLO
 check_messaggio(Fe,Ff):-leggiriga(Fe,3),
-	   clause(az(L),_),if(L=[],true,check_mess(L,Ff)).
+           clause(az(L),_),if(L=[],true,check_mess(L,Ff)).
 
 check_mess(L,Ff):-last(L,U),
-	  repeat,
-		 member(Me,L),
-		 functor(Me,Fu,_),
-		 if(Fu=message,ass_plf_string(Me,Ff),true),
-	  Me==U,!.
+          repeat,
+                 member(Me,L),
+                 functor(Me,Fu,_),
+                 if(Fu=message,ass_plf_string(Me,Ff),true),
+          Me==U,!.
 
 ass_plf_string(Me,Ff):-open(Ff,append,Stream,[]),
-	   write(Stream,'mod('),write(Stream,Me),write(Stream,','),
-	   write(Stream,'check'),write(Stream,').'),nl(Stream), 
-	   close(Stream). 
+           write(Stream,'mod('),write(Stream,Me),write(Stream,','),
+           write(Stream,'check'),write(Stream,').'),nl(Stream), 
+           close(Stream). 
 
 %AGGIORNA LE CONDIZIONI DEGLI EVENTI ESTERNI
 writ_cond_extevent(X,Plf):-name(Plf,L),append(Li,[102],L),append(Li,[118],Lj),name(F,Lj),clause(agente(_,_,S,_),_),leggiriga(S,4),
-	clause(condt(Y),true),
-        retractall(condt(_)),rip_esterni(X,Y,F).	
+        clause(condt(Y),true),
+        retractall(condt(_)),rip_esterni(X,Y,F).        
 
 
 
 
 %CARICA LE DIRETTIVE DEL FILE .plf%
 load_directives(F):-open(F,read,Stream,[]),
-		   repeat,
-				 read(Stream,T),
-				 if(clause(T,_),true,assert((T))),
-			T==end_of_file,!,
-	close(Stream).
+                   repeat,
+                                 read(Stream,T),
+                                 if(clause(T,_),true,assert((T))),
+                        T==end_of_file,!,
+        close(Stream).
 
 
 
 aprifile_en(F):-see(F), 
-	 repeat,
-	read(T), 
-			assert(clause_man(T)), 
-	T == end_of_file,
-	 !,
-	 seen,man_go,
-		 retractall(clause_man(_)).
+         repeat,
+        read(T), 
+                        assert(clause_man(T)), 
+        T == end_of_file,
+         !,
+         seen,man_go,
+                 retractall(clause_man(_)).
 
 man_go:-setof(X,clause_man(X),L),
-	 last(L,Lu),
-		member(A,L),if(A\=end_of_file, arg(1,A,A1),false),
-			  spezza1man(A,A1),
-		A==Lu,!.
+         last(L,Lu),
+                member(A,L),if(A\=end_of_file, arg(1,A,A1),false),
+                          spezza1man(A,A1),
+                A==Lu,!.
 
-	%T è tutto, mentre A è la TESTA
-	spezza1man(T,A):-T=..L,member(X,L),if(member(X,[':-',',']),true,spezza2man(X,A)).
+        %T è tutto, mentre A è la TESTA
+        spezza1man(T,A):-T=..L,member(X,L),if(member(X,[':-',',']),true,spezza2man(X,A)).
 
-	spezza2man(X,A):-functor(X,_,N),if(N>1,spezza1man(X,A),spezza3man(X,A)).
+        spezza2man(X,A):-functor(X,_,N),if(N>1,spezza1man(X,A),spezza3man(X,A)).
 
-	% Cioè se cia esattamente un argomento
-	spezza3man(X,A):-functor(X,H,N),if(N>0,continman(X,H,A),true).
+        % Cioè se cia esattamente un argomento
+        spezza3man(X,A):-functor(X,H,N),if(N>0,continman(X,H,A),true).
 
-	continman(X,H,A):-arg(1,X,I),if(H=en,( asse_cosa(legato_en(A,I)), write(A),nl,write(I),nl ),true).
+        continman(X,H,A):-arg(1,X,I),if(H=en,( asse_cosa(legato_en(A,I)), write(A),nl,write(I),nl ),true).
 
 %RICEZIONE EVENTI ESTERNI%
-ricmess:-clause(agente(Ag,Ind,_,_),_),		
+ricmess:-clause(agente(Ag,Ind,_,_),_),          
          if(rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
          ricmess0(Ag,Ind,AgM,IndM,Language,Ontology,Con),true).
 
                          
 ricmess0(Ag,Ind,AgM,IndM,Language,Ontology,Con):-
-	  asse_cosa(ext_agent(AgM,IndM,Ontology,Language)),
-	  in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
-	  %print('RECEIVED: '),print(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),nl,
-	  if(clause(receive(Con),_),chiama_con(AgM,IndM,Language,Ontology,Con),not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
+          asse_cosa(ext_agent(AgM,IndM,Ontology,Language)),
+          in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
+          %print('RECEIVED: '),print(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),nl,
+          if(clause(receive(Con),_),chiama_con(AgM,IndM,Language,Ontology,Con),not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
 
 chiama_con(AgM,IndM,Language,Ontology,Con):-if(receive(Con),true,not_receivable_message(AgM,IndM,Language,Ontology,Con)).
 
@@ -737,26 +716,26 @@ execute_proc(E,AgM):-clause(ext_agent(AgM,IndM,Ontology,_),_),
 execute_do_action_propose:-if(clause(do_action_propose(_,_),_),keep_action_propose1,true).
 
 keep_action_propose1:-findall(act_propose(X,Ag),
-	clause(do_action_propose(X,Ag),_),L),                  
-	last(L,U),
-	  repeat,
-		   member(Me,L),
-			 arg(1,Me,Az),
-			 arg(2,Me,Ag),
-			 if(do_propose(Az,Ag),true,
-			 asse_cosa(not_executable_action_propose(Az,Ag))),
-			 retractall(do_action_propose(Az,Ag)),
-			 retractall(act_propose(Az,Ag)), 
-		  Me==U,!.
+        clause(do_action_propose(X,Ag),_),L),                  
+        last(L,U),
+          repeat,
+                   member(Me,L),
+                         arg(1,Me,Az),
+                         arg(2,Me,Ag),
+                         if(do_propose(Az,Ag),true,
+                         asse_cosa(not_executable_action_propose(Az,Ag))),
+                         retractall(do_action_propose(Az,Ag)),
+                         retractall(act_propose(Az,Ag)), 
+                  Me==U,!.
 
 
 %%EDITONTO Nuovo sistema gestione ontologie
 % ASSORBIMENTO DELLA ONTOLOGIA DELL'AGENTE COMUNICANTE
 asserisci_ontologia(AgM,O):-
-	if(clause(ontology(_,_,AgM),_), true,
-		( if(O=[],true,(O=ontology(Pref,[Rep,Host],AgM), assert(ontology(Pref,[Rep,Host],AgM))) ) %%Ramo else
-		)
-	).
+        if(clause(ontology(_,_,AgM),_), true,
+                ( if(O=[],true,(O=ontology(Pref,[Rep,Host],AgM), assert(ontology(Pref,[Rep,Host],AgM))) ) %%Ramo else
+                )
+        ).
 
 % CONDIZIONE RICEZIONE MESSAGGI
 
@@ -774,11 +753,11 @@ processa_eve:- clause(agente(_,_,S,_),_),leggiriga(S,1),clause(eventE(Es),_),
 
 processa_eve_high:-if(clause(ev_high(_,_,_),_),processa_eve_high1,true).
 processa_eve_high1:-findall(ev_high(AgM,E,T),clause(ev_high(AgM,E,T),_),L),
-	  last(L,U),
-	  repeat,
-		 member(M,L),arg(1,M,Ag),
-		 arg(2,M,E),arg(3,M,T),
-	  if(once(eve_cond(E)),processa_eve_high(Ag,E,T),no_proc_eve_high(Ag,E,T)),
+          last(L,U),
+          repeat,
+                 member(M,L),arg(1,M,Ag),
+                 arg(2,M,E),arg(3,M,T),
+          if(once(eve_cond(E)),processa_eve_high(Ag,E,T),no_proc_eve_high(Ag,E,T)),
               M==U,!. 
 no_proc_eve_high(AgM,E,T):-write('External event preconditions not verified'),nl,retractall(ev_high(_,E,T)),asse_cosa(refused_external(AgM,E,T)).
 processa_eve_high(AgM,E,T):-retractall(ev_high(AgM,E,T)),asse_cosa(executed_external(AgM,E,T)),
@@ -809,30 +788,30 @@ uccidi_iv(X,Tc):-if(clause(iv(X,Tc),_),retractall(iv(X,Tc)),true).
 
 %LEGA LE AZIONI ALLE REGOLE AZIONI CORRISPONDENTI%              
 azioni(Nf):-clause(agente(_,_,S,_),_),retractall(az(_)),
-	leggiriga(S,3),
-	clause(az(X),true),
+        leggiriga(S,3),
+        clause(az(X),true),
         retractall(az(_)),if(X=[],true,azioni1(X,S,Nf)).
 azioni1(X,S,Nf):-leggiriga(S,4),
-	clause(condt(Y),true),
-        retractall(condt(_)),	
-	last(X,La),
-	repeat,
+        clause(condt(Y),true),
+        retractall(condt(_)),   
+        last(X,La),
+        repeat,
         member(Me,X),
         rip(Me,Y,Nf),
         Me==La.
-	   
+           
 rip(Me,Y,Nf):-open(Nf,append,Stream,[]),
               if(nonvar(Y),proc_rip(Me,Y,Stream),clause2(Me,Stream)),close(Stream).
 
 proc_rip(Me,Y,Stream):- 
                  if(member(Me,Y),clause1(Me,Stream),clause2(Me,Stream)).
-	    
-	clause1(X,Stream):-nl(Stream),write(Stream,'a('),write(Stream,X),
+            
+        clause1(X,Stream):-nl(Stream),write(Stream,'a('),write(Stream,X),
                     write(Stream,'):-cd('),write(Stream,X),
                     write(Stream,'),assert(do_action('),
                     write(Stream,X),write(Stream,',program'),write(Stream,')).').
 
-	clause2(X,Stream):-nl(Stream),write(Stream,'a('),write(Stream,X),
+        clause2(X,Stream):-nl(Stream),write(Stream,'a('),write(Stream,X),
                     write(Stream,'):-cd('),write(Stream,X),
                     write(Stream,'),assert(do_action('),
                     write(Stream,X),write(Stream,',program'),write(Stream,')).'),nl(Stream),
@@ -843,18 +822,18 @@ proc_rip(Me,Y,Stream):-
 %LEGA GLI EVENTI ESTERNI ALLE REGOLE AZIONI CORRISPONDENTI% 
              
 cond_esterni(Nf):-clause(agente(_,_,S,_),_),retractall(even_args(_)),
-	leggiriga(S,9),
-	clause(even_args(X),true),
+        leggiriga(S,9),
+        clause(even_args(X),true),
         retractall(even_args(_)),if(X=[],true,cond_esterni1(X,S,Nf)).
 cond_esterni1(X,S,Nf):-leggiriga(S,4),
-	clause(condt(Y),true),
-        retractall(condt(_)),	
-	last(X,La),
-	repeat,
+        clause(condt(Y),true),
+        retractall(condt(_)),   
+        last(X,La),
+        repeat,
         member(Me,X),
         rip_esterni(Me,Y,Nf),
         Me==La.
-	   
+           
 rip_esterni(Me,Y,Nf):-open(Nf,append,Stream,[]),
               if(nonvar(Y),proc_rip_esterni(Me,Y,Stream),clause2_esterni(Me,Stream)),close(Stream).
 
@@ -862,13 +841,13 @@ rip_esterni(Me,Y,Nf):-open(Nf,append,Stream,[]),
 
 proc_rip_esterni(Me,Y,Stream):- 
                  if(member(Me,Y),clause1_esterni(Me,Stream),clause2_esterni(Me,Stream)).
-	    
-	clause1_esterni(X,Stream):-nl(Stream),write(Stream,'eve_cond('),write(Stream,X),
+            
+        clause1_esterni(X,Stream):-nl(Stream),write(Stream,'eve_cond('),write(Stream,X),
                     write(Stream,'):-cd('),write(Stream,X),
                     write(Stream,'),eve('),
                     write(Stream,X),write(Stream,').').
 
-	clause2_esterni(X,Stream):-nl(Stream),write(Stream,'eve_cond('),write(Stream,X),
+        clause2_esterni(X,Stream):-nl(Stream),write(Stream,'eve_cond('),write(Stream,X),
                     write(Stream,'):-cd('),write(Stream,X),
                     write(Stream,'),eve('),
                     write(Stream,X),write(Stream,').'),nl(Stream),
@@ -879,11 +858,11 @@ proc_rip_esterni(Me,Y,Stream):-
 asser_evN(S):-leggiriga(S,5),clause(evN(C),_),if(C=[],true,asser_evN1(C)).
 
 asser_evN1(C):- last(C,La),retractall(evN(_)),
-                	repeat,
-			  member(Me,C),
-			  assert((en(Me):-en(Me,_))),
-			  assert((en(Me,_):-false)),
-			Me==La,!.
+                        repeat,
+                          member(Me,C),
+                          assert((en(Me):-en(Me,_))),
+                          assert((en(Me,_):-false)),
+                        Me==La,!.
 
                                 
 
@@ -891,17 +870,17 @@ asser_evN1(C):- last(C,La),retractall(evN(_)),
 
 %LEGA I GOALS DA OTTENERE ALLE REGOLE GOALS CORRISPONDENTI%              
 obg_goal(Nf):-clause(agente(_,_,S,_),_),
-	leggiriga(S,6),
-	clause(obtgoal(X),true),if(X=[],true,obg_goal1(X,Nf)).
+        leggiriga(S,6),
+        clause(obtgoal(X),true),if(X=[],true,obg_goal1(X,Nf)).
 
 obg_goal1(X,Nf):-retractall(obtgoal(_)),
-	open(Nf,append,Stream,[]),
-	last(X,La),
-	repeat,
+        open(Nf,append,Stream,[]),
+        last(X,La),
+        repeat,
         member(Me,X),
         rip_goal(Me,Stream),
         Me==La,!,close(Stream).
-	   
+           
 
 rip_goal(Me,Stream):-nl(Stream),write(Stream,'obg('),
               write(Stream,Me),
@@ -925,47 +904,47 @@ tesg(X):-clause(past(X),_);clause(isa(X,_,_),_);clause(past(X,_,_),_).
 keep_action:-if(clause(do_action(_,_),_),keep_action1,true).
 
 keep_action1:-findall(azione(X,Ag),clause(do_action(X,Ag),_),L),
-	 last(L,U),
-		  repeat,
-			   member(Me,L),!,
-			   arg(1,Me,Az),
-			   arg(2,Me,Ag),
-			   
-			   retractall(do_action(Az,Ag)),
-			   retractall(azione(Az,Ag)),
+         last(L,U),
+                  repeat,
+                           member(Me,L),!,
+                           arg(1,Me,Az),
+                           arg(2,Me,Ag),
+                           
+                           retractall(do_action(Az,Ag)),
+                           retractall(azione(Az,Ag)),
  
-			   statistics(walltime,[Te,_]),
-			   clause(action(Az,Mod),_),
-			   if(Mod=high,assert(high_action(Az,Te,Ag)),assert(normal_action(Az,Te,Ag))),
-						 
-			  Me==U,!.
+                           statistics(walltime,[Te,_]),
+                           clause(action(Az,Mod),_),
+                           if(Mod=high,assert(high_action(Az,Te,Ag)),assert(normal_action(Az,Te,Ag))),
+                                                 
+                          Me==U,!.
 
 %SVUOTA LA CODA DELLE AZIONI AD ALTA PRIORITA'%
 svuota_coda_priority:-if(clause(high_action(_,_,_),_),svuota_coda_priority1,true).
 
 svuota_coda_priority1:-findall(act(X,T,Ag),clause(high_action(X,T,Ag),_),L),
-	 last(L,U),
-		  repeat,
-			   member(Me,L),
-						 arg(1,Me,Az),
-						 arg(2,Me,Te),
-						 arg(3,Me,Agt),
-						  retractall(high_action(Az,Te,Agt)),
-						  fai(Az,Te,Agt),
-			  Me==U,!.
+         last(L,U),
+                  repeat,
+                           member(Me,L),
+                                                 arg(1,Me,Az),
+                                                 arg(2,Me,Te),
+                                                 arg(3,Me,Agt),
+                                                  retractall(high_action(Az,Te,Agt)),
+                                                  fai(Az,Te,Agt),
+                          Me==U,!.
                                           
 
 %PRENDE UNA AZIONE DALLA CODA A  PRIORITA' NORMALE%'
 prendi_action_normal:-if(clause(normal_action(_,_,_),_),prendi_action_normal1,true).
 
 prendi_action_normal1:-findall(act_n(X,T,Ag),clause(normal_action(X,T,Ag),_),L),
-			 if(L\=[],arg(1,L,Me),false),
-			 arg(1,Me,Az),
-			 arg(2,Me,Te),
-			 arg(3,Me,Agt),
-			 retractall(normal_action(Az,Te,Agt)),fai(Az,Te,Agt).
+                         if(L\=[],arg(1,L,Me),false),
+                         arg(1,Me,Az),
+                         arg(2,Me,Te),
+                         arg(3,Me,Agt),
+                         retractall(normal_action(Az,Te,Agt)),fai(Az,Te,Agt).
 
-			  
+                          
                                           
 
 fai(X,T,Ag):-functor(X,F,_),if(F=message,em_mess0(X,T,Ag),choose_action(X)),if(F\=message,(ver_az_int(X,T,Ag),!),true).
@@ -991,7 +970,7 @@ set_past_evento(X,C):-retractall(past_event_life(X,_)),retractall(past_event_mod
 
 em_mess0(X,T,Ag):-if(clause(mod(X,check),_),check_msg(X,T,Ag),em_mess(X)). 
 check_msg(X,T,Ag):-arg(1,X,To),arg(2,X,M),
-	
+        
               if(call(send(To,M)),(ver_az_int(X,T,Ag),!),not_sendable_message(To,M)).
 em_mess(X):-arg(1,X,To),arg(2,X,M),send_m0(To,M).
 
@@ -1004,54 +983,54 @@ send_m(To,M):-clause(agente(S,IndS,_,_),_),
             if(To=all,manda_a_all(M,S,IndS),if(To=room,manda_a_room(M,S,IndS),manda_a(To,M,S,IndS))).
 
 manda_a(To,M,S,IndS):-
-			%print('testing agent active...'),print(rd_noblock(agente_attivo(To,IndTo))),nl,
-			if(rd_noblock(agente_attivo(To,IndTo)),
-				emetti_ms(To,M,S,IndS,IndTo),
-				print('Message addressed to a not active agent')),nl.
+                        %print('testing agent active...'),print(rd_noblock(agente_attivo(To,IndTo))),nl,
+                        if(rd_noblock(agente_attivo(To,IndTo)),
+                                emetti_ms(To,M,S,IndS,IndTo),
+                                print('Message addressed to a not active agent')),nl.
 
 %% Azione di invio del messaggio
 emetti_ms(To,M,S,IndS,IndTo):-clause(own_language(Lang),_),
-	  invia_terms_ontology(O),
-	  out(message(IndTo,To,IndS,S,Lang,O,M)),
-	  %print(send_message_to(To,M,Lang,O)),nl,
-	  save_on_log_file(send_message(M)).
+          invia_terms_ontology(O),
+          out(message(IndTo,To,IndS,S,Lang,O,M)),
+          %print(send_message_to(To,M,Lang,O)),nl,
+          save_on_log_file(send_message(M)).
 
 invia_terms_ontology(O):-
-	clause(agent(Agent),_),
-	if(clause(ontology(Prefixes,[Rep,Host],Agent),_), O=ontology(Prefixes, [Rep,Host], Agent), O=[]).
+        clause(agent(Agent),_),
+        if(clause(ontology(Prefixes,[Rep,Host],Agent),_), O=ontology(Prefixes, [Rep,Host], Agent), O=[]).
 
 %%EDITONTO
 manda_a_all(M,S,IndS):-bagof_rd_noblock(ag(A,Ind),
-	   agente_attivo(A,Ind),Lis),
-	   nth1(N,Lis,ag(S,IndS)),
-	   nth1(N,Lis,ag(S,IndS),R),
-	   invia_terms_ontology(L),
-	   clause(own_language(Lang),_),
-	   remove_dups(R,Rwd),
-	   last(Rwd,RL),
-		 repeat,
-		   member(X,Rwd),
-			  arg(1,X,To),
-			  arg(2,X,IndTo),
-			  out(message(IndTo,To,IndS,S,Lang,L,M)),
-			  print(send_message_to(To,M,Lang,L)),nl,nl,
-	   X==RL,!.   
+           agente_attivo(A,Ind),Lis),
+           nth1(N,Lis,ag(S,IndS)),
+           nth1(N,Lis,ag(S,IndS),R),
+           invia_terms_ontology(L),
+           clause(own_language(Lang),_),
+           remove_dups(R,Rwd),
+           last(Rwd,RL),
+                 repeat,
+                   member(X,Rwd),
+                          arg(1,X,To),
+                          arg(2,X,IndTo),
+                          out(message(IndTo,To,IndS,S,Lang,L,M)),
+                          print(send_message_to(To,M,Lang,L)),nl,nl,
+           X==RL,!.   
 
 %%EDITONTO
 manda_a_room(M,S,IndS):-arg(2,M,Cat),functor(M,F,_),
-	   datime(C),
-	   invia_terms_ontology(L),
-	   clause(own_language(Lang),_),
-			  out(room(F,Cat,M,IndS,S,Lang,L,C)),
-			  print(send_desire(F,Cat,M,IndS,S,Lang,L,C)),nl.         
+           datime(C),
+           invia_terms_ontology(L),
+           clause(own_language(Lang),_),
+                          out(room(F,Cat,M,IndS,S,Lang,L,C)),
+                          print(send_desire(F,Cat,M,IndS,S,Lang,L,C)),nl.         
 
                           
 ver_az_int(X,Tc,Ag):-
-	   divP(X,Tc,Ag),
+           divP(X,Tc,Ag),
    clause(agente(_,_,S,_),_),
    leggiriga(S,2),
-	   clause(evintI(L),_),
-	   if(L\=[],ver_az_int1(L,Tc,X),true).
+           clause(evintI(L),_),
+           if(L\=[],ver_az_int1(L,Tc,X),true).
 
 ver_az_int1(L,Tc,X):-retractall(evintI(_)),
 if(member(X,L),assert(iv(X,Tc)),true).
@@ -1069,15 +1048,15 @@ con_ev_int1(L,S):-leggiriga(S,3),
 
 
 freq_tutto1(L):-last(L,Ul),
-	repeat,
-	member(Me,L),
-	asser_prov0(Me),
+        repeat,
+        member(Me,L),
+        asser_prov0(Me),
     Me==Ul,!.  
 
 freq_sing1(L,As):-last(L,Ul),
-	repeat,
-	member(Me,L),
-	if(member(Me,As),true,asser_prov0(Me)),
+        repeat,
+        member(Me,L),
+        if(member(Me,As),true,asser_prov0(Me)),
     Me==Ul,!.  
 
 asser_prov0(Me):-if(clause(prov_int0(Me),_),true,assert(prov_int0(Me))).
@@ -1085,8 +1064,8 @@ asser_prov0(Me):-if(clause(prov_int0(Me),_),true,assert(prov_int0(Me))).
 ev_goal:-findall(M,clause(prov_int0(M),_),L),
          if(L=[],true,ev_goal1(L)).
 ev_goal1(L):-clause(agente(_,_,S,_),_),
-	leggiriga(S,6),
-	clause(obtgoal(X),true),if(X=[],passa_a_prov_int(L),ev_goal21(X,L)).
+        leggiriga(S,6),
+        clause(obtgoal(X),true),if(X=[],passa_a_prov_int(L),ev_goal21(X,L)).
 
 ev_goal21(X,L):-last(X,U),
               repeat,
@@ -1138,32 +1117,32 @@ esamina_dt(Me,C):-arg(1,C,D),arg(2,C,A),verif_time(Me,D,A).
               if((Ac=A1,Ac=A2),
               conf_date_3(Iv,D,A,C),scarica(Iv))))).
  
-	conf_date_max(Iv,D,A,C):-arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
+        conf_date_max(Iv,D,A,C):-arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
                        R1 is (Me1*43790+G1*1440),
                        R is (Me*43790+G*1440),
                        
                        if(R>R1,controlla_ore(Iv,D,A,C),scarica(Iv)).
 
-	conf_date_min(Iv,D,A,C):-arg(2,A,Me1),arg(3,A,G1),arg(2,C,Me),arg(3,C,G),
+        conf_date_min(Iv,D,A,C):-arg(2,A,Me1),arg(3,A,G1),arg(2,C,Me),arg(3,C,G),
                        R2 is (Me1*43790+G1*1440),
                        R is (Me*43790+G*1440),
                         
                        if(R=<R2,controlla_ore(Iv,D,A,C),scarica(Iv)).
 
-	conf_date_3(Iv,D,A,C):-	
-		arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
-				   arg(2,A,Me2),arg(3,A,G2),
-				   R1 is (Me1*43790+G1*1440),
-				   R2 is (Me2*43790+G2*1440),
-				   R is (Me*43790+G*1440),
-				   
-				   if((R>=R1,R=<R2),controlla_ore(Iv,D,A,C),scarica(Iv)).
+        conf_date_3(Iv,D,A,C):- 
+                arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
+                                   arg(2,A,Me2),arg(3,A,G2),
+                                   R1 is (Me1*43790+G1*1440),
+                                   R2 is (Me2*43790+G2*1440),
+                                   R is (Me*43790+G*1440),
+                                   
+                                   if((R>=R1,R=<R2),controlla_ore(Iv,D,A,C),scarica(Iv)).
 
-	controlla_ore(Iv,D,A,C):-arg(4,D,H1),arg(5,D,M1),arg(6,D,S1),arg(4,A,H2),arg(5,A,M2),arg(6,A,S2),arg(4,C,H),arg(5,C,M),arg(6,C,S),
-			O1 is (H1*3600+M1*60+S1),
-			O2 is (H2*3600+M2*60+S2),
-			O is (H*3600+M*60+S),
-			if(O2>O1,ora_normale(Iv,O,O1,O2),print('To insert a correct temporal interval')).
+        controlla_ore(Iv,D,A,C):-arg(4,D,H1),arg(5,D,M1),arg(6,D,S1),arg(4,A,H2),arg(5,A,M2),arg(6,A,S2),arg(4,C,H),arg(5,C,M),arg(6,C,S),
+                        O1 is (H1*3600+M1*60+S1),
+                        O2 is (H2*3600+M2*60+S2),
+                        O is (H*3600+M*60+S),
+                        if(O2>O1,ora_normale(Iv,O,O1,O2),print('To insert a correct temporal interval')).
 
 ora_normale(Iv,O,O1,O2):-if((O>O1,O<O2),carica(Iv),scarica(Iv)).
 
@@ -1189,7 +1168,7 @@ blocco_numero2(L):-last(L,U),
 check_time_rep(Me,N):-functor(Me,F,_),
                       if(cond_int_repeat(F,N),check_cond_repeat(Me,N),
                       asserisco_prov_int2(Me)).
-					  
+                                          
 cond_int_repeat(F,N):-clause(internal_repeat(F,P),_),P>=N.
 asserisco_prov_int2(Me):-asse_cosa(prov_int2(Me)).
 
@@ -1202,27 +1181,27 @@ check_cond_repeat1(Me,Cn):-functor(Cn,F,_),
 %%Edited: Vedi gli arg(1 cosa ho fatto .
 check_cond_change(Me,Cn):-if(Cn\=[],arg(1,Cn,L),false),if(L=[],true,check_cond_change1(Me,L)).
 check_cond_change1(Me,L):-last(L,U),
-	  repeat,
-		 member(M,L),
-		 if(change_fact_or_evp(M,Me),
-		 fact_evp_changed(Me),
-		true),
-	   M==U,!.
+          repeat,
+                 member(M,L),
+                 if(change_fact_or_evp(M,Me),
+                 fact_evp_changed(Me),
+                true),
+           M==U,!.
 
 fact_evp_changed(Me):-functor(Me,F,_),retractall(internal_repeat(F,_)),
-	  assert(internal_repeat(F,0)).
+          assert(internal_repeat(F,0)).
 
 change_fact_or_evp(M,Me):-functor(Me,F,_),clause(internal_reaction(F,Ti),_),
-	  if(clause(isa(M,_,_),_),
-	  change_fact(M,Ti),(if(clause(past(M,_,_),_),
-	  change_past(M,Ti),false))).
+          if(clause(isa(M,_,_),_),
+          change_fact(M,Ti),(if(clause(past(M,_,_),_),
+          change_past(M,Ti),false))).
 
 
 change_fact(M,Ti):-clause(isa(M,_,Tf),_),
-	  if(Tf>Ti,true,false).
+          if(Tf>Ti,true,false).
 
 change_past(M,Ti):-clause(past(M,Tp,_),_),
-	  if(Tp>Ti,true,false).
+          if(Tp>Ti,true,false).
                                    
                                    
                   
@@ -1236,8 +1215,8 @@ blocco_frequenza2(L):-last(L,U),
         member(Me,L),
         if(clause(reagito(Me,_),_),true,asserisci_tempI(Me)),
          Me==U,!,retractall(prov_int2(_)).
-		 
-		 
+                 
+                 
 asserisci_tempI(Me):-
           if(clause(tempI(Me),_),true,assert(tempI(Me))). 
 
@@ -1245,34 +1224,34 @@ ev_int2:-if(clause(tempI(_),_),ev_intp,true).
 
 ev_intp:-findall(Y,tempI(Y),Ls),
          statistics(walltime,[Tc,_]),
-	 last(Ls,La),
-	 repeat,
-	   member(Me,Ls), 
+         last(Ls,La),
+         repeat,
+           member(Me,Ls), 
        if(clause(tentato_evento(Me,_),_),true,ev_int_p_no_tent(Me,Tc)),    
-	 Me==La,!.
-	 
+         Me==La,!.
+         
 ev_int_p_no_tent(Me,Tc):-if(once(Me),asserisci_iv(Me,Tc),retractall(tempI(Me))).
 
 asserisci_iv(Me,Tc):-assert(tentato_evento(Me,Tc)),
-	 if(clause(iv(Me,Tc),_),true,assert(iv(Me,Tc))),
-	 retractall(tempI(Me)),
-	 if(clause(attiva_goal(Me),_),
-	 canc_goal(Me),true),    
-	 findall(X,clause(legato_en(Me,X),_),L),
-	 if(L=[],true,(interno_pres(Me,L),ass_ev_pre_i(Me,Tc))).
+         if(clause(iv(Me,Tc),_),true,assert(iv(Me,Tc))),
+         retractall(tempI(Me)),
+         if(clause(attiva_goal(Me),_),
+         canc_goal(Me),true),    
+         findall(X,clause(legato_en(Me,X),_),L),
+         if(L=[],true,(interno_pres(Me,L),ass_ev_pre_i(Me,Tc))).
 
 interno_pres(Me,L):-last(L,Lu),
    member(X,L),
-	  clause(en(X,T1),true),
-	   assert(lega_int_time(Me,T1)),
-	  retractall(en(X,T1)),
+          clause(en(X,T1),true),
+           assert(lega_int_time(Me,T1)),
+          retractall(en(X,T1)),
    X==Lu,!.
 
 ass_ev_pre_i(Me,Tc):-setof(T,clause(lega_int_time(Me,T),_),L1),
    retractall(lega_int_time(Me,_)),
    if(clause(ev_pre_time(Me,_,_),_),
-	 (retractall(ev_pre_time(Me,_,_)),assert(ev_pre_time(Me,Tc,L1))),
-	assert(ev_pre_time(Me,Tc,L1))).
+         (retractall(ev_pre_time(Me,_,_)),assert(ev_pre_time(Me,Tc,L1))),
+        assert(ev_pre_time(Me,Tc,L1))).
                      
 %GESTISCE CODA GOALS DA OTTENERE%
 obtaining_goals:-findall(a(G,T),clause(ob_goal(G,T),_),Lg),if(Lg=[],true,process_ob_goal(Lg)).
@@ -1294,11 +1273,11 @@ manage_list_int([A|B]):-arg(1,A,Me),arg(2,A,Tc),scat0(Me,Tc),manage_list_int(B).
 scat0(Me,Tc):-if(clause(legato_en(Me,_),_),scat0_en(Me,Tc),scat1(Me,Tc)).
              
 scat0_en(Me,Tc):-findall(E,clause(legato_en(Me,E),_),L),
-	 last(L,U),
-		  repeat,
-				member(X,L),
-				if(clause(past(X,T1,_),_),check_app(Me,Tc,T1),scat1(Me,Tc)),
-	  X==U,!.
+         last(L,U),
+                  repeat,
+                                member(X,L),
+                                if(clause(past(X,T1,_),_),check_app(Me,Tc,T1),scat1(Me,Tc)),
+          X==U,!.
 
 check_app(Me,Tc,T1):-if(clause(ev_pre_time(Me,Tc,L1),_),check_member(Me,T1,Tc,L1),true).
 
@@ -1309,23 +1288,23 @@ ritrai_ev_pres(Me,Tc):-retractall(iv(Me,Tc)).
 scat1(Me,Tc):-if(evi(Me),scatena_agisci(Me,Tc),no_scatena(Me,Tc)),!.
 no_scatena(Me,Tc):-retractall(iv(Me,Tc)),if(clause(reagito(Me,_),_),true,assert(reagito(Me,Tc))),
                    
-		   retractall(tempI(Me)), rec_internal_reaction(Me,Tc),
-			   rec_internal_repeat(Me).
+                   retractall(tempI(Me)), rec_internal_reaction(Me,Tc),
+                           rec_internal_repeat(Me).
 
 scatena_agisci(Me,Tc):-retractall(iv(Me,Tc)),divP(Me,Tc,program),
-		   assert(reagito(Me,Tc)),
-		   rec_internal_reaction(Me,Tc),
-		   rec_internal_repeat(Me).
+                   assert(reagito(Me,Tc)),
+                   rec_internal_reaction(Me,Tc),
+                   rec_internal_repeat(Me).
 
 rec_internal_reaction(Me,Tc):-functor(Me,F,_),if(clause(internal_reaction(F,_),_),
-		   agg_internal_reaction(Me,Tc),crea_internal_reaction(Me,Tc)).
+                   agg_internal_reaction(Me,Tc),crea_internal_reaction(Me,Tc)).
 
 agg_internal_reaction(Me,Tc):-functor(Me,F,_),retractall(internal_reaction(F,_)),assert(internal_reaction(F,Tc)). 
 crea_internal_reaction(Me,Tc):-functor(Me,F,_),assert(internal_reaction(F,Tc)).  
 
 rec_internal_repeat(Me):- functor(Me,F,_),clause(internal_repeat(F,N),_),
-		  retractall(internal_repeat(F,N)),R is N+1,
-		  assert(internal_repeat(F,R)). 
+                  retractall(internal_repeat(F,N)),R is N+1,
+                  assert(internal_repeat(F,R)). 
 
 
 controlla_freq_tent:-clause(agente(_,_,S,_),_),statistics(walltime,[T,_]),
@@ -1334,11 +1313,11 @@ controlla_freq_tent:-clause(agente(_,_,S,_),_),statistics(walltime,[T,_]),
 
 
 contr_freq_tent0(Ls,T):-last(Ls,U),
-	   repeat,
-	   member(X,Ls),
-	   if(clause(internal_event(X,Tp,_,_,_),_),
-	   controlla_freq_tent1(X,T,Tp),true),    
-		X==U,!.  
+           repeat,
+           member(X,Ls),
+           if(clause(internal_event(X,Tp,_,_,_),_),
+           controlla_freq_tent1(X,T,Tp),true),    
+                X==U,!.  
 
 controlla_freq_tent1(X,T,Tp):-if(clause(tentato_evento(X,Tc),_),controlla_freq_tent2(X,T,Tp,Tc),true).
 
@@ -1353,16 +1332,16 @@ controlla_freq_iv:-clause(agente(_,_,S,_),_),statistics(walltime,[T,_]),
 
 
 contr_freq_iv0(Ls,T):-last(Ls,U),
-	   repeat,
-	   member(X,Ls),
-	   if(clause(internal_event(X,Tp,_,_,_),_),
-	   controlla_freq_iv1(X,T,Tp),true),    
-		X==U,!.
-					
-					
-					
-					
-					
+           repeat,
+           member(X,Ls),
+           if(clause(internal_event(X,Tp,_,_,_),_),
+           controlla_freq_iv1(X,T,Tp),true),    
+                X==U,!.
+                                        
+                                        
+                                        
+                                        
+                                        
 controlla_freq_iv1(X,T,Tp):-if(clause(reagito(X,Tc),_),controlla_freq_int2(X,T,Tp,Tc),true).
 
 controlla_freq_int2(X,T,Tp,Tc):-Tp1 is Tp*1000,
@@ -1377,33 +1356,33 @@ canc_e_reagito(X,Tc):-retractall(reagito(X,Tc)).
 divP(Me,Tc,Ag):-if(clause(past(Me,Tr,A),_),sposta_in_rem(Me,Tr,A,Tc,Ag),asserta(past(Me,Tc,Ag))).
 
 sposta_in_rem(Me,Tr,A,Tc,Ag):-retractall(past(Me,Tr,A)),retractall(past(Me)),
-		  assert(remember(Me,Tr,A)),asserta(past(Me,Tc,Ag)).
+                  assert(remember(Me,Tr,A)),asserta(past(Me,Tc,Ag)).
 
 canc_goal(Me):-retractall(attiva_goal(Me)).
 
 %CONTROLLA LA VITA DEI PAST EVENTS
 controlla_vita_past_base:-findall(it_past(I,T,Pr),clause(past(I,T,Pr),_),Is),
-	if(Is=[],true,controlla_vita_past(Is)).
+        if(Is=[],true,controlla_vita_past(Is)).
 controlla_vita_past(Is):-last(Is,IU),
-	repeat,
-	  member(Me,Is),arg(1,Me,Mee),
-		functor(Mee,F,_),
-		 if(clause(past_event(Mee,T),_),contrr_past_event1(Me,T),
-		  if(clause(past_event(F,T),_),contrr_past_event1(Me,T),true)),
-	  Me==IU,!.
+        repeat,
+          member(Me,Is),arg(1,Me,Mee),
+                functor(Mee,F,_),
+                 if(clause(past_event(Mee,T),_),contrr_past_event1(Me,T),
+                  if(clause(past_event(F,T),_),contrr_past_event1(Me,T),true)),
+          Me==IU,!.
 
 contrr_past_event1(Me,T):-if(number(T),processa_tempo_past(Me,T),controlla_vita_past1(Me,T)).
 controlla_vita_past1(Me,T):-functor(T,F,_),if(F=forever,true,controlla_vita_past2(Me,F,T)).
 controlla_vita_past2(Me,F,T):-if(F=until,processa_cd_past(Me,T),print('Writing_error2')).
 
 processa_tempo_past(Me,T):-arg(1,Me,P),arg(2,Me,Tc),arg(3,Me,Pr),T1 is T*1000, Tt is Tc+T1,
-	  statistics(walltime,[Tcorr,_]),
-	   
-	  if(Tt<Tcorr,processa_tempo_canc_item(P,Tc,Pr),true).
+          statistics(walltime,[Tcorr,_]),
+           
+          if(Tt<Tcorr,processa_tempo_canc_item(P,Tc,Pr),true).
 
 processa_tempo_canc_item(Me,Tc,Pr):-retractall(past(Me)),
-			retractall(past(Me,Tc,Pr)),
-			assert(remember(Me,Tc,Pr)).
+                        retractall(past(Me,Tc,Pr)),
+                        assert(remember(Me,Tc,Pr)).
 
 
 processa_cd_past(Me,T):-arg(1,Me,P),arg(1,T,C),
@@ -1419,96 +1398,96 @@ processa_cd_past(Me,T):-arg(1,Me,P),arg(1,T,C),
 controlla_vita_remember:-controlla_vita_remember_base,controlla_past_remember.
 
 controlla_vita_remember_base:-findall(it(I,T),clause(remember(I,T,_),_),Is),
-				if(Is=[],true,controlla_vita_remember0(Is)).
+                                if(Is=[],true,controlla_vita_remember0(Is)).
 
 
 
 controlla_vita_remember0(Is):-last(Is,IU),
-		repeat,
-		  member(Me,Is),arg(1,Me,Mee),
-			functor(Mee,F,_),
-			 if(clause(remember_event(Me,T),_),contrr_remember_event1(Me,T),
-			  if(clause(remember_event(F,T),_),contrr_remember_event1(Me,T),true)),
-		  Me==IU,!.
+                repeat,
+                  member(Me,Is),arg(1,Me,Mee),
+                        functor(Mee,F,_),
+                         if(clause(remember_event(Me,T),_),contrr_remember_event1(Me,T),
+                          if(clause(remember_event(F,T),_),contrr_remember_event1(Me,T),true)),
+                  Me==IU,!.
 
 contrr_remember_event1(Me,T):-if(number(T),processa_tempo_rem(Me,T),controlla_vita_remember1(Me,T)).
 controlla_vita_remember1(Me,T):-functor(T,F,_),if(F=forever,true,controlla_vita_remember2(Me,F,T)).
 controlla_vita_remember2(Me,F,T):-if(F=until,processa_cd_remember(Me,T),print('Writing_error2')).
 
 processa_tempo_rem(Me,T):-arg(1,Me,P),arg(2,Me,Tc),T1 is T*1000, Tt is Tc+T1,
-	  statistics(walltime,[Tcorr,_]),
-	   
-	  if(Tt<Tcorr,processa_tempo_canc_item_rem(P,Tc),true).
+          statistics(walltime,[Tcorr,_]),
+           
+          if(Tt<Tcorr,processa_tempo_canc_item_rem(P,Tc),true).
 
 processa_tempo_canc_item_rem(Me,Tc):-retractall(remember(Me)),retractall(remember(Me,Tc,_)).
 
 
 processa_cd_remember(Me,T):-arg(1,Me,P),arg(1,T,C),
-		last(C,U),
-		  repeat,
-			member(K,C),
-			 if(clause(K,true),(retractall(remember(P)),retractall(remember(P,_,_))),
-			  true),
-		  K==U,!.
+                last(C,U),
+                  repeat,
+                        member(K,C),
+                         if(clause(K,true),(retractall(remember(P)),retractall(remember(P,_,_))),
+                          true),
+                  K==U,!.
 
 controlla_past_remember:-findall(I,clause(remember_event_mod(I,_,_),_),Is0),
-		remove_dups(Is0,Is),
-		if(Is=[],true,controlla_past_mod_rem0(Is)).
-					
-					
-										
+                remove_dups(Is0,Is),
+                if(Is=[],true,controlla_past_mod_rem0(Is)).
+                                        
+                                        
+                                                                                
 
 controlla_past_mod_rem0(Is):-last(Is,IU),
-		repeat,
-		  member(Me,Is),
-			 if(clause(remember_event_mod(Me,number(N),last),_),contrr_remember_event_event_mod1(Me,N),
-			  if(clause(remember_event_mod(Me,number(N),first),_),contrr_remember_event_event_mod2(Me,N),
-				if(clause(remember_event_mod(Me,number(N),T1,T2),_),contrr_remember_event_event_mod3(Me,T1,T2),
-				 true))),
-		  Me==IU,!.
+                repeat,
+                  member(Me,Is),
+                         if(clause(remember_event_mod(Me,number(N),last),_),contrr_remember_event_event_mod1(Me,N),
+                          if(clause(remember_event_mod(Me,number(N),first),_),contrr_remember_event_event_mod2(Me,N),
+                                if(clause(remember_event_mod(Me,number(N),T1,T2),_),contrr_remember_event_event_mod3(Me,T1,T2),
+                                 true))),
+                  Me==IU,!.
  
 contrr_remember_event_event_mod1(P,N):-findall(past_app(P,T,S),clause(remember(P,T,S),_),L0),
-		 length(L0,Lu),
-		  if(Lu>N,eliminate_not_last_items_remember(L0,N),true).
+                 length(L0,Lu),
+                  if(Lu>N,eliminate_not_last_items_remember(L0,N),true).
 
 
 eliminate_not_last_items_remember(L,N):-
    length(L,Lu),
-	  Ul is Lu-N,
-	  assert(cont_last_it1(Ul)),
-	  repeat,
-	  clause(cont_last_it1(K),_),
-	  nth1(K,L,E),arg(1,E,P),arg(2,E,T),arg(3,E,Ty),retractall(remember(P,T,Ty)),
-	 Y is K-1,
-	  retractall(cont_last_it1(_)),
-	  assert(cont_last_it1(Y)),
-	  Y==0,!,retractall(cont_last_it1(_)).
+          Ul is Lu-N,
+          assert(cont_last_it1(Ul)),
+          repeat,
+          clause(cont_last_it1(K),_),
+          nth1(K,L,E),arg(1,E,P),arg(2,E,T),arg(3,E,Ty),retractall(remember(P,T,Ty)),
+         Y is K-1,
+          retractall(cont_last_it1(_)),
+          assert(cont_last_it1(Y)),
+          Y==0,!,retractall(cont_last_it1(_)).
 
 
 contrr_remember_event_mod2(P,N):-findall(past_app(P,T,S),clause(past(P,T,S),_),L0),
-	 length(L0,Lu),
-	  if(Lu>N,eliminate_not_first_items_remember(L0,N),true).
+         length(L0,Lu),
+          if(Lu>N,eliminate_not_first_items_remember(L0,N),true).
 
 
 eliminate_not_first_items_remember(L,N):-
    length(L,Lu),
-	  Ul is N+1,
-	  assert(cont_last_it(Ul)),
-	  repeat,
-	  clause(cont_last_it(K),_),
-	  nth1(K,L,E),arg(1,E,P),arg(2,E,T),arg(3,E,Ty),retractall(remember(P,T,Ty)),
-	  Y is K+1,
-	  retractall(cont_last_it(_)),
-	  assert(cont_last_it(Y)),
-	  S is Lu+1,
-	  Y==S,!,retractall(cont_last_it(_)).
+          Ul is N+1,
+          assert(cont_last_it(Ul)),
+          repeat,
+          clause(cont_last_it(K),_),
+          nth1(K,L,E),arg(1,E,P),arg(2,E,T),arg(3,E,Ty),retractall(remember(P,T,Ty)),
+          Y is K+1,
+          retractall(cont_last_it(_)),
+          assert(cont_last_it(Y)),
+          S is Lu+1,
+          Y==S,!,retractall(cont_last_it(_)).
 
 contrr_remember_event_mod3(P,T1,T2):-findall(past_app(P,T,S),clause(remember(P,T,S),_),L0),
-	last(L0,U),
-	   member(M,L0),
-		 arg(1,M,Pm),arg(2,M,Tm),arg(3,M,Ty),
-			if(cond_true_remember_event_mod3(T,T1,T2),true,elim_remember_event_mod3(Pm,Tm,Ty)),
-	   M==U,!.
+        last(L0,U),
+           member(M,L0),
+                 arg(1,M,Pm),arg(2,M,Tm),arg(3,M,Ty),
+                        if(cond_true_remember_event_mod3(T,T1,T2),true,elim_remember_event_mod3(Pm,Tm,Ty)),
+           M==U,!.
                                           
 elim_remember_event_mod3(Pm,Tm,Ty):-retractall(remember(Pm,Tm,Ty)).
 
@@ -1551,13 +1530,13 @@ diff(Tail,L2,Tail1).
 % PRENDE LA LISTA DEI RESIDUI DEI GOALS E LA SODDISFA
 residue_goal:-if(clause(tenta_residuo(_),_),residue_goal1,true).
 residue_goal1:-findall(X,clause(tenta_residuo(X),_),L),
-	  last(L,U),
-			repeat,
-			   member(Me,L),
-			   if(call_residue_goal(Me),resid_goal(Me),true),
-	  Me==U,!.
+          last(L,U),
+                        repeat,
+                           member(Me,L),
+                           if(call_residue_goal(Me),resid_goal(Me),true),
+          Me==U,!.
 resid_goal(Me):-retractall(tenta_residuo(Me)),if(clause(attiva_goal(Me),_),
-		   canc_goal(Me),true).       
+                   canc_goal(Me),true).       
 
 % PREFISSO PAST DEi PAST%
 evp(E):-clause(past(E),_).
@@ -1571,50 +1550,50 @@ isa(E):-clause(isa(E,_,_),_).
 %INIZIALIZZA INTERNAL REPEAT%
 
 ass_internal_repeat:-clause(agente(_,_,S,_),_),
-	 leggiriga(S,2),
-	 clause(evintI(L),_),
-	 if(L\=[],ass_internal_repeat1(L),true).
+         leggiriga(S,2),
+         clause(evintI(L),_),
+         if(L\=[],ass_internal_repeat1(L),true).
 
 ass_internal_repeat1(L):-last(L,U),
-	 repeat,
-		member(M,L),functor(M,F,_),
-		 assert(internal_repeat(F,0)),
-	 M==U,!.
+         repeat,
+                member(M,L),functor(M,F,_),
+                 assert(internal_repeat(F,0)),
+         M==U,!.
 
 %SCRIVE NEL FILE PLV GLI EVENTI ESTERNI SINGOLI DI UN EVENTO ESTERNO MULTIPLO
 ass_stringhe_mul(Nf):-findall(X,clause(da_asserire_stringhe_mul(X),_),L),
-	  if(L=[],true,ass_stringhe_mul1(Nf,L)).
+          if(L=[],true,ass_stringhe_mul1(Nf,L)).
 ass_stringhe_mul1(Nf,L):-open(Nf,append,Stream,[]),
-		 last(L,U),
-		  repeat,
-			 member(Me,L),
-			 nl(Stream),
-			 write(Stream,'eve('),
-			 write(Stream,Me),write(Stream,'):-true.'),
-		   Me==U,!,
-		  close(Stream).
+                 last(L,U),
+                  repeat,
+                         member(Me,L),
+                         nl(Stream),
+                         write(Stream,'eve('),
+                         write(Stream,Me),write(Stream,'):-true.'),
+                   Me==U,!,
+                  close(Stream).
 
 %APRE IL FILE PLV ED ASSERISCE LE REGOLE PER GLI EVENTI SINGOLI DEGLI EVENTI ESTERNI MULTIPLI
 %% e' chiamato dalla "take_meta_var" contenuta in "togli_var.pl"
 %% Il file PLV non è vuoto. Contiene cioè che è scritto nel file PL.
 aprifile_head_mul(F):-see(F), 
-	 repeat,
-	read(T),expand_term(T,Te),
-						if(T=end_of_file,true,
-						assert(rule_mul_head(Te))),
-					T == end_of_file,
-	 !,
-	 seen,take_head_mul.
+         repeat,
+        read(T),expand_term(T,Te),
+                                                if(T=end_of_file,true,
+                                                assert(rule_mul_head(Te))),
+                                        T == end_of_file,
+         !,
+         seen,take_head_mul.
 
 
 take_head_mul:-findall(T,clause(rule_mul_head(T),_),L),
-	  last(L,U),
-	 repeat,
-	  member(M,L),
-		  
-		   arg(1,M,Head),
-		   eve_mul(Head),
-	 M==U,!,retractall(rule_mul_head(_)), if(clause(mul(_),_),ass_mul_head,true).
+          last(L,U),
+         repeat,
+          member(M,L),
+                  
+                   arg(1,M,Head),
+                   eve_mul(Head),
+         M==U,!,retractall(rule_mul_head(_)), if(clause(mul(_),_),ass_mul_head,true).
 
 eve_mul(Head):-functor(Head,_,N),Head=..L_eve,if((L_eve\=[],arg(1,L_eve,_),N>1),continue_mul(L_eve),true).
         continue_mul(L_eve):-arg(1,L_eve,X_eve),if((X_eve=eve,is_list(L_eve)),
@@ -1636,13 +1615,13 @@ exist_event(X):-clause(agente(_,_,F,_),_),extern(F,X).
 %LEGGE LE LISTE DEGLI EVENTI SU FILE .PLE%
 leggiriga(F,N):-see(F),read(T),if(N=1,chiudi1(T),leggiriga2(N)).
 
-	leggiriga2(N):-read(T),if(N=2,chiudi2(T),leggiriga3(N)).
+        leggiriga2(N):-read(T),if(N=2,chiudi2(T),leggiriga3(N)).
 
-	leggiriga3(N):-read(T),if(N=3,chiudi3(T),leggiriga4(N)).
+        leggiriga3(N):-read(T),if(N=3,chiudi3(T),leggiriga4(N)).
 
-	leggiriga4(N):-read(T),if(N=4,chiudi4(T),leggiriga5(N)).
+        leggiriga4(N):-read(T),if(N=4,chiudi4(T),leggiriga5(N)).
 
-	leggiriga5(N):-read(T),if(N=5,chiudi5(T),leggiriga6(N)).
+        leggiriga5(N):-read(T),if(N=5,chiudi5(T),leggiriga6(N)).
               
         leggiriga6(N):-read(T),if(N=6,chiudi6(T),leggiriga7(N)).
               
@@ -1652,15 +1631,15 @@ leggiriga(F,N):-see(F),read(T),if(N=1,chiudi1(T),leggiriga2(N)).
 
         leggiriga9:-read(T),chiudi9(T).
 
-	chiudi1(T):-if(clause(eventE(T),_),true,assert(eventE(T))),seen.
+        chiudi1(T):-if(clause(eventE(T),_),true,assert(eventE(T))),seen.
 
-	chiudi2(T):-if(clause(evintI(T),_),true,assert(evintI(T))),seen.
+        chiudi2(T):-if(clause(evintI(T),_),true,assert(evintI(T))),seen.
 
-	chiudi3(T):-if(clause(az(T),_),true,assert(az(T))),seen.
+        chiudi3(T):-if(clause(az(T),_),true,assert(az(T))),seen.
 
-	chiudi4(T):-assert(condt(T)),seen.
-	
-	chiudi5(T):-if(clause(evN(T),_),true,assert(evN(T))),seen.
+        chiudi4(T):-assert(condt(T)),seen.
+        
+        chiudi5(T):-if(clause(evN(T),_),true,assert(evN(T))),seen.
               
         chiudi6(T):-if(clause(obtgoal(T),_),true,assert(obtgoal(T))),seen.
 
@@ -1704,13 +1683,13 @@ ass_learn:-assert(learn_if(_,_,_)).
 
 
 apri_learn(F):-see(F), 
-	     repeat,
-		read(T),expand_term(T,Te),
+             repeat,
+                read(T),expand_term(T,Te),
                             if(T=end_of_file,true,
                             assegna_nome(T,Te)),
-                		T == end_of_file,
-	     !,
-	     seen.
+                                T == end_of_file,
+             !,
+             seen.
 
 
 assegna_nome(T,Te):-functor(Te,_,N),if(N>1,assegna_nome1(T,Te),true).
@@ -1729,22 +1708,22 @@ leggi_l(Ag):-clause(agent(A),_),see('prova1%13%.txt'),
        seen, if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
 
 learn_all(H,Ag):-findall(Name,clause(modified_clause(H,Name),_),LC),
-	 last(LC,U),
-	   open('prova1%13%.txt',write,Stream,[]),
-	  repeat,
-	   member(Me,LC),
-		  clause(txt_clause(Me,T),_),
-		  format(Stream,"'~p'.",[T]),nl(Stream), 
-	   Me==U,!,                               
-	   close(Stream),leggi_all(Ag). 
+         last(LC,U),
+           open('prova1%13%.txt',write,Stream,[]),
+          repeat,
+           member(Me,LC),
+                  clause(txt_clause(Me,T),_),
+                  format(Stream,"'~p'.",[T]),nl(Stream), 
+           Me==U,!,                               
+           close(Stream),leggi_all(Ag). 
 
 leggi_all(Ag):-clause(agent(A),_),
-	open('prova1%13%.txt',read,Stream,[]),
-	repeat,
-	  read(Stream,T),
-	  if((T= end_of_file),true,send_msg_learn(T,A,Ag)),
-	  T==end_of_file,!,
-	close(Stream), if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
+        open('prova1%13%.txt',read,Stream,[]),
+        repeat,
+          read(Stream,T),
+          if((T= end_of_file),true,send_msg_learn(T,A,Ag)),
+          T==end_of_file,!,
+        close(Stream), if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
 
 %GESTIONE EVP CONSTRANTS
 
@@ -1764,13 +1743,13 @@ composed_past_ok(_,_):-true.
 % ASP INTERCONNECTION
 
 callasp(Name,Model):-name(Name,L),append(L,[46,116,120,116],Lf),
-		name('lparse ',L1),append(L1,Lf,Lp1),
-		name('|smodels ',L2),append(Lp1,L2,Lp2),
-		name(Model,L5),append(Lp2,L5,Lp5),append(Lp5,[32,62,32],Lp5f),
-		append(L,[95,111,117,116,46,116,120,116],Lp3),
-		append(L,[95,111,117,116],Lp4),
-		name(Ff,Lp4),
-		append(Lp5f,Lp3,Lpf),name(T,Lpf),system(T),assert(wait_asp_result(Ff,Name)).
+                name('lparse ',L1),append(L1,Lf,Lp1),
+                name('|smodels ',L2),append(Lp1,L2,Lp2),
+                name(Model,L5),append(Lp2,L5,Lp5),append(Lp5,[32,62,32],Lp5f),
+                append(L,[95,111,117,116,46,116,120,116],Lp3),
+                append(L,[95,111,117,116],Lp4),
+                name(Ff,Lp4),
+                append(Lp5f,Lp3,Lpf),name(T,Lpf),system(T),assert(wait_asp_result(Ff,Name)).
 
 
 
@@ -1781,8 +1760,8 @@ leggi_asp_file_intermedio(Name),retractall(wait_asp_result(Ff,Name)).
 
 examine_asp_token([],_).
 examine_asp_token([Testa|Coda],Stream):-clause(write_asp_el,_),write(Stream,Testa),
-		examine_asp_item2(Testa),
-		examine_asp_token(Coda,Stream).
+                examine_asp_item2(Testa),
+                examine_asp_token(Coda,Stream).
 
 examine_asp_token([Testa|Coda],Stream) :-examine_asp_item1(Testa),examine_asp_token(Coda,Stream).
 
@@ -1800,7 +1779,7 @@ tokenize(Fi,L),if(file_exists('asp_intermedio9993423.txt'),delete_file('asp_inte
 examine_asp_token1([],_).
 
 examine_asp_token1([Testa|Coda],Stream):-Testa=' ',write(Stream,'.'),nl(Stream),
-			   examine_asp_token1(Coda,Stream).
+                           examine_asp_token1(Coda,Stream).
 examine_asp_token1([Testa|Coda],Stream):-Testa=':',examine_asp_token1(Coda,Stream).
 
 examine_asp_token1([Testa|Coda],Stream) :-Testa\=' ',write(Stream,Testa),
@@ -1810,10 +1789,10 @@ examine_asp_token1([Testa|Coda],Stream) :-Testa\=':',write(Stream,Testa),
 
 
 leggi_file_open_asp(Name):-open('asp_intermedio9993423.txt',read,Stream,[]),
-		 repeat,
-		   read(Stream,T),if(var(T),true,examine_asp_result(T,Name)),
-		   T=='end_of_file',!,
-			  close(Stream).
+                 repeat,
+                   read(Stream,T),if(var(T),true,examine_asp_result(T,Name)),
+                   T=='end_of_file',!,
+                          close(Stream).
 
 
 examine_asp_result(T,_):-number(T),R is T-1, not(clause(join(R),_)),assert(join(T)).
@@ -1826,23 +1805,23 @@ generate_plan_list(Name):-if(not(clause(join(_),_)),no_models(Name),generate_pla
 
 
 generate_plan_list0(Name):-retractall(join(_)),findall(N,clause(plan(Name,N,_),_),L),
-			  if(L\=[],generate_plan_list1(Name,L),empty_plan_generated(Name)).
+                          if(L\=[],generate_plan_list1(Name,L),empty_plan_generated(Name)).
 
 generate_plan_list1(Name,L):-remove_dups(L,L1),
-		  last(L1,U),
-			  repeat,
-				member(M,L1),
-				   findall(X,clause(plan(Name,M,X),_),Lp),
-				   statistics(walltime,[Tc,_]),
-					assert(past(plan_list(Name,M,Lp),Tc,program)),
-				M==U,!,
-		   retractall(plan(_,_,_)),
-	   if(file_exists('asp_intermedio9993423.txt'),
-	   delete_file('asp_intermedio9993423.txt'),true).
+                  last(L1,U),
+                          repeat,
+                                member(M,L1),
+                                   findall(X,clause(plan(Name,M,X),_),Lp),
+                                   statistics(walltime,[Tc,_]),
+                                        assert(past(plan_list(Name,M,Lp),Tc,program)),
+                                M==U,!,
+                   retractall(plan(_,_,_)),
+           if(file_exists('asp_intermedio9993423.txt'),
+           delete_file('asp_intermedio9993423.txt'),true).
 
 
 empty_plan_generated(Name):-statistics(walltime,[Tc,_]),
-		assert(past(plan_list(Name,1,[]),Tc,program)).
+                assert(past(plan_list(Name,1,[]),Tc,program)).
 
 no_models(Name):-write('No Stable Models for plan: '),write(Name),nl.
 
@@ -1862,40 +1841,40 @@ calcola_time_tree5(L,N,Dn):-if(N=1,calcola_time_1(L,Dn),true).
 
 
 calcola_time_6(L,Dn):-nth1(1,L,H1),nth1(2,L,H2),nth1(3,L,M1),nth1(4,L,M2),nth1(5,L,S1),nth1(6,L,S2),
-	  name('time(',W0),name(')',U0),append([H1],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-					  
-					  
-					  
+          name('time(',W0),name(')',U0),append([H1],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+                                          
+                                          
+                                          
 calcola_time_5(L,Dn):-nth1(1,L,H2),nth1(2,L,M1),nth1(3,L,M2),nth1(4,L,S1),nth1(5,L,S2),
-	  name('time(',W0),name(')',U0),append([48],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-					 
+          name('time(',W0),name(')',U0),append([48],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+                                         
 calcola_time_4(L,Dn):-nth1(1,L,M1),nth1(2,L,M2),nth1(3,L,S1),nth1(4,L,S2),
-	  name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[M1],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	  
-					  
+          name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[M1],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+          
+                                          
 calcola_time_3(L,Dn):-nth1(1,L,M2),nth1(2,L,S1),nth1(3,L,S2),
-	  name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-					  
-					  
+          name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+                                          
+                                          
 calcola_time_2(L,Dn):-nth1(1,L,S1),nth1(2,L,S2),
-	  name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
-	  append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	  
-					 
+          name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
+          append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+          
+                                         
 calcola_time_1(L,Dn):-nth1(1,L,S2),
-	  name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
-	  append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[48],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	  					  
+          name('time(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
+          append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[48],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+                                                  
 calcola_date(D,Dn):-name(D,L),length(L,N),if(N=6,
 calcola_date_6(L,Dn),calcola_date_tree1(L,N,Dn)).
 
@@ -1914,90 +1893,90 @@ calcola_date_tree5(L,N,Dn):-if(N=1,calcola_date_1(L,Dn),true).
 
 
 calcola_date_6(L,Dn):-nth1(1,L,H1),nth1(2,L,H2),nth1(3,L,M1),nth1(4,L,M2),nth1(5,L,S1),nth1(6,L,S2),
-	  name('date(',W0),name(')',U0),append([H1],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-					  
-					  
-					  
+          name('date(',W0),name(')',U0),append([H1],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+                                          
+                                          
+                                          
 calcola_date_5(L,Dn):-nth1(1,L,H2),nth1(2,L,M1),nth1(3,L,M2),nth1(4,L,S1),nth1(5,L,S2),
-	  name('date(',W0),name(')',U0),append([48],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	 
+          name('date(',W0),name(')',U0),append([48],[H2],H),append(H,[44],Hv),append(Hv,[M1],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+         
 calcola_date_4(L,Dn):-nth1(1,L,M1),nth1(2,L,M2),nth1(3,L,S1),nth1(4,L,S2),
-	  name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[M1],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	  
-					  
+          name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[M1],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+          
+                                          
 calcola_date_3(L,Dn):-nth1(1,L,M2),nth1(2,L,S1),nth1(3,L,S2),
-	  name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
-	  append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	  
-					  
+          name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
+          append(HM1,[M2],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+          
+                                          
 calcola_date_2(L,Dn):-nth1(1,L,S1),nth1(2,L,S2),
-	  name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
-	  append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
-	  
-					 
+          name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
+          append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[S1],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+          
+                                         
 calcola_date_1(L,Dn):-nth1(1,L,S2),
-	  name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
-	  append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[48],HMS1),
-	  append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
+          name('date(',W0),name(')',U0),append([48],[48],H),append(H,[44],Hv),append(Hv,[48],HM1),
+          append(HM1,[48],HM2),append(HM2,[44],HMv),append(HMv,[48],HMS1),
+          append(HMS1,[S2],HMS2),append(W0,HMS2,P0),append(P0,U0,HMSf),name(Dn,HMSf).
 
 % TRASFORMA UNA LISTA IN ASCII E VICEVERSA
 list_in_ascii(Ln,La):-trasform_list_in_ascii(Ln),create_new_ascii_list(La).
 
 trasform_list_in_ascii(Ln):-last(Ln,U),
-	  repeat,
-		member(Mn,Ln),
-		  name(Mn,Ma),
-		  assert(list_ascii(Ma)),
-		Mn==U,!.
-					  
+          repeat,
+                member(Mn,Ln),
+                  name(Mn,Ma),
+                  assert(list_ascii(Ma)),
+                Mn==U,!.
+                                          
 create_new_ascii_list(La):-findall(X,clause(list_ascii(X),_),La),
-	   retractall(list_ascii(_)).
-					   
-					   
-					   
+           retractall(list_ascii(_)).
+                                           
+                                           
+                                           
 ascii_in_list(La,Ln):-trasform_ascii_in_list(La),create_new_term_list(Ln).
 
 trasform_ascii_in_list(La):-last(La,U),
-	  repeat,
-		member(Ma,La),
-		  name(Tn,Ma),
-		  assert(new_this_term(Tn)),
-		Ma==U,!.
-	  
+          repeat,
+                member(Ma,La),
+                  name(Tn,Ma),
+                  assert(new_this_term(Tn)),
+                Ma==U,!.
+          
 create_new_term_list(Ln):-findall(X,clause(new_this_term(X),_),Ln),
-	   retractall(new_this_term(_)). 
+           retractall(new_this_term(_)). 
 
 %TRASFORMA UNA LISTA IN UNA STRINGA
 
 concatena_items_poi_in_string(L,S):-assert(conc_item003('')),
-	 retractall(k_item003(_)),
-	 assert(k_item003(1)),length(L,N),
-	 if(N>1,(parte_prima_conc_items(L,N),
-	 parte_seconda(L,N,S)),parte_seconda(L,N,S)).
+         retractall(k_item003(_)),
+         assert(k_item003(1)),length(L,N),
+         if(N>1,(parte_prima_conc_items(L,N),
+         parte_seconda(L,N,S)),parte_seconda(L,N,S)).
 parte_prima_conc_items(L,N):-repeat,
-	 clause(k_item003(K),_),
-	 nth1(K,L,M),
-	 clause(conc_item003(X),_),
-	 atom_concat(X,M,M1),atom_concat(M1,',',M2),
-	 retractall(conc_item003(X)),
-	 assert(conc_item003(M2)),
-	 
-	 R is K+1,assert(k_item003(R)),retractall(k_item003(K)),
-	 K==N,!.
-	 
+         clause(k_item003(K),_),
+         nth1(K,L,M),
+         clause(conc_item003(X),_),
+         atom_concat(X,M,M1),atom_concat(M1,',',M2),
+         retractall(conc_item003(X)),
+         assert(conc_item003(M2)),
+         
+         R is K+1,assert(k_item003(R)),retractall(k_item003(K)),
+         K==N,!.
+         
 parte_seconda(L,N,S):-nth1(N,L,M3),
-	 clause(conc_item003(D),_),
-	 atom_concat(D,M3,S),
-	 retractall(k_item003(_)),
-	 retractall(conc_item003(_)).
+         clause(conc_item003(D),_),
+         atom_concat(D,M3,S),
+         retractall(k_item003(_)),
+         retractall(conc_item003(_)).
 
 
 
@@ -2010,77 +1989,77 @@ intersection([_|T],S2,S3):-intersection(T,S2,S3).
 
 
 save_on_log_file(P):-clause(agent(N),_),
-	name('log/log_',L0),name(N,L1),name('.txt',L2),
-	append(L0,L1,L01),append(L01,L2,L02),name(Q,L02),
-	open(Q,append,Stream,[]),
-	write(Stream,P),nl(Stream),
-	close(Stream).
-					
+        name('log/log_',L0),name(N,L1),name('.txt',L2),
+        append(L0,L1,L01),append(L01,L2,L02),name(Q,L02),
+        open(Q,append,Stream,[]),
+        write(Stream,P),nl(Stream),
+        close(Stream).
+                                        
 % GENERA UN nUOVO AGENTE
 generate_new_agent(U):-generation_path(_,P,LO,Ont,K,Pr),create_initialization_file(U,P,LO,Ont,K),!,
 create_comm_file(U,P),create_plf_file(U,P),
 create_txt_file(U,P),create_profile_file(U,P,Pr).
 
 create_initialization_file(U,P,LO,Ont,K):-
-	   atom_concat(P,'initialization_dali_files/',I),
-	   number_in_term(I,U,I1),
-	   atom_concat(I1,'.txt',I2),
-	   atom_concat(P,'program/',Y),
-	   number_in_term(Y,U,Y1),
-	   atom_concat(P,LO,R),
-	   atom_concat(P,'communication',C),
-	   number_in_term(C,U,C1),
-	   atom_concat(P,'communication_fipa',E),
-	   atom_concat(P,'learning',J),
-	   atom_concat(P,'planasp',D),
-	   atom_concat(P,'user_profiles/',S),
-	   atom_concat(S,'profile_',S1),
-	   number_in_term(S1,U,S2),
-	   atom_concat(S2,'.txt',S3),
-	   atom_concat(P,'onto/',B),
-	   atom_concat(B,Ont,B1),
-	   atom_concat(B1,'.txt',B2),
-	   open(I2,append,Stream,[eof_action(reset)]),
-	   write(Stream,'agent('),
-	   write(Stream,'\''),		  
-	   write(Stream,Y1),
-	   write(Stream,'\','),
-	   write(Stream,U),
-	   write(Stream,',\''),
-	   write(Stream,R),
-	   write(Stream,'\','),
-	   write(Stream,'italian,'),
-	   write(Stream,'[\''),
-	   write(Stream,C1),
-	   write(Stream,'\'],'),
-	   write(Stream,'[\''),
-	   write(Stream,E),
-	   write(Stream,'\',\''),
-	   write(Stream,J),
-	   write(Stream,'\',\''),
-	   write(Stream,D),
-	   write(Stream,'\'],\''),
-	   write(Stream,S3),
-	   write(Stream,'\',\''),
-	   write(Stream,B2),
-	   write(Stream,'\','),
-	   write(Stream,K),
-	   write(Stream,').'),
-	   close(Stream).
-			   
-			   
+           atom_concat(P,'initialization_dali_files/',I),
+           number_in_term(I,U,I1),
+           atom_concat(I1,'.txt',I2),
+           atom_concat(P,'program/',Y),
+           number_in_term(Y,U,Y1),
+           atom_concat(P,LO,R),
+           atom_concat(P,'communication',C),
+           number_in_term(C,U,C1),
+           atom_concat(P,'communication_fipa',E),
+           atom_concat(P,'learning',J),
+           atom_concat(P,'planasp',D),
+           atom_concat(P,'user_profiles/',S),
+           atom_concat(S,'profile_',S1),
+           number_in_term(S1,U,S2),
+           atom_concat(S2,'.txt',S3),
+           atom_concat(P,'onto/',B),
+           atom_concat(B,Ont,B1),
+           atom_concat(B1,'.txt',B2),
+           open(I2,append,Stream,[eof_action(reset)]),
+           write(Stream,'agent('),
+           write(Stream,'\''),            
+           write(Stream,Y1),
+           write(Stream,'\','),
+           write(Stream,U),
+           write(Stream,',\''),
+           write(Stream,R),
+           write(Stream,'\','),
+           write(Stream,'italian,'),
+           write(Stream,'[\''),
+           write(Stream,C1),
+           write(Stream,'\'],'),
+           write(Stream,'[\''),
+           write(Stream,E),
+           write(Stream,'\',\''),
+           write(Stream,J),
+           write(Stream,'\',\''),
+           write(Stream,D),
+           write(Stream,'\'],\''),
+           write(Stream,S3),
+           write(Stream,'\',\''),
+           write(Stream,B2),
+           write(Stream,'\','),
+           write(Stream,K),
+           write(Stream,').'),
+           close(Stream).
+                           
+                           
 divide_host_port(L,A1,A2):-manage_host_port_list(L,A1,A2).
 manage_host_port_list([],_,A2):-findall(X,code_asc(X),L1),
                            name(A2,L1),retractall(code_asc(_)).
-						   
+                                                   
 manage_host_port_list([A|B],A1,A2):-A=58,findall(X,code_asc(X),L1),
                            name(A1,L1),retractall(code_asc(_)),manage_host_port_list(B,A1,A2).
-						   
-						   
+                                                   
+                                                   
 manage_host_port_list([A|B],A1,A2):-A=\=58,assert(code_asc(A)),
-                              manage_host_port_list(B,A1,A2).						   
-						   
-						   
+                              manage_host_port_list(B,A1,A2).                                              
+                                                   
+                                                   
 create_comm_file(U,P):-duplicate_file_comm(U,P,'communication').
 
 number_in_term(I,U,I1):-name(I,L),name(U,L1),append(L,L1,L2),name(I1,L2).
@@ -2107,7 +2086,7 @@ duplicate_file_comm(U,P,S):-
    M==38,!,
    close(Stream),
    retractall(base_cod_term(_)).
-			   
+                           
 create_plf_file(U,P):-duplicate_file_plf(U,P,'user_assistant_plf').
 
 duplicate_file_plf(U,P,S):-
@@ -2131,7 +2110,7 @@ duplicate_file_plf(U,P,S):-
    M==38,!,
    close(Stream),
    retractall(base_cod_term(_)).
-			   
+                           
 create_txt_file(U,P):-generation_path(NF,_,_,_,_,_),duplicate_file_txt(U,P,NF).
 
 duplicate_file_txt(U,P,S):-
@@ -2155,31 +2134,31 @@ duplicate_file_txt(U,P,S):-
    M==38,!,
    close(Stream),
    retractall(base_cod_term(_)).
-			   
-			   
+                           
+                           
 create_profile_file(U,P,Pr):-atom_concat(P,'user_profiles/profile_',S1),
-	   number_in_term(S1,U,S2),
-	   atom_concat(S2,'.txt',S3),if(file_exists(S3),true,duplicate_file_profile(U,P,Pr)).
+           number_in_term(S1,U,S2),
+           atom_concat(S2,'.txt',S3),if(file_exists(S3),true,duplicate_file_profile(U,P,Pr)).
 
 duplicate_file_profile(U,P,S):-
-	   atom_concat(P,S,K),
-	   atom_concat(K,'.txt',K1),
-	   open(K1,read,Stream,[]),
-	   repeat,
-	   get_code(Stream,T),
-	   assert(base_cod_term(T)),
-	   T==(-1),!,
-	   close(Stream),
-	   atom_concat(P,'user_profiles/profile_',S1),
-	   number_in_term(S1,U,S2),
-	   atom_concat(S2,'.txt',S3),
-	   open(S3,append,Stream,[]),
-	   findall(X,base_cod_term(X),L),append(L1,[-1],L),append(L1,[38],L2),
-	   repeat,
-	   member(M,L2),
-	   name(B,[M]),
-	   if(M=38,true,write(Stream,B)),
-	   M==38,!,
-	   close(Stream),
-	   retractall(base_cod_term(_)).
-			   
+           atom_concat(P,S,K),
+           atom_concat(K,'.txt',K1),
+           open(K1,read,Stream,[]),
+           repeat,
+           get_code(Stream,T),
+           assert(base_cod_term(T)),
+           T==(-1),!,
+           close(Stream),
+           atom_concat(P,'user_profiles/profile_',S1),
+           number_in_term(S1,U,S2),
+           atom_concat(S2,'.txt',S3),
+           open(S3,append,Stream,[]),
+           findall(X,base_cod_term(X),L),append(L1,[-1],L),append(L1,[38],L2),
+           repeat,
+           member(M,L2),
+           name(B,[M]),
+           if(M=38,true,write(Stream,B)),
+           M==38,!,
+           close(Stream),
+           retractall(base_cod_term(_)).
+                           
