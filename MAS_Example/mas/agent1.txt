@@ -1,5 +1,5 @@
-:- write(‘Hello ‘world!).
+:- write('Hello world!').
 
-eventE:> write(‘which event?’).
+eventE:> write('which event?').
 
-goE:> write(‘received.’), messageA(agent2,send_message(go,agent1)).
+goE:> write('received.'), messageA(agent2,send_message(go,agent1)).
