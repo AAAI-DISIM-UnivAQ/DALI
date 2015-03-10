@@ -1,7 +1,7 @@
 #exec 1>/dev/null # @echo off
 clear # cls
 #title "MAS"
-sicstus_home=/usr/local/sicstus4.2.3
+sicstus_home=/usr/local/sicstus4.3.1
 main_home=..
 dali_home=../src
 conf_dir=conf
@@ -22,20 +22,21 @@ do
 	type=$(<$instance_filename) # agent type name is the content of the instance file
 	type_filename="$types_home/$type"
 	instance_base="${instance_filename##*/}" # e.g. 'mas/instances/agent1.txt' -> 'agent1.txt'
+	echo $type_filename	
 	cat $type_filename >> "$build_home/$instance_base"
 done
 
 cp $build_home/*.txt work
 
 xterm -hold -e "$prolog -l $dali_home/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%prolog%" -l "%dali_home%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
-echo Server attivato. Attivo il MAS....
+echo Server ready. Starting the MAS....
 $WAIT > /dev/null # %WAIT% >nul
 
 xterm -hold -e "$prolog -l $dali_home/active_user_wi.pl --goal utente." & # start /B "" "%prolog%" -l "%dali_home%/active_user_wi.pl" --goal utente.
-echo Server DALI attivato. Attivo gli agenti...
+echo Launching agents instances...
 $WAIT > /dev/null # %WAIT% > nul
 
-# Avvia gli agenti
+# Launch agents
 for agent_filename in $build_home/*
 do
 	agent_base="${agent_filename##*/}"
@@ -45,9 +46,9 @@ do
     $WAIT > /dev/null # %WAIT% >nul
 done
 
-echo Operazione completata.
-echo Premere un tasto per terminare il MAS
+echo MAS started.
+echo Press a key to shutdown the MAS
 read -p "$*"
-echo Chiudo il MAS...
+echo Halting the MAS...
 killall sicstus
 killall xterm

@@ -1,0 +1,130 @@
+
+told(From,send_message(M)):-true.
+told(Ag,execute_proc(_)):-true.
+told(Ag,query_ref(_,_)):-true.
+told(Ag,agree(_)):-true.
+told(Ag,confirm(_),200):-true.
+told(Ag,disconfirm(_)):-true.
+told(Ag,request(_,_)):-true.
+told(Ag,propose(_,_)):-true.
+told(Ag,accept_proposal(_,_),20):-true.
+told(Ag,reject_proposal(_,_),20):-true.
+told(_,failure(_,_),200):-true.
+told(_,cancel(_)):-true.
+told(Ag,inform(_,_),70):-true.
+told(Ag,inform(_),70):-true.
+told(Ag,reply(_)):-true.
+told(_,refuse(_,Xp)):-functor(Xp,Fp,_),Fp=agree.
+
+tell(To,From,send_message(M)):-true.
+tell(To,_,confirm(_)):-true.
+tell(To,_,disconfirm(_)):-true.
+tell(To,_,propose(_,_)):-true.
+tell(To,_,request(_,_)):-true.
+tell(To,_,execute_proc(_)):-true.
+tell(To,_,agree(_)):-true.
+tell(To,_,reject_proposal(_,_)):-true.
+tell(To,_,accept_proposal(_,_)):-true.
+tell(To,_,failure(_,_)):-true.
+tell(To,_,query_ref(_,_)):-true.
+tell(To,_,eve(_)):-true.
+tell(_,_,refuse(X,_)):-functor(X,F,_),(F=send_message;F=query_ref).
+tell(To,_,inform(_,M)):-true;M=motivation(refused_message).
+tell(To,_,inform(_)):-true,To\=user.
+tell(To,_,propose_desire(_,_)):-true.
+
+meta(P,V,AgM):-
+        functor(P,F,N),N=0,clause(agent(Ag),_),
+        clause(ontology(Pre,[Rep,Host],Ag),_),
+        if(
+         (eq_property(F,V,Pre,[Rep,Host]);
+          same_as(F,V,Pre,[Rep,Host]);
+          eq_class(F,V,Pre,[Rep,Host])
+         ),true,
+			if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	(if(
+         	 (eq_property(F,V,PreM,[RepM,HostM]); 
+        	 	  same_as(F,V,PreM,[RepM,HostM]);
+         	  eq_class(F,V,PreM,[RepM,HostM])
+         	 ),true,false)
+				),false
+			)
+        ).
+meta(P,V,AgM):-
+        functor(P,F,N),(N=1;N=2),clause(agent(Ag),_),
+        clause(ontology(Pre,[Rep,Host],Ag),_),
+        if(
+         (eq_property(F,H,Pre,[Rep,Host]);
+          same_as(F,H,Pre,[Rep,Host]);
+          eq_class(F,H,Pre,[Rep,Host])
+         ),true,
+			if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	(if(
+         	 (eq_property(F,H,PreM,[RepM,HostM]); 
+        	 	  same_as(F,H,PreM,[RepM,HostM]);
+         	  eq_class(F,H,PreM,[RepM,HostM])
+         	 ),true,false)
+				),false
+			)
+        ),
+		  P=..L,substitute(F,L,H,Lf),V=..Lf.
+
+meta(P,V,_):-functor(P,F,N),N=2,symmetric(F),P=..L,
+           delete(L,F,R),reverse(R,R1),
+           append([F],R1,R2),V=..R2.
+
+meta(P,V,AgM):-
+			 clause(agent(Ag),_),functor(P,F,N),N=2,(symmetric(F,AgM);symmetric(F)), P=..L,
+          delete(L,F,R),reverse(R,R1),
+		 	 clause(ontology(Pre,[Rep,Host],Ag),_),
+          if(
+           (eq_property(F,Y,Pre,[Rep,Host]);
+            same_as(F,Y,Pre,[Rep,Host]);
+            eq_class(F,Y,Pre,[Rep,Host])
+           ),true,
+			  if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	  (if(
+         	   (eq_property(F,Y,PreM,[RepM,HostM]); 
+        	 	    same_as(F,Y,PreM,[RepM,HostM]);
+         	    eq_class(F,Y,PreM,[RepM,HostM])
+         	   ),true,false)
+				  ),false
+			  )
+          ),          
+			 append([Y],R1,R2),V=..R2.
+
+meta(P,V,AgM):-
+			clause(agent(Ag),_),clause(ontology(Pre,[Rep,Host],Ag),_),
+			functor(P,F,N),N>2,
+			if(
+          (eq_property(F,H,Pre,[Rep,Host]);
+           same_as(F,H,Pre,[Rep,Host]);
+           eq_class(F,H,Pre,[Rep,Host])
+          ),true,
+			 if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+          	 (if(
+         	  (eq_property(F,H,PreM,[RepM,HostM]); 
+        	 	   same_as(F,H,PreM,[RepM,HostM]);
+         	   eq_class(F,H,PreM,[RepM,HostM])
+         	  ),true,false)
+				 ),false
+			 )
+         ),
+			P=..L,substitute(F,L,H,Lf),V=..Lf.
+
+meta(P,V,AgM):-clause(agent(Ag),_), clause(ontology(Pre,[Rep,Host],Ag),_), functor(P,F,N),N=2,P=..L,
+			if(
+          (eq_property(F,H,Pre,[Rep,Host]);
+           same_as(F,H,Pre,[Rep,Host]);
+           eq_class(F,H,Pre,[Rep,Host])
+          ),true,
+			 if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	 (if(
+         	  (eq_property(F,H,PreM,[RepM,HostM]); 
+        	 	   same_as(F,H,PreM,[RepM,HostM]);
+         	   eq_class(F,H,PreM,[RepM,HostM])
+         	  ),true,false)
+				 ),false
+			 )
+         ),
+			substitute(F,L,H,Lf),V=..Lf.
