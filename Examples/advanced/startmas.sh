@@ -2,8 +2,8 @@
 clear # cls
 #title "MAS"
 sicstus_home=/usr/local/sicstus4.3.1
-main_home=..
-dali_home=../src
+main_home=../..
+dali_home=../../src
 conf_dir=conf
 prolog="$sicstus_home/bin/sicstus"
 WAIT="ping -c 4 127.0.0.1" 
