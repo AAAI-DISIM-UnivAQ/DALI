@@ -15,7 +15,7 @@ copy mas\*.txt work
 
 set daliH=%dali_home:\=/%
 
-start /B "" "%prolog%" -l "%dali_home%\active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
+start /B "" "%prolog%" -l "%dali_home%\active_server_wi.pl" --goal go.
 echo Server attivato. Pronto ad attivare il MAS.
 pause
 
