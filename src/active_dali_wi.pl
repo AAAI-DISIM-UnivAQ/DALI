@@ -92,13 +92,13 @@ start0(FI):-set_prolog_flag(redefine_warnings,off),
             open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
             if(UP=no, true, assert(user_profile_location(UP))),
             if(DO=no,true,assert(dali_onto_location(DO))),
-            assert(server_obj(T)), %% questo si puo togliere se si passa ad una sola funzione
+            assert(server_obj('localhost':3010)), %% questo si puo togliere se si passa ad una sola funzione
             filtra_fil(Fil),
             assert(specialization(Specialization)),
             if(Ontolog=no,true,load_ontology_file(Ontolog,AgentName)),
             assert(own_language(Lang)),
             
-            linda_client(T),
+            linda_client('localhost':3010),
             out(activating_agent(AgentName)),
             
             delete_agent_files(File),
