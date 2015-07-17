@@ -1,0 +1,1 @@
+echo agent('work/%1',%1,'no',italian,['conf/communication'],['../interpreter/communication_fipa','../interpreter/learning','../interpreter/planasp'],'no','../interpreter/onto/dali_onto.txt',[]). > conf/%2
