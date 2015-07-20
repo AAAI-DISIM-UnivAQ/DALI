@@ -18,6 +18,6 @@ With Linux, Mac OS X when you start the MAS from the shell, the user agent may n
 
     sudo apt-get install rlwrapp
 
-and modify the startmas.sh launch script at line 45:
+and modify the [startmas.sh](advanced/startmas.sh) launch script at line 45:
 
     xterm -hold -e "rlwrapp ./conf/startagent.sh $agent_base $prolog $dali_home" &
