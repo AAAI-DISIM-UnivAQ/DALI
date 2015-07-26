@@ -1,0 +1,44 @@
+:-dynamic winner/2.
+:-dynamic n_auction/1.
+trusted(auctioneer).
+ally(jim).
+winner(0,0).
+default_bid_value(3).
+n_auction(0).
+/*This agent bids 3 by default, but if it looses for three consecutive times 
+then propose an alliance to the its ally jim. After that it bids its default value
+plus ally value if it accept the alliance*/
+
+new_auctionE(N) :> retract(n_auction(_)),assert(n_auction(N)),
+		bid(N).
+bid(N):- alliance_acceptedP(V1), default_bid_value(V2), V is V1+V2,
+	agent(M),
+	messageA(auctioneer,send_message(place_bid(V,M,N),M)),
+	write(' bidded' ),write(V),nl.
+bid(N):- default_bid_value(V),
+	agent(M),
+	messageA(auctioneer,send_message(place_bid(V,M,N),M)),
+	write(' bidded' ),write(V),nl.
+
+/*Received from an ally. the agent prints the acceptance and then reasons with this past event
+to decide the value to bid*/
+alliance_acceptedE(Value) :> write('alliance ;)'),nl.
+
+
+/*These are the precondition to make the agent tired.
+It is an internal event triggered when the agents understands that he looses for 
+three consecutive aucitons. After that, it will send an alliance proposal to
+its ally*/
+tired_to_loose :- \+ alliance_acceptedP(V), n_auction(N), T1 is N-1, T2 is N-2, T3 is N-3,
+		agent(Me),
+		winner(W1,T1), winner(W2,T2), winner(W3,T3),
+		\+ member(Me,[W1,W2,W3]). 
+tired_to_looseI :- ally(A), agent(Me), messageA(A, send_message(alliance_proposal(Me),Me)), write('tired... waiting for alliance acceptance').
+
+/*Event to assert the winner in the case that the confirm message does not work*/
+announce_winnerE(W,N) :> assert(winner(W,N)).
+
+/*Internal Event that makes the agent exults when it knows it is the winner.
+It exults every 60 seconds if no other auction starts in the meantime (Past event default storing policy)*/
+exult(N) :-  agent(Me), n_auction(N), \+ exultP(N), winner(Me,N).
+exultI(N) :- write('I won! Yeah ;)'),nl.

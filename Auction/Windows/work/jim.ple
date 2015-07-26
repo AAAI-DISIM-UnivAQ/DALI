@@ -1,0 +1,1 @@
+[alliance_proposal,announce_winner,new_auction]. [exult(N)]. [message(auctioneer,send_message(place_bid(0,M,N),M)),message(auctioneer,send_message(place_bid(V,M,N),M)),message(A,send_message(alliance_accepted(V),X))]. []. []. []. []. []. [alliance_proposal(A),new_auction(N),announce_winner(W,N)].

@@ -1,0 +1,1 @@
+[alliance_accepted,announce_winner,new_auction]. [tired_to_loose,exult(N)]. [message(auctioneer,send_message(place_bid(V,M,N),M)),message(A,send_message(alliance_proposal(Me),Me))]. []. []. []. []. []. [alliance_accepted(Value),new_auction(N),announce_winner(W,N)].

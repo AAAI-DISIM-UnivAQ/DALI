@@ -1,7 +1,7 @@
 @echo off
 cls
 title "MAS"
-set sicstus_home=C:\Program Files\SICStus Prolog 4.2.3\bin
+set sicstus_home=C:\Program Files\SICStus Prolog VC9 4.3.2\bin
 ::set main_home=%~dp0\..
 set main_home=..\..
 set dali_home=..\..\src

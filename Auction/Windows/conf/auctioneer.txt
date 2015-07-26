@@ -1,0 +1,1 @@
+agent('work/auctioneer',auctioneer,'no',italian,['conf/communication'],['../interpreter/communication_fipa','../interpreter/learning','../interpreter/planasp'],'no','../interpreter/onto/dali_onto.txt',[]). 

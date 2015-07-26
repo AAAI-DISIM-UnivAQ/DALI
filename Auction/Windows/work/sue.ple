@@ -1,0 +1,1 @@
+[announce_winner,new_auction]. [exult(N)]. [message(auctioneer,send_message(place_bid(6,M,N),M))]. []. []. []. []. []. [new_auction(N),announce_winner(W,N)].
