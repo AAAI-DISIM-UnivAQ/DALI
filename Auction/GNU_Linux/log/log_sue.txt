@@ -1,0 +1,4 @@
+send_message(send_message(place_bid(6,sue,1),sue))
+send_message(send_message(place_bid(6,sue,2),sue))
+send_message(send_message(place_bid(6,sue,3),sue))
+send_message(send_message(place_bid(6,sue,4),sue))

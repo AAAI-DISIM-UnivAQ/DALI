@@ -1,0 +1,5 @@
+send_message(send_message(place_bid(3,bob,1),bob))
+send_message(send_message(place_bid(3,bob,2),bob))
+send_message(send_message(place_bid(3,bob,3),bob))
+send_message(send_message(alliance_proposal(bob),bob))
+send_message(send_message(place_bid(7,bob,4),bob))
