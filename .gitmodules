@@ -1,0 +1,3 @@
+[submodule "Examples/more/Knapsack-example"]
+	path = Examples/more/Knapsack-example
+	url = https://github.com/AAAI-DISIM-UnivAQ/Knapsack-example
