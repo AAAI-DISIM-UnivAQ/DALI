@@ -1,3 +1,6 @@
 [submodule "Examples/more/Knapsack-example"]
 	path = Examples/more/Knapsack-example
 	url = https://github.com/AAAI-DISIM-UnivAQ/Knapsack-example
+[submodule "Examples/more/DALI-Auction-example"]
+	path = Examples/more/DALI-Auction-example
+	url = https://github.com/AAAI-DISIM-UnivAQ/DALI-Auction-example
