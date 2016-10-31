@@ -17,7 +17,7 @@ With Linux if you need to start the MAS during debug many times, you can avoid t
 ### Line command editor with memory
 With Linux, Mac OS X when you start the MAS from the shell, the user agent may not have memory of the commands already sent. You can install rlwrap:
 
-    sudo apt-get install rlwrapp
+    sudo apt-get install rlwrap
 
 and modify the [startmas.sh](advanced/startmas.sh) launch script at line 45:
 
