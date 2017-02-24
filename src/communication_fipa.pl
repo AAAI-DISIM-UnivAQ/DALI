@@ -84,7 +84,7 @@ call_query_ref(var_X,var_N,var_Ag):-clause(agent(var_A),var__),not(var(var_X)),n
 
 call_agree(var_X,var_Ag):-clause(agent(var_A),var__),ground(var_X),meta_agree(var_X,var_Ag),a(message(var_Ag,inform(agree(var_X),values(yes),var_A))).
 
-call_confirm(var_X,var_Ag,var_T):-ground(var_X),statistics(walltime,[var_Tp,var__]),
+call_confirm(var_X,var_Ag,var_T):-ground(var_X),statistics(walltime,[var_Tp,var__]),datime(C),retractall(evtp_date(var_X,_)),assert(evtp_date(var_X,C)),
 asse_cosa(past_event(var_X,var_T)),retractall(past(var_X,var_Tp,var_Ag)),assert(past(var_X,var_Tp,var_Ag)).
 
 call_disconfirm(var_X,var_Ag):-ground(var_X),retractall(past(var_X,var__,var_Ag)),
@@ -96,13 +96,13 @@ call_agree(var_X,var_Ag):-clause(agent(var_A),var__),not(ground(var_X)),a(messag
 
 call_inform(var_X,var_Ag,var_M,var_T):-
 asse_cosa(past_event(inform(var_X,var_M,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(inform(var_X,var_M,var_Ag),var__,var_Ag)),
-assert(past(inform(var_X,var_M,var_Ag),var_Tp,var_Ag)).
+assert(past(inform(var_X,var_M,var_Ag),var_Tp,var_Ag)),datime(C),retractall(evtp_date(inform(var_X,var_M,var_Ag),_)),assert(evtp_date(inform(var_X,var_M,var_Ag),C)).
 
 call_inform(var_X,var_Ag,var_T):-
 asse_cosa(past_event(inform(var_X,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(inform(var_X,var_Ag),var__,var_Ag)),
-assert(past(inform(var_X,var_Ag),var_Tp,var_Ag)).
+assert(past(inform(var_X,var_Ag),var_Tp,var_Ag)),datime(C),retractall(evtp_date(inform(var_X,var_Ag),_)),assert(evtp_date(inform(var_X,var_Ag),C)).
 
-call_refuse(var_X,var_Ag,var_T):-clause(agent(var_A),var__),asse_cosa(past_event(var_X,var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(var_X,var__,var_Ag)),assert(past(var_X,var_Tp,var_Ag)),a(message(var_Ag,reply(received(var_X),var_A))).
+call_refuse(var_X,var_Ag,var_T):-clause(agent(var_A),var__),asse_cosa(past_event(var_X,var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(var_X,var__,var_Ag)),assert(past(var_X,var_Tp,var_Ag)),a(message(var_Ag,reply(received(var_X),var_A))),datime(C),retractall(evtp_date(var_X,_)),assert(evtp_date(var_X,C)).
 
 
 call_cfp(var_A,var_C,var_Ag):-clause(agent(var_AgI),var__),
@@ -130,11 +130,11 @@ call_propose(var_A,var_C,var_Ag):-clause(agent(var_AgI),var__),
 
 call_accept_proposal(var_A,var_Mp,var_Ag,var_T):-asse_cosa(past_event(accepted_proposal(var_A,var_Mp,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),
 retractall(past(accepted_proposal(var_A,var_Mp,var_Ag),var__,var_Ag)),
-assert(past(accepted_proposal(var_A,var_Mp,var_Ag),var_Tp,var_Ag)).
+assert(past(accepted_proposal(var_A,var_Mp,var_Ag),var_Tp,var_Ag)),datime(C),retractall(evtp_date(accepted_proposal(var_A,var_Mp,var_Ag),_)),assert(evtp_date(accepted_proposal(var_A,var_Mp,var_Ag),C)).
 
-call_reject_proposal(var_A,var_Mp,var_Ag,var_T):-asse_cosa(past_event(rejected_proposal(var_A,var_Mp,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(rejected_proposal(var_A,var_Mp,var_Ag),var__,var_Ag)),assert(past(rejected_proposal(var_A,var_Mp,var_Ag),var_Tp,var_Ag)).
+call_reject_proposal(var_A,var_Mp,var_Ag,var_T):-asse_cosa(past_event(rejected_proposal(var_A,var_Mp,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(rejected_proposal(var_A,var_Mp,var_Ag),var__,var_Ag)),assert(past(rejected_proposal(var_A,var_Mp,var_Ag),var_Tp,var_Ag)),datime(C),retractall(evtp_date(rejected_proposal(var_A,var_Mp,var_Ag),_)),assert(evtp_date(rejected_proposal(var_A,var_Mp,var_Ag),C)).
 
-call_failure(var_A,var_M,var_Ag,var_T):-asse_cosa(past_event(failed_action(var_A,var_M,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(failed_action(var_A,var_M,var_Ag),var__,var_Ag)),assert(past(failed_action(var_A,var_M,var_Ag),var_Tp,var_Ag)).
+call_failure(var_A,var_M,var_Ag,var_T):-asse_cosa(past_event(failed_action(var_A,var_M,var_Ag),var_T)),statistics(walltime,[var_Tp,var__]),retractall(past(failed_action(var_A,var_M,var_Ag),var__,var_Ag)),assert(past(failed_action(var_A,var_M,var_Ag),var_Tp,var_Ag)),datime(C),retractall(evtp_date(failed_action(var_A,var_M,var_Ag),_)),assert(evtp_date(failed_action(var_A,var_M,var_Ag),C)).
 
 call_cancel(var_A,var_Ag):-if(clause(high_action(var_A,var_Te,var_Ag),_),retractall(high_action(var_A,var_Te,var_Ag)),true),if(clause(normal_action(var_A,var_Te,var_Ag),_),retractall(normal_action(var_A,var_Te,var_Ag)),true).
 

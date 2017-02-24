@@ -157,25 +157,15 @@ sep(Ch) --> [Ch],
 		 [Ch] = ":"; [Ch] = "|";
                  [Ch] = "/"; [Ch] = "~";
                  [Ch] = "<"; [Ch] = "/";[Ch] = "?"}. 
+				 
 
-take_meta(L,F):-assert(parentesi(0)), assert(buffer([])), name(F,Lf),append(Lf,[46,112,108],Lft),
-                        name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),
-                        last(L,U),
-repeat,
-member(Me,L),
-examine_all(Me),
-Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1)),true),
-	if(clause(buffer(ParsedC),_), 
-	( retractall(buffer(_)), name(Parsed,ParsedC), 
-	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-	), (write('Errore take_meta'),nl)
-),re_file(Nf).
 
 take_meta_fil(L,F):-assert(parentesi(0)),assert(buffer([])),name(F,Lf),append(Lf,[46,112,108],Lft),
                         name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),
                         last(L,U),
 repeat,
 member(Me,L),
+
 examine_all(Me),
 Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1,Nf)),true), 
 if(clause(buffer(ParsedC),_), 
@@ -184,9 +174,21 @@ if(clause(buffer(ParsedC),_),
 	), (write('Errore take_meta_fil'),nl)
 ).
 
+take_meta(L,F):-assert(parentesi(0)), assert(buffer([])), name(F,Lf),append(Lf,[46,112,108],Lft),
+                        name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),assert(evtp_tsp_number(0)),
+                        last(L,U),
+repeat,
+member(Me,L),
+
+examine_all(Me),
+Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1)),true),
+	if(clause(buffer(ParsedC),_), 
+	( retractall(buffer(_)), name(Parsed,ParsedC), 
+	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
+	), (write('Errore take_meta'),nl)
+),re_file(Nf).
+
 examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
-
-
 
 examine_all1(Me):-if(member(Me,['(',')']), conta_parentesi(Me),true),
 		if(variabile(Me),examine_variable(Me),
@@ -211,9 +213,11 @@ aggiungi_39(L):-append([39,39,39,39,39,39],L,Lf),append(Lf,[39,39,39,39,39,39],L
 non_aggiungi(L):-clause(buffer(Parsed),_), retractall(buffer(_)),append(Parsed,L,Parola),
 						  assert(buffer(Parola)).
 
-write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/']), check_parentesi), write_parentesi, true),
-                                     
-                                        name(Me,L),re_write(L).
+write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/']), check_parentesi),write_parentesi,true),
+                                     name(Me,L),re_write(L).
+									 							
+evtp_no_manager(Me):-member(Me,[':-']),clause(evtp_tsp_number(R,_),_),Rnew is R+1,assert(evtp_tsp_number(Rnew,0)).
+									 
 write_parentesi:-re_write([41]),retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
 check_parentesi:-if((clause(evento_aperto,_),clause(parentesi(0),_)),true,false).
 
@@ -225,6 +229,8 @@ label(Me):-name(Me,L),nth0(0,L,El),piccolo(El),last(L,U),app_label(U).
 
 piccolo(El):-El>96,El<123.
 app_label(U):-U=65;U=69;U=73;U=71;U=84;U=80;U=78;U=82.
+
+
 
 
 examine_label(Me):-name(Me,L),last(L,U),if(U=65,appA(L,U),if(U=69,appE(L,U),if(U=73,appI(L,U),
@@ -239,14 +245,20 @@ appG(L,U):-length(L,N),nth1(N,L,U,R),append([111,98,103,40],R,L1),
                 re_write(L1),assert(evento_aperto).        
 appT(L,U):-length(L,N),nth1(N,L,U,R),append([116,101,115,103,40],R,L1),
                 re_write(L1),assert(evento_aperto).  
-appP(L,U):-length(L,N),nth1(N,L,U,R),append([101,118,112,40],R,L1),
+appP(L,U):-length(L,N),nth1(N,L,U,R),
+				clause(evtp_tsp_number(D),_),
+				New is D+1,
+				name(New,K),
+				append([101,118,116,112,40,118,97,114,95,68,97,108,105,95,116,116],K,L0),
+				append(L0,[44],L2),
+				append(L2,R,L1),
+				retractall(evtp_tsp_number(_)),				
+				assert(evtp_tsp_number(New)),
                 re_write(L1),assert(evento_aperto). 
 appN(L,U):-length(L,N),nth1(N,L,U,R),append([101,110,40],R,L1),
                 re_write(L1),assert(evento_aperto). 
 appR(L,U):-length(L,N),nth1(N,L,U,R),append([114,101,109,40],R,L1),
                 re_write(L1),assert(evento_aperto). 
-
-
 
 conta_parentesi(El):-name(El,L),append(L,[fine],Lf),
               repeat,
@@ -264,23 +276,78 @@ re_file(Nf):- see(Nf),
                      repeat,
                      read(T),
                      expand_term(T,Te),
-                     assert(rewrite_clause(Te)),
+					 write('ELABORAZIONE NUOVA RIGA '),nl,
+					 if(T==end_of_file,
+						true,
+						if(compound(Te),(arg(1,Te,Head),
+						functor(Head,F,_),Te=..Tte,functor(Te,FX,N2),
+						if((N2=2),
+							(arg(2,Te,Corpo),Corpo=..Corponew,
+							 count_evtp(Corponew),clause(evtp_no(S,W),_),					
+							 if(F=evi,
+							 (arg(1,Head,Ev),functor(Ev,Fev,N),if(clause(list_for_ei_bl(Fev,_),_),true,(assert(list_for_ei_bl(Fev,N)),write(Fev),nl))),
+							 true)),
+							(S is 0,W is 0))),(S is 0,W is 0))),
+                    
+					if(clause(rewriting_clause(Te,_,_),_),retractall(rewriting_clause(Te,_,_)),true),assert(rewriting_clause(Te,S,W)),
                     T==end_of_file, 
                    
 	     seen,rewrite_program_clause(Nf).
+		 
 
+count_evtp(Corpo):-retractall(evtp_no(_,_)),assert(evtp_no(0,0)),N is 0,K is 1,count_evtp_repeat(N,K,Corpo).
+
+
+count_evtp_repeat(N,K,Corpo):-arg(1,Corpo,El1),functor(El1,Head1,_),name(El1,HH1),
+								if(HH1=",",
+									(nth1(2,Corpo,El2),functor(El2,Head2,_),
+									 nth1(3,Corpo,Rimanenti),Rimanenti=..ListaAltri,
+									 if(Head2=evtp,
+										(NN is N+1,if(K>0,(KK is K-1,arg(1,El2,Vartt),elabora_primo_evtp(Vartt)),KK is K)),
+										(NN is N,KK is K)),
+									 count_evtp_repeat(NN,KK,ListaAltri)),
+									
+									(if(Head1=evtp,
+										(NN is N+1,if(K>0,(KK is K-1,nth1(2,Corpo,Vartt),elabora_primo_evtp(Vartt)),KK is K)),
+										(NN is N,KK is K)),
+									count_evtp_final(NN,KK))).
+									
+count_evtp_final(N,K):-clause(evtp_no(S,_),_),retractall(evtp_no(_,_)),assert(evtp_no(S,N)).
+						
+elabora_primo_evtp(Vartt):-name(Vartt,Le),append([118,97,114,95,68,97,108,105,95,116,116],K,Le),
+						name(Nx,K),assert(evtp_no(Nx,0)).
+		 
 rewrite_program_clause(Nf):-if(file_exists(Nf),delete_file(Nf),true),
-                            findall(T,clause(rewrite_clause(T),_),L),
+                            findall(yy(T,S,W),clause(rewriting_clause(T,S,W),_),L),
                             last(L,U),
                             open(Nf,append,Stream,[]),
-                            repeat,
-                                 member(Me,L),
-                                 if(Me=end_of_file,true,write_prog_cl(Stream,Me)),
+							 repeat,
+                                 member(Member,L),
+								 arg(1,Member,Me),arg(2,Member,SS),arg(3,Member,WW),
+                                 if(Me=end_of_file,true,write_prog_cl_check_ei(Stream,Me,SS,WW)),
                                  
-                            Me==U,!,
-                            close(Stream),retractall(rewrite_clause(_)).
+                            Member==U,!,
+							close(Stream),retractall(rewriting_clause(_,_,_)).
                              
-write_prog_cl(Stream,Me):-write(Stream,Me),write(Stream,'.'),nl(Stream).        
+write_prog_cl_check_ei(Stream,Me,S,W):-if(compound(Me),arg(1,Me,Head),Head=Me),functor(Head,Ev,N),
+				write('VALUTA SCRITTURA '),nl,write(Me),nl,write(Head),nl,write(Ev),nl,write(N),nl,write('WWWWW '),write(W),nl,
+				if(Ev=evi,
+					write_prog_cl_for_ei(Stream,Me),
+					if(clause(list_for_ei_bl(Ev,N),_),write_prog_cl_ei2(Stream,Me,S,W),write_prog_cl(Stream,Me))).
+
+				
+write_prog_cl_for_ei(Stream,Me):-arg(1,Me,Head),arg(1,Head,Evi),write(Stream,Me),
+						write(Stream,',go_reaction('),write(Stream,Evi),write(Stream,').'),nl(Stream).    
+											
+write_prog_cl_ei2(Stream,Me,S,W):-arg(1,Me,Head),
+						if(W=0,
+							write_prog_cl(Stream,Me),
+							(write(Stream,Me),write(Stream,',control_times('),write(Stream,Head),write(Stream,',['),write_ei2_repeat(Stream,S,W))).
+						
+write_ei2_repeat(Stream,S,W):-write(Stream,'var_Dali_tt'),write(Stream,S),WW is W-1,NN is S+1,
+								if(WW>0,(write(Stream,','),write_ei2_repeat(Stream,NN,WW)),(write(Stream,']).'),nl(Stream))).
+   
+write_prog_cl(Stream,Me):-write(Stream,Me),write(Stream,'.'),nl(Stream).     
       
 
 %GESTIONE LEARNING CLAUSES

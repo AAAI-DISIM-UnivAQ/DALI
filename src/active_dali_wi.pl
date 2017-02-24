@@ -18,6 +18,7 @@
 :-dynamic prefixes/1.
 :-dynamic repositories/1.
 :-dynamic ontology/3.
+
 %%
 
 :-['tokefun.pl'].
@@ -31,9 +32,20 @@
 
 :-['examine_past_constraints.pl'].
 
+:-dynamic evtp_date/2.
+:-dynamic evr/3.
+:-dynamic rewriting_clause/3.
+:-dynamic evtp_no/2.
+:-dynamic evtp_tsp_number/2.
+:-dynamic evp_time/2.
+:-dynamic evp_evi_list/3.
+:-dynamic evi_variables_list/2.
+:-dynamic list_for_evi_bl/2.
 :-dynamic tesg/1.
 :-dynamic ontology/2.
 :-dynamic en/1.
+:-dynamic ev_int_block/1.
+:-dynamic block_flag/1.
 
 
 :-dynamic told/6.
@@ -103,7 +115,7 @@ start0(FI):-set_prolog_flag(redefine_warnings,off),
             
             delete_agent_files(File),
             token(File),
-            start1(File, AgentName, Lib, Fil).
+			start1(File, AgentName, Lib, Fil).
 
 load_ontology_file(Ontolog,Agent):-
         open(Ontolog,read,Stream,[]),
@@ -128,6 +140,8 @@ start1(Fe,AgentName,Libr,Fil):-
   plf_from_name(Fe, FilePlf),
   txt_from_name(Fe, FileTxt),
    
+  assert(plname(FilePl)),
+  
   aprifile(FilePl),
   
   aprifile_res(FilePl),
@@ -175,6 +189,44 @@ start1(Fe,AgentName,Libr,Fil):-
   check_constr_all,
   delete_agent_log_file(AgentName),
   print('..................   Actived Agent '),print(AgentName),print(' ...................'),nl,go.
+  
+  
+implementa_block(Ei):-true.
+  
+implementa_blockk(Ei):-if(clause(block_implementato(Ei),_),true,implementa_block1(Ei)).
+
+implementa_block1(Ei):-assert(block_implementato(Ei)),clause(plname(FilePl),_),
+				see(FilePl), 
+             repeat,
+                read(T),expand_term(T,Te),functor(Ei,FuntoreB,NB),arg(1,Ei,Parametri),
+                            if(T=end_of_file,true,
+								(arg(1,Te,Head),functor(Head,FuntoreR,NR),arg(1,Ei,Argomenti),
+								if(Head=Ei,
+									if((Ei=flag_crea_block(var_Ei);
+										Ei=external_refused_action_propose(var_A,var_Ag);
+										Ei=refused_message(var_AgM,var_Con);
+										Ei=gest_learn(var_H)),true,take_clausole_block(Ei,Te)),true))),
+                                T == end_of_file,!,seen,add_block_flags(Ei).
+								
+take_clausole_block(Ei,Te):-Te=..L,append([':-'],L2,L),arg(2,L2,E1),arg(1,E1,Lista),
+								arg(1,Lista,Testa),arg(2,Lista,Resto),
+								write('Testa: '),write(Testa),nl,write('Resto: '),write(Resto),nl,take_clausole_block0(Ei,Testa,Resto).
+
+take_clausole_block0(Ei,Testa,Resto):-functor(Testa,Head,_),write(Head),nl,
+							if(Head=controlla_tempi,true,
+							(asserta_block(Ei,Testa),arg(1,Resto,T),arg(2,Resto,R),
+							write('Testa2: '),write(T),nl,write('Resto2: '),write(R),nl,take_clausole_block0(Ei,T,R))).		
+
+
+asserta_block(Ei,C):-functor(C,Funtore,_),if(Funtore=evp,assert_new_evplist(Ei,C),asserta_block1(Ei,C)).
+
+asserta_block1(Ei,C):-functor(C,F,_),if(F=not,(arg(1,C,A),functor(C,F1,_),if(F1=evp,assert_new_evplist(Ei,C),true)),true).
+									
+assert_new_evplist(Ei,C):-arg(1,C,C1),assert(evp_evi_list(Ei,C1,0)).
+
+add_block_flags(Ei):-if(Ei=wo(3),add_block_flagss(Ei),true).			
+					
+add_block_flagss(Ei):-findall(X,clause(evp_evi_list(Ei,X,_),_),L),write(Ei),write(' HA QUESTI EVENTI PASSATI REGISTRATI '),write(L),nl.
 
 %L0 it should be communicationf/fipa
 libreria(F,L0,Fil):-name(F,Lf),append(Lf,[46,112,108],Ltf),
@@ -261,10 +313,10 @@ take_time_ep(L):-last(L,U),repeat,member(M,L),clause(past(M,Tp,_),_),asse_cosa(t
 cont_tep(L):-findall(X,clause(tep(_,X),_),Le),retractall(tep(_,_)),
          if(clause(fatto_mul(_,_),_),(retractall(fatto_mul(_,_)),assert(fatto_mul(L,Le))),assert(fatto_mul(L,Le))).
 
-spezza(C):-arg(1,C,Head),C=..L,eve_mul_first(Head),if(member(':-',L),is_clausola(L,Head),true).
+spezza(C):-if(compound(C),arg(1,C,Head),Head=C),C=..L,eve_mul_first(Head),if(member(':-',L),is_clausola(L,Head),true).
 
 
-is_clausola(L,Head):-append([':-'],L1,L),ejec(L1,Head).
+is_clausola(L,Head):-append([':-'],L1,L),ejec(L1,Head),functor(Head,F,_),if(F=evi,(arg(1,Head,Evinterno),implementa_block(Evinterno)),true).
 ejec([],_).
 ejec([S1|Resto],Head):-ejec(S1,Head),!,ejec(Resto,Head).
 ejec((X,Y),Head):-expand_term((X,Y),Z),ejec(Z,Head).
@@ -720,6 +772,7 @@ keep_action_propose1:-findall(act_propose(X,Ag),
         last(L,U),
           repeat,
                    member(Me,L),
+						
                          arg(1,Me,Az),
                          arg(2,Me,Ag),
                          if(do_propose(Az,Ag),true,
@@ -769,7 +822,7 @@ processa_eve_normal:-if(clause(ev_normal(_,_,_),_),processa_eve_normal1,true).
 processa_eve_normal1:-clause(ev_normal(AgM,E,T),_),
                      if(once(eve_cond(E)),processa_eve_normal(AgM,E,T),no_proc_eve_normal(AgM,E,T)).
                     
-no_proc_eve_normal(AgM,E,T):-write('External event preconditions not verified'),nl,retractall(ev_normal(_,E,T)),
+no_proc_eve_normal(AgM,E,T):-write('External event preconditions not verified'),write(E),nl,retractall(ev_normal(_,E,T)),
                           asse_cosa(refused_external(AgM,E,T)).
                   
 processa_eve_normal(AgM,E,T):-retractall(ev_normal(AgM,E,T)),
@@ -963,7 +1016,7 @@ caso3_past(F,X,Y):-if(F=callasp,call(Y),set_past_evento(X,Y)).
 
 %PRIMITIVE DI GESTIONE DEGLI EVENTI DEL PASSATO
 drop_evento(X):-if(clause(past(X,_,_),_),retractall(past(X,_,_)),true).
-add_evento(X):-statistics(walltime,[Tc,_]),assert(past(X,Tc,program)).
+add_evento(X):-statistics(walltime,[Tc,_]),datime(C),retractall(evtp_date(X,_)),assert(evtp_date(X,C)),assert(past(X,Tc,program)).
 look_up_evento(X):-clause(past(X,_,_),_).
 set_past_evento(X,C):-retractall(past_event_life(X,_)),retractall(past_event_mod(X,_,_)),retractall(past_event_mod(X,_,_,_)),assert(C).
 
@@ -1108,45 +1161,62 @@ ev_int01:-findall(M,prov_int(M),L),
 ev_int011(Me,C0,C):-if(C0=until_cond,esamina_cd(Me,C),ev_int012(Me,C0,C)).
 ev_int012(Me,C0,C):-if(C0=in_date,esamina_dt(Me,C),print('Writing_error1')).
 esamina_cd(Me,C):-arg(1,C,C1),if(clause(C1,true),scarica(Me),carica(Me)).
-esamina_dt(Me,C):-arg(1,C,D),arg(2,C,A),verif_time(Me,D,A).
+esamina_dt(Me,C):-arg(1,C,D),arg(2,C,A),verif_time(Me,D,A,C).
 
- verif_time(Iv,D,A):-datime(C),arg(1,C,Ac),arg(1,D,A1),arg(1,A,A2),
-              if((Ac>A1,Ac<A2),carica(Iv),if((Ac=A1,Ac=\=A2),
-              conf_date_max(Iv,D,A,C),
-              if((Ac=A2,A1=\=Ac),conf_date_min(Iv,D,A,C),
+
+ verif_time(Iv,D,A,TPar):-datime(C),arg(1,C,Ac),if(D=forever,A1 is -999,arg(1,D,A1)),if(A=forever,A2 is 99999,arg(1,A,A2)),
+			  if(A2>=A1,if((Ac>A1,Ac<A2),controlla_week(Iv,C,TPar),if((Ac=A1,Ac=\=A2),
+              if(A=forever,conf_date_max(Iv,D,date(99999,12,31,23,59,59),C,TPar),conf_date_max(Iv,D,A,C,TPar)),
+              if((Ac=A2,A1=\=Ac),if(D=forever,conf_date_min(Iv,date(-999,1,1,0,0,0),A,C,TPar),conf_date_min(Iv,D,A,C,TPar)),
               if((Ac=A1,Ac=A2),
-              conf_date_3(Iv,D,A,C),scarica(Iv))))).
+              conf_date_3(Iv,D,A,C,TPar),scarica(Iv))))),scarica(Iv)).
  
-        conf_date_max(Iv,D,A,C):-arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
+        conf_date_max(Iv,D,A,C,TPar):-arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
                        R1 is (Me1*43790+G1*1440),
                        R is (Me*43790+G*1440),
                        
-                       if(R>R1,controlla_ore(Iv,D,A,C),scarica(Iv)).
+                       if(R>R1,controlla_ore(Iv,D,A,C,TPar),scarica(Iv)).
 
-        conf_date_min(Iv,D,A,C):-arg(2,A,Me1),arg(3,A,G1),arg(2,C,Me),arg(3,C,G),
+        conf_date_min(Iv,D,A,C,TPar):-arg(2,A,Me1),arg(3,A,G1),arg(2,C,Me),arg(3,C,G),
                        R2 is (Me1*43790+G1*1440),
                        R is (Me*43790+G*1440),
                         
-                       if(R=<R2,controlla_ore(Iv,D,A,C),scarica(Iv)).
+                       if(R=<R2,controlla_ore(Iv,D,A,C,TPar),scarica(Iv)).
 
-        conf_date_3(Iv,D,A,C):- 
+        conf_date_3(Iv,D,A,C,TPar):- 
                 arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
                                    arg(2,A,Me2),arg(3,A,G2),
                                    R1 is (Me1*43790+G1*1440),
                                    R2 is (Me2*43790+G2*1440),
                                    R is (Me*43790+G*1440),
                                    
-                                   if((R>=R1,R=<R2),controlla_ore(Iv,D,A,C),scarica(Iv)).
+                                   if((R>=R1,R=<R2),controlla_ore(Iv,D,A,C,TPar),scarica(Iv)).
 
-        controlla_ore(Iv,D,A,C):-arg(4,D,H1),arg(5,D,M1),arg(6,D,S1),arg(4,A,H2),arg(5,A,M2),arg(6,A,S2),arg(4,C,H),arg(5,C,M),arg(6,C,S),
+        controlla_ore(Iv,D,A,C,TPar):-arg(4,D,H1),arg(5,D,M1),arg(6,D,S1),arg(4,A,H2),arg(5,A,M2),arg(6,A,S2),arg(4,C,H),arg(5,C,M),arg(6,C,S),
                         O1 is (H1*3600+M1*60+S1),
                         O2 is (H2*3600+M2*60+S2),
                         O is (H*3600+M*60+S),
-                        if(O2>O1,ora_normale(Iv,O,O1,O2),print('To insert a correct temporal interval')).
+                        if(O2>O1,ora_normale(Iv,O,O1,O2,TPar,C),print('To insert a correct temporal interval')).
 
-ora_normale(Iv,O,O1,O2):-if((O>O1,O<O2),carica(Iv),scarica(Iv)).
+ora_normale(Iv,O,O1,O2,TPar,C):-if((O>O1,O<O2),controlla_week(Iv,C,TPar),scarica(Iv)).
 
-
+controlla_week(Iv,C,TPar):-arg(1,C,Ac),arg(2,C,Mc),arg(3,C,Dc),day_of_the_week(Ac,Mc,Dc,Wd),
+				arg(3,TPar,ListWD),
+				if(ListWD=everyday,carica(Iv),if(member(Wd,ListWD),carica(Iv),scarica(Iv))).
+				
+day_of_the_week(_year,_month,_day,D):-
+  A is (14-_month)//12,
+  Y is _year-A,
+  M is round(_month+(12*A)-2),
+  D is (_day+Y+(Y//4)-(Y//100)+(Y//400)+(round(31*M)//12)) mod 7.
+  
+  
+%PROTOTIPO PER AGGIUNGERE EVENTUALI ECCEZIONI ALLA DIRETTIVA TIME%
+controlla_eccezioni(Iv):-clause(internal_event(Me,_,_,_,Dir),_),datime(C),arg(4,Dir,Lista),
+				if(Lista=[],scarica(Iv),controlla_eccezioni(Iv,Lista)).				
+controlla_eccezioni(Iv,[Testa|Resto]):-arg(1,Testa,SN),arg(2,Testa,Mod),arg(3,Testa,D),arg(4,Testa,HMin),arg(5,Testa,HMax).
+			
+			
 
 carica(Me):-if(clause(prov_int1(Me),_),true,assert(prov_int1(Me))).
 
@@ -1285,7 +1355,7 @@ check_member(Me,T1,Tc,L1):-if(member(T1,L1),ritrai_ev_pres(Me,Tc),scat1(Me,Tc)).
                   
 ritrai_ev_pres(Me,Tc):-retractall(iv(Me,Tc)).                
 
-scat1(Me,Tc):-if(evi(Me),scatena_agisci(Me,Tc),no_scatena(Me,Tc)),!.
+scat1(Me,Tc):-if(evi(Me),no_scatena(Me,Tc),scatena_agisci(Me,Tc)),!.
 no_scatena(Me,Tc):-retractall(iv(Me,Tc)),if(clause(reagito(Me,_),_),true,assert(reagito(Me,Tc))),
                    
                    retractall(tempI(Me)), rec_internal_reaction(Me,Tc),
@@ -1353,7 +1423,8 @@ canc_e_reagito(X,Tc):-retractall(reagito(X,Tc)).
 
 
 
-divP(Me,Tc,Ag):-if(clause(past(Me,Tr,A),_),sposta_in_rem(Me,Tr,A,Tc,Ag),asserta(past(Me,Tc,Ag))).
+divP(Me,Tc,Ag):-datime(C),retractall(evtp_date(Me,_)),assert(evtp_date(Me,C)),
+			if(clause(past(Me,Tr,A),_),sposta_in_rem(Me,Tr,A,Tc,Ag),asserta(past(Me,Tc,Ag))).
 
 sposta_in_rem(Me,Tr,A,Tc,Ag):-retractall(past(Me,Tr,A)),retractall(past(Me)),
                   assert(remember(Me,Tr,A)),asserta(past(Me,Tc,Ag)).
@@ -1539,8 +1610,52 @@ resid_goal(Me):-retractall(tenta_residuo(Me)),if(clause(attiva_goal(Me),_),
                    canc_goal(Me),true).       
 
 % PREFISSO PAST DEi PAST%
-evp(E):-clause(past(E),_).
 evp(E):-clause(past(E,_,_),_).
+evp(E):-clause(past(E),_).
+evtp(T,E):-clause(past(E,T,_),_).
+vedi_time(E,T):-clause(past(E,T,_),_).
+see_time(E,T,C,CS):-clause(past(E,T,_),_),clause(evtp_date(E,C),_),
+				arg(1,C,A),arg(2,C,M),arg(3,C,G),arg(4,C,H),arg(5,C,N),arg(6,C,S),
+				name(A,AA),name(M,MM),name(G,GG),name(H,HH),name(N,NN),name(S,SS),
+				append(AA,MM,L1),append(L1,GG,L2),append(L2,HH,L3),append(L3,NN,L4),append(L4,SS,L5),
+				name(CS,L5).
+
+after_evp_time(E,D,H,M,S):-vedi_time(E,Tp),statistics(walltime,[Tc,_]),
+					Tf is Tp+D*86400000+H*3600000+M*60000+S*1000,
+					if(Tc>Tf,true,false).
+					
+comparing_2evp_time(E1,E2,Option,D,H,M,S):-vedi_time(E1,T1),vedi_time(E2,T2),Tf1 is T1+D*86400000+H*3600000+M*60000+S*1000,
+					if(Option=between,
+						if((T2<Tf1,T2>T1),true,false),
+						if(Option=min,
+							if(T2<Tf1,true,false),
+							if(Option=max,
+								if(T2>Tf1,true,false),
+								false))).
+
+control_times(Ei,L):-if(clause(evp_evi_list(Ei,_,L),_),false,(retractall(evp_evi_list(Ei,_,_)),assert(evp_evi_list(Ei,0,L)))),
+						write(Ei),write(' HA QUESTA LISTA DEI TEMPI '),write(L),nl.
+						
+go_reaction(Ei):-statistics(walltime,[Tc,_]),clause(evp_evi_list(Ei,_,L),_),retractall(evp_evi_list(Ei,_,_)),assert(evp_evi_list(Ei,Tc,L)).
+
+
+
+% REGOLE PER CONTROLLO TEMPI CHE OTREBBERO TORNARE UTILI%
+controlla_tempi0(Ei):-clause(evp_evi_list(Ei,_,L),_),controlla_tempi_repeat(L).
+
+controlla_tempi_repeat([Tempo|Resto]):-if(evtp(Evp,Newtime),
+											(if(Newtime=Tempo,if(Resto=[],false,controlla_tempi_repeat(Resto)),true)),
+											true).
+											
+scrivi_tempi(Ei,[Tempo|Resto]):-arg(1,Tempo,Evp),arg(2,Tempo,Time),evtp(Evp,Newtime),
+						if(Newtime=Time,true,asserta_tempi(Ei,Evp,Newtime)),scrivi_tempi(Ei,Resto).
+
+scrivi_tempi([]).
+
+asserta_tempi(Ei,Evp,T):-retractall(evp_evi_list(Ei,Evp,_)),assert(evp_evi_list(Ei,Evp,T)).
+
+%-----------------------------------------------------------%
+
 rem(E):-clause(remember(E,_,_),_).
 
 
