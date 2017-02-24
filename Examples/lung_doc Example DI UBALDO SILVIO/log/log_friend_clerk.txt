@@ -1,0 +1,1 @@
+send_message(send_message(friend_opinion(friend_clerk,lung_doc2,0.9),friend_clerk))

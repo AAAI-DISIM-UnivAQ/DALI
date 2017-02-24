@@ -1,0 +1,12 @@
+:-dynamic ability/2.
+:-dynamic name/1.
+ability(lung_doc1,0.4).
+ability(lung_doc2,0.9).
+name(friend_clerk).
+:-dynamic chosen_ld/2.
+what_about_lung_docE(Patient):>name(Name),best_doc,chosen_ld(Lung_doc,X),
+			messageA(Patient,send_message(friend_opinion(Name,Lung_doc,X),Name)),retractall(chosen_ld(_)),
+			write('Io consiglio il dottore '),write(Lung_doc),write(', su di lui ho una fiducia di '),write(X),nl.
+
+best_doc:-clause(ability(lung_doc1,X1),_),clause(ability(lung_doc2,X2),_),if(X2>X1,assert(chosen_ld(lung_doc2,X2)),assert(chosen_ld(lung_doc1,X1))).
+
