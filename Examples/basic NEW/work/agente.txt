@@ -1,0 +1,13 @@
+:-dynamic go/1.
+
+rrE:>write('merda'),nl.
+ddE(X):>write('cujo'),nl.
+wo:-rrP.
+woI:>write('cazzo'),nl.
+cacca(X):-rrP,ddP(X),comparing_2evp_time(rr,dd(X),between,1,0,0,0).
+
+
+ppE:-assert(go(2)).
+caccaI(X):>write('ooo'),write(X),nl.
+evento:-go(3).
+cancellagoE:-retractall(go(_)).

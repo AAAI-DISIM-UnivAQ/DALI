@@ -1,0 +1,1 @@
+send_message(inform(send_message(new_auction,p1),motivation(refused_message),at))
