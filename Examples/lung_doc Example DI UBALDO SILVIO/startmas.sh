@@ -17,14 +17,14 @@ rm -f work/*.txt # remove everything if you want to clear agent history
 rm -rf conf/mas/*
 
 # Build agents by creating a file with the instance name containing the type content for each instance.
-# DA AGGIUSTAREEEEEE
+# NOT SURE IF SED WORKS
 for instance_filename in $instances_home/*.txt
 do	
 	type=$(head -n 1 $instance_filename) # agent type name is the content of the instance file     agent1
 	type_filename="$types_home/$type.txt"     #mas/types/agent1.txt
 	instance_base="${instance_filename##*/}" # e.g. 'mas/instances/agent1.txt' -> 'agent1.txt'
 	echo $type_filename	
-	sed -n '2{p;q;}' $instance_filename > "$build_home/$instance_base"
+	sed -n '2,/^$/p' $instance_filename > "$build_home/$instance_base"
 	cat $type_filename >> "$build_home/$instance_base"
 done
 #
