@@ -1,0 +1,13 @@
+:-dynamic go/1.
+
+rrE:>write('evento RR reagisce'),nl.
+ddE(X):>write('evento DD reagisce'),nl.
+wo:-rrP.
+woI:>write('evento WO reagisce'),nl.
+cc(X):-rrP,ddP(X),comparing_2evp_time(rr,dd(X),between,1,0,0,0).
+
+
+ppE:-assert(go(2)).
+ccI(X):>write('evento CC reagisce'),write(X),nl.
+evento:-go(3).
+cancellagoE:-retractall(go(_)).
