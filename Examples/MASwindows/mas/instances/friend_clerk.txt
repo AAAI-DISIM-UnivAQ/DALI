@@ -1,0 +1,6 @@
+amico
+:-dynamic ability/2#
+:-dynamic name/1#
+ability(lung_doc1,0.4)#
+ability(lung_doc2,0.9)#
+name(friend_clerk)#

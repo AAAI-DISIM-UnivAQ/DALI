@@ -1,0 +1,1 @@
+agent('work/gen_doc',gen_doc,'no',italian,['conf/communication_gen_doc'],['../../src/communication_fipa','../../src/learning','../../src/planasp'],'no','../../src/onto/dali_onto.txt',[]).  

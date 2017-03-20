@@ -1,0 +1,134 @@
+:-dynamic ill/2.
+:-dynamic trust/3.
+trust(gen_doc,0.8,gen_doctor).
+trust(friend_nurse,0.4,friend).
+trust(friend_clerk,0.5,friend).
+trust(lung_doc1,0.4,doctor).
+trust(lung_doc2,0.4,doctor).
+ill(cold,10).
+ill(bone_pain,10).
+ill(high_temperature,10).
+:-dynamic maxtrust/2.
+:-dynamic go_lung_doc/1.
+:-dynamic ability/2.
+:-dynamic controllo/1.
+:-dynamic opinion/3.
+:-dynamic guarito/1.
+
+controllo(1).
+
+modifiche_salute:-controllo(1).
+					
+modifiche_saluteI:>random(C),random(Rc),random(Rb),random(Rh),
+					if(C>0.6,(NRc is Rc/3,NRb is Rb/3,NRh is Rh/3),(NRc is -Rc/3,NRb is -Rb/3,NRh is -Rh/3)),
+					clause(ill(cold,X1),_),clause(ill(bone_pain,X2),_),clause(ill(high_temperature,X3),_),
+					retractall(ill(_,_)),N1 is X1+NRc,N2 is X2+NRb,N3 is X3+NRh,
+					assert(ill(cold,N1)),assert(ill(bone_pain,N2)),assert(ill(high_temperature,N3)),
+					write('OLD COLD '),write(X1),nl,
+					write('OLD BONE_PAIN '),write(X2),nl,
+					write('OLD HIGH_TEMPERATURE  '),write(X3),nl,
+					write('NEW COLD '),write(N1),nl,
+					write('NEW BONE_PAIN '),write(N2),nl,
+					write('NEW HIGH_TEMPERATURE  '),write(N3),nl,nl,assert(controllo(0)).
+
+					
+					
+sto_male:-controllo(0),modifiche_saluteP,clause(ill(cold,X),_),X>4.
+sto_male:-controllo(0),modifiche_saluteP,clause(ill(bone_pain,X),_),X>4.
+sto_male:-controllo(0),modifiche_saluteP,clause(ill(high_temperature,X),_),X>4.
+
+i_am_ill:-sto_male.
+
+i_am_illI:>sleep(20),write('STO MALE, DEVO CONSULTARE UN DOTTORE PER FARMI DIRE COME AGIRE'),
+			messageA(gen_doc,send_message(i_am_ill(patient),patient)),retractall(controllo(_)).
+
+
+
+
+
+
+gen_doc_proponeE:>prendere_antibioticoA.
+consult_lung_docE:>write('CONSULTO I MIEI AMICI PER SCEGLIERE DOTTORE POLMONARE'),nl,retractall(opinion(_,_,_)),
+			findall(pp(X,Tr),trust(X,Tr,friend),L),last(L,U),arg(1,U,Ultimo),write('L ultimo è '),write(Ultimo),nl,
+			repeat,member(Me,L),
+				arg(1,Me,Amico),arg(2,Me,Fiducia),
+				write('Inviamo richiesta di info a '),write(Amico),nl,
+				messageA(Amico,send_message(what_about_lung_doc(patient),patient)),
+			Amico==Ultimo,!,
+			clause(trust(lung_doc1,FD1,doctor),_),clause(trust(lung_doc2,FD2,doctor),_),
+			retractall(maxtrust(_,_)),
+			if(FD2>FD1,
+				(assert(maxtrust(default,lung_doc2)),assert(opinion(default,lung_doc2,-999))),
+				(assert(maxtrust(default,lung_doc1)),assert(opinion(default,lung_doc1,-999)))).
+				
+friend_opinionE(Name,LD,X):>assert(opinion(Name,LD,X)),write(Name),write(' mi dice di scegliere '),write(LD),write(' per il ricovero'),nl.
+
+choose_doctor:-consult_lung_docP,after_evp_time(consult_lung_doc,0,0,0,10).
+					
+choose_doctorI:>clause(trust(lung_doc1,FD1,doctor),_),clause(trust(lung_doc2,FD2,doctor),_),
+					findall(yy(Name,LD,X),opinion(Name,LD,X),L),last(L,U),arg(1,U,Ultimo),
+					repeat,member(Me,L),
+						arg(1,Me,Amico),arg(2,Me,Dottore),arg(3,Me,Fiducia),
+						if(Amico=default,(Fiducia is 1,Tr is 1),clause(trust(Amico,Tr,friend),_)),
+						if(Dottore=lung_doc1,FT is Fiducia*FD1*Tr,FT is Fiducia*FD2*Tr),
+						retractall(opinion(Amico,Dottore,_)),assert(opinion(Amico,Dottore,FT)),
+					Amico==Ultimo,!,
+					findall(yynew(Namenew,LDnew,Xnew),opinion(Namenew,LDnew,Xnew),Lnew),last(Lnew,Unew),arg(1,Unew,Ultimonew),
+					repeat,member(Menew,Lnew),
+						arg(1,Menew,Amiconew),arg(2,Menew,Dottorenew),arg(3,Menew,Fiducianew),
+						clause(maxtrust(CurrentFriend,CurrentDoctor),_),clause(opinion(CurrentFriend,CurrentDoctor,HisTrust),_),
+						if(Fiducianew>HisTrust,(retractall(maxtrust(_,_)),assert(maxtrust(Amiconew,Dottorenew))),true),
+					Amiconew==Ultimonew,!,
+					clause(maxtrust(ChosenFriend,ChosenDoctor),_),scegli_dottoreA(ChosenFriend,ChosenDoctor).
+
+go_to_lung_doctor(Lung_doc):-scegli_dottoreP(F,Lung_doc).
+				
+go_to_lung_doctorI(Lung_doc):>clause(ill(cold,X1),_),clause(ill(bone_pain,X2),_),clause(ill(high_temperature,X3),_),
+			random(R1),random(R2),random(R3),
+			S1 is R1*X1,S2 is R2*X2,S3 is R3*X3,
+			write('COLD AFTER LUNG DOCTOR VISIT '),write(S1),nl,
+			write('BONE_PAIN AFTER LUNG DOCTOR VISIT  '),write(S2),nl,
+			write('HIGH_TEMPERATURE AFTER LUNG DOCTOR VISIT  '),write(S3),nl,
+			retractall(ill(_,_)),assert(ill(cold,S1)),assert(ill(bone_pain,S2)),assert(ill(high_temperature,S3)),go_docA(Lung_doc).
+			
+valutazione_ricovero(Lung_doc):-go_docP(Lung_doc),after_evp_time(go_doc(Lung_doc),0,0,0,10).
+				
+no_malato(HT,CC,BP):-if(HT>4,false,if(CC>4,false,if(BP>4,false,true))).
+
+valutazione_ricoveroI(Lung_doc):>clause(ill(high_temperature,HT),_),clause(ill(cold,CC),_),clause(ill(bone_pain,BP),_),
+				clause(maxtrust(Friend,Lung_doctor),_),
+				write('IL TEMPO NECESSARIO PER LA VALUTAZIONE E TRASCORSO.'),nl,
+				if(no_malato(HT,CC,BP),
+					(write('SONO GUARITO!'),nl,
+						if(Friend=default,true,increment_trust_to(Friend,0.2,friend)),increment_trust_to(Lung_doctor,0.2,lung_doctor)),
+					(write('NON SONO GUARITO!'),nl,
+						if(Friend=default,true,decrement_trust_to(Friend,0.2,friend)),decrement_trust_to(Lung_doctor,0.2,lung_doctor))),
+						assert(controllo(1)).
+			
+increment_trust_to(Person,M,Type):-if(trust(Person,Tr,Type),retract(trust(Person,Tr,Type)),Tr is 0.4),
+					Tn is Tr+M,assert(trust(Person,Tn,Type)),
+					write('Congratulations to '),write(Type),write(' '),write(Person),
+					write(', your trust of '),write(Tr),write(' will increase to '),write(Tn),nl.
+												
+decrement_trust_to(Person,M,Type):-if(trust(Person,Tr,Type),retract(trust(Person,Tr,Type)),Tr is 0.4),
+					Tn is Tr-M,assert(trust(Person,Tn,Type)),
+					write('Sorry for '),write(Type),write(' '),write(Person),
+					write(', your trust of '),write(Tr),write(' will decrease to '),write(Tn),nl.		
+						
+			
+
+			
+
+
+
+
+				
+				
+				
+				
+				
+				
+				
+				
+				
+				

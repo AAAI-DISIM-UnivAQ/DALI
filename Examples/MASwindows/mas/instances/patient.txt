@@ -1,0 +1,11 @@
+paziente
+:-dynamic ill/2#
+:-dynamic trust/3#
+trust(gen_doc,0.8,gen_doctor)#
+trust(friend_nurse,0.4,friend)#
+trust(friend_clerk,0.5,friend)#
+trust(lung_doc1,0.4,doctor)#
+trust(lung_doc2,0.4,doctor)#
+ill(cold,10)#
+ill(bone_pain,10)#
+ill(high_temperature,10)#
