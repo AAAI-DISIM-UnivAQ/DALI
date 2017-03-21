@@ -1,1 +1,0 @@
-i_am_illE(Patient):>messageA(Patient,send_message(gen_doc_propone,gen_doc)),messageA(Patient,send_message(consult_lung_doc,gen_doc)).
