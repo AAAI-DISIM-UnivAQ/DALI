@@ -1,2 +1,0 @@
-send_message(send_message(gen_doc_propone,gen_doc))
-send_message(send_message(consult_lung_doc,gen_doc))
