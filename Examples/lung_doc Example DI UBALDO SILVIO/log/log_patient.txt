@@ -1,6 +1,0 @@
-send_message(send_message(i_am_ill(patient),patient))
-make(prendere_antibiotico)
-send_message(send_message(what_about_lung_doc(patient),patient))
-send_message(send_message(what_about_lung_doc(patient),patient))
-make(scegli_dottore(friend_clerk,lung_doc2))
-make(go_doc(lung_doc2))
