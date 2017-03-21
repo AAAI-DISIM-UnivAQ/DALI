@@ -1,6 +1,0 @@
-amico
-:-dynamic ability/2#
-:-dynamic name/1#
-ability(lung_doc1,0.8)#
-ability(lung_doc2,0.3)#
-name(friend_nurse)#
