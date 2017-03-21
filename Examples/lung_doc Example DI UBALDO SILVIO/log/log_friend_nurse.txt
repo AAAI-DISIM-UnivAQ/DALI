@@ -1,1 +1,0 @@
-send_message(send_message(friend_opinion(friend_nurse,lung_doc1,0.8),friend_nurse))
