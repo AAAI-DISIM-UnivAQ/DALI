@@ -1,1 +1,0 @@
-agent('work/patient',patient,'no',italian,['conf/communication_patient'],['../../src/communication_fipa','../../src/learning','../../src/planasp'],'no','../../src/onto/dali_onto.txt',[]).  
