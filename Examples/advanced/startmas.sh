@@ -1,28 +1,29 @@
 #exec 1>/dev/null # @echo off
 clear # cls
 #title "MAS"
-sicstus_home=/usr/local/sicstus4.2.3
+sicstus_home=/usr/local/sicstus4.3.5
+#sicstus_home=/usr/local/sicstus4.2.3
 main_home=../..
 dali_home=../../src
 conf_dir=conf
 prolog="$sicstus_home/bin/sicstus"
-WAIT="ping -c 4 127.0.0.1" 
+WAIT="ping -c 4 127.0.0.1"
 instances_home=mas/instances
 types_home=mas/types
 build_home=build
 
 rm -rf tmp/*
 rm -rf build/*
-rm -f work/*.txt # remove everything if you want to clear agent history
+rm -f work/* # remove everything if you want to clear agent history
 rm -rf conf/mas/*
 
 # Build agents by creating a file with the instance name containing the type content for each instance.
 for instance_filename in $instances_home/*.txt
-do	
+do
 	type=$(<$instance_filename) # agent type name is the content of the instance file
 	type_filename="$types_home/$type.txt"
 	instance_base="${instance_filename##*/}" # e.g. 'mas/instances/agent1.txt' -> 'agent1.txt'
-	echo $type_filename	
+	echo $type_filename
 	cat $type_filename >> "$build_home/$instance_base"
 done
 
@@ -42,7 +43,8 @@ do
 	agent_base="${agent_filename##*/}"
     echo "Agente: $agent_base"
     xterm -e "./conf/makeconf.sh $agent_base $dali_home" &
-    xterm -hold -e "./conf/startagent.sh $agent_base $prolog $dali_home" &
+    xterm -T "$agent_base" -hold -e "./conf/startagent.sh $agent_base $prolog $dali_home" &
+    sleep 2s
     $WAIT > /dev/null # %WAIT% >nul
 done
 
