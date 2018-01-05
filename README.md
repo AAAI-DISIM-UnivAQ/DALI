@@ -35,9 +35,9 @@ bash startmas.sh
 ## Usage example
 
 You can find some examples into the Example folder, where examples are divided into 3 subfolders:
-* basic : aimed at basic Windows-based setup, no agent types, every agent living in a separated sicstus window.
-* advanced : more complex, aimed at Unix-like based environment, with agent type, instances, each agent living in a separated xterm console
-* more : MAS examples derived from our students projects
+* basic: aimed at basic Windows-based setup, no agent types, every agent living in a separated sicstus window.
+* advanced: more complex, aimed at Unix-like based environment, with agent type, instances, each agent living in a separated xterm console
+* more: MAS examples derived from our students projects
 
 
 ## Development setup
