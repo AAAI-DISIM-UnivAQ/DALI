@@ -1,10 +1,6 @@
 # DALI
 > DALI Multi Agent Systems Framework
 
-[![NPM Version][npm-image]][npm-url]
-[![Build Status][travis-image]][travis-url]
-[![Downloads Stats][npm-downloads]][npm-url]
-
 DALI is a meta interpreter built on top of Sicstus Prolog (R) (at the moment).
 
 ![](DALI_logo.png)
