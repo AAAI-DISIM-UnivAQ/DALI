@@ -25,6 +25,7 @@ bash startmas.sh
 1.  To download and install SICStus Prolog (it is needed), follow the instructions at https://sicstus.sics.se/download4.html.
 2.  Then, you can download DALI from https://github.com/AAAI-DISIM-UnivAQ/DALI.git.
 3.  Unzip the repository, go to the folder "DALI/Examples/basic", and test if DALI works by duble clicking "startmas.bat" file (this will launch an example DALI MAS). \
+\
 &nbsp;&nbsp;&nbsp;&nbsp; You will see different windows opening:
 * &nbsp;&nbsp;&nbsp;&nbsp; Prolog LINDA server (active_server_wi.pl)
 * &nbsp;&nbsp;&nbsp;&nbsp; Prolog FIPA client (active_user_wi.pl) 
@@ -55,7 +56,7 @@ To create a new DALI MAS, you can use an example as a boilerplate:
 
 
 ## Release History
-ToDo
+To do
 
 
 ## Meta
@@ -69,7 +70,7 @@ Distributed under the Apache License 2.0. See ``LICENSE`` for more information.
 
 
 ## Contributing
-
+To complete
 1. Fork it (<https://github.com/yourname/yourproject/fork>)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
