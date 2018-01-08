@@ -1,3 +1,4 @@
+#!/bin/bash
 #exec 1>/dev/null # @echo off
 clear # cls
 #title "MAS"
