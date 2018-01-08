@@ -60,18 +60,18 @@ To do
 
 
 ## Meta
-To complete
+Contacts
 
-Your Name – [@YourTwitter](https://twitter.com/) – YourEmail@example.com
+Giovanni De Gasperis – [@giodegas](http://twitter.com/giodegas) – giovanni.degasperis-at-univaq-it
 
 Distributed under the Apache License 2.0. See ``LICENSE`` for more information.
 
-[https://github.com/AAAI-DISIM-UnivAQ](https://github.com/AAAI-DISIM-UnivAQ)
+[http://github.com/AAAI-DISIM-UnivAQ](http://github.com/AAAI-DISIM-UnivAQ)
 
 
 ## Contributing
 To complete
-1. Fork it (<https://github.com/yourname/yourproject/fork>)
+1. Fork it (<https://github.com/AAAI-DISIM-UnivAQ/DALI/fork>)
 2. Create your feature branch (`git checkout -b feature/fooBar`)
 3. Commit your changes (`git commit -am 'Add some fooBar'`)
 4. Push to the branch (`git push origin feature/fooBar`)
