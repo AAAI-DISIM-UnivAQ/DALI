@@ -2,16 +2,17 @@
 #exec 1>/dev/null # @echo off
 clear # cls
 #title "MAS"
-sicstus_home=/usr/local/sicstus4.3.5
-#sicstus_home=/usr/local/sicstus4.2.3
-main_home=../..
-dali_home=../../src
-conf_dir=conf
-prolog="$sicstus_home/bin/sicstus"
+SICSTUS_HOME=/usr/local/sicstus4.3.5
+#SICSTUS_HOME=/usr/local/sicstus4.2.3
+MAIN_HOME=../..
+DALI_HOME=../../src
+CONF_DIR=conf
+PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 4 127.0.0.1"
-instances_home=mas/instances
-types_home=mas/types
-build_home=build
+INSTANCES_HOME=mas/instances
+TYPES_HOME=mas/types
+BUILD_HOME=build
+XTERM=XTERM
 
 rm -rf tmp/*
 rm -rf build/*
@@ -19,32 +20,32 @@ rm -f work/* # remove everything if you want to clear agent history
 rm -rf conf/mas/*
 
 # Build agents by creating a file with the instance name containing the type content for each instance.
-for instance_filename in $instances_home/*.txt
+for instance_filename in $INSTANCES_HOME/*.txt
 do
 	type=$(<$instance_filename) # agent type name is the content of the instance file
-	type_filename="$types_home/$type.txt"
+	type_filename="$TYPES_HOME/$type.txt"
 	instance_base="${instance_filename##*/}" # e.g. 'mas/instances/agent1.txt' -> 'agent1.txt'
 	echo $type_filename
-	cat $type_filename >> "$build_home/$instance_base"
+	cat $type_filename >> "$BUILD_HOME/$instance_base"
 done
 
-cp $build_home/*.txt work
+cp $BUILD_HOME/*.txt work
 
-xterm -hold -e "$prolog -l $dali_home/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%prolog%" -l "%dali_home%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
+XTERM -hold -e "$PROLOG -l $DALI_HOME/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%PROLOG%" -l "%DALI_HOME%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
 echo Server ready. Starting the MAS....
 $WAIT > /dev/null # %WAIT% >nul
 
-xterm -hold -e "$prolog -l $dali_home/active_user_wi.pl --goal utente." & # start /B "" "%prolog%" -l "%dali_home%/active_user_wi.pl" --goal utente.
+XTERM -hold -e "$PROLOG -l $DALI_HOME/active_user_wi.pl --goal utente." & # start /B "" "%PROLOG%" -l "%DALI_HOME%/active_user_wi.pl" --goal utente.
 echo Launching agents instances...
 $WAIT > /dev/null # %WAIT% > nul
 
 # Launch agents
-for agent_filename in $build_home/*
+for agent_filename in $BUILD_HOME/*
 do
 	agent_base="${agent_filename##*/}"
     echo "Agente: $agent_base"
-    xterm -e "./conf/makeconf.sh $agent_base $dali_home" &
-    xterm -T "$agent_base" -hold -e "./conf/startagent.sh $agent_base $prolog $dali_home" &
+    XTERM -e "./conf/makeconf.sh $agent_base $DALI_HOME" &
+    XTERM -T "$agent_base" -hold -e "./conf/startagent.sh $agent_base $PROLOG $DALI_HOME" &
     sleep 2s
     $WAIT > /dev/null # %WAIT% >nul
 done
