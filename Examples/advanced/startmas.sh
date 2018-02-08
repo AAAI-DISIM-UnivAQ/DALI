@@ -12,7 +12,7 @@ WAIT="ping -c 4 127.0.0.1"
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
-XTERM=XTERM
+XTERM=xterm
 
 rm -rf tmp/*
 rm -rf build/*
