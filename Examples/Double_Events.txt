@@ -1,0 +1,42 @@
+
+Double Events Example
+=============
+
+
+The example shows that it is possible to have conjunctions of external events 
+in the antecedents of the DALI reactive rule. 
+If you want to enter more than one external event, you must enter the Simultaneity 
+Interval before the reactive rule is defined.
+The result of the reactive rule will only be executed if all external events 
+arrive in the simultaneity interval.
+
+In the advanced example, the files contained in the mas/types folder have been modified:
+=============
+
+agentType1.txt
+
+alarm1E:>write('Activate fire suppression and Send security guard '),nl.
+
+=============
+
+agentType2.txt
+
+alarmE:>write('Call fire department'),nl.
+
+=============
+
+agentType3.txt
+
+:-dynamic notified/1.
+notified(false).
+t60.
+heat_sensedE(X,T),smoke_detectedE(X,T):>fire_responceA(X,T).
+check_fire(X,T):-fire_responceP(X,T).
+check_fireI(X,T):>choose_fire(X,T).
+choose_fire(X,T):-notified(false),T<11,activate_fire_suppressionA,send_security_guardA,retract(notified(false)).
+choose_fire(X,T):-notified(false),T>10,call_fire_departmentA,retract(notified(false)).
+alarm1(X,T):-activate_fire_suppressionP,send_security_guardP.
+alarm1I(X,T):>messageA(agent1,send_message(alarm1,agent3),agent3),nl.
+alarm2(X,T):-call_fire_departmentP.
+alarm2I(X,T):>messageA(agent2,send_message(alarm,agent3),agent3),nl.
+send_security_guard(X,T):< security_guard_available(X,T).
