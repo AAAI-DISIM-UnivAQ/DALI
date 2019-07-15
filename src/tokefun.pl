@@ -4,7 +4,9 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-:- multifile user:term_expansion/6.
+:- multifile user:term_expansion/6, scrittura/1.
+:-dynamic rewrite_clause_le/1, parentesi_le/1,rewrite_clause/1,re_write/2, evento_aperto_le/0, examine_all/2, parentesi/1, buffer/1, cifre/1, cifre/2, cifre/4, residue/1, evento_aperto/0, eventi_esterni/1, deltaT/1.
+
 :-op(500,xfy,:>).
 :-op(500,xfy,:<).
 :-op(1200,fy,:~).
@@ -31,8 +33,7 @@ user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[]
 %%EDITED
 token(F):-leggiFile(F,Fi),tokenize(Fi,L),take_meta(L,F).
 token_fil(F):-leggiFile_fil(F,Fi),tokenize(Fi,L),take_meta_fil(L,F).
-token_clause(C,F,F1):-crea_rand(F,F1),name(C,L),tokenize(L,S),append(Lb,['EOL'],S),append(Lb,['.'],Lb1),
-append(Lb1,['EOL'],Lb2),take_meta_update(Lb2,F,F1).
+token_clause(C,F,F1):-crea_rand(F,F1),name(C,L),tokenize(L,S),append(Lb,['EOL'],S),append(Lb,['.'],Lb1),append(Lb1,['EOL'],Lb2),take_meta_update(Lb2,F,F1).
 
 crea_rand(F,T):-random(97,122,A4),random(97,122,A5),random(97,122,A6),name(F,Lf),append(Lf,[A4],F1),append(F1,[A5],F2),append(F2,[A6],Fi),name(T,Fi).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -64,9 +65,7 @@ charBlank(32).
 leggiChars(Final):-
 	get_code(Kh), 
 	if( charEof(Kh), Final=[], 
-		(if( (charEol(Kh); charBlank(Kh)), leggiChars1(32,[], Final), leggiChars1(Kh, [Kh], Final)))
-	)
-.
+		(if( (charEol(Kh); charBlank(Kh)), leggiChars1(32,[], Final), leggiChars1(Kh, [Kh], Final)))).
 
 leggiChars1(Prev, Temp, Final):-
 	get_code(Kh),
@@ -77,8 +76,7 @@ leggiChars1(Prev, Temp, Final):-
 				(leggiChars1(Kh,[Kh|Temp],Final))
 			))
 		))
-	)
-.
+	).
 		 		
 
 
@@ -114,7 +112,7 @@ chList([Ch|ChList],Sym) --> [Ch], chList(ChList,Sym).
 simbolo(Sym) --> implicitaz(Sym)|
                  simb_univ(Sym)
 			| identific(Sym)
-                                          | assegnamento(Sym)
+                        | assegnamento(Sym)
 			| separatore(Sym)
 			| letterale(Sym).
 
@@ -158,7 +156,7 @@ sep(Ch) --> [Ch],
                  [Ch] = "/"; [Ch] = "~";
                  [Ch] = "<"; [Ch] = "/";[Ch] = "?"}. 
 
-take_meta(L,F):-assert(parentesi(0)), assert(buffer([])), name(F,Lf),append(Lf,[46,112,108],Lft),
+take_meta(L,F):-assert(eventi_esterni(0)),assert(deltaT(0)),assert(parentesi(0)), assert(buffer([])), name(F,Lf),append(Lf,[46,112,108],Lft),
                         name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),
                         last(L,U),
 repeat,
@@ -168,8 +166,7 @@ Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1)),true),
 	if(clause(buffer(ParsedC),_), 
 	( retractall(buffer(_)), name(Parsed,ParsedC), 
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-	), (write('Errore take_meta'),nl)
-),re_file(Nf).
+	), (write('Errore take_meta'),nl)),re_file(Nf).
 
 take_meta_fil(L,F):-assert(parentesi(0)),assert(buffer([])),name(F,Lf),append(Lf,[46,112,108],Lft),
                         name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),
@@ -181,18 +178,18 @@ Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1,Nf)),true),
 if(clause(buffer(ParsedC),_), 
 	( retractall(buffer(_)), name(Parsed,ParsedC), 
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-	), (write('Errore take_meta_fil'),nl)
-).
+	), (write('Errore take_meta_fil'),nl)).
 
 examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
 
 
-
 examine_all1(Me):-if(member(Me,['(',')']), conta_parentesi(Me),true),
-		if(variabile(Me),examine_variable(Me),
-			if(label(Me),examine_label(Me),write_NovarNolabel(Me))
+                  if(tempo(Me), scrittura(Me),                 % controlla se è stato inserito il deltat, se si scrivo nel file pl e asserisco time_add
+                    (if(variabile(Me),examine_variable(Me),
+                        if(label(Me),examine_label(Me),write_NovarNolabel(Me)))
 
-		 ).
+                 )).
+
 
 variabile(Me):-name(Me,L),
                                     nth0(0,L,El),
@@ -200,6 +197,18 @@ variabile(Me):-name(Me,L),
 
 isa_variable(El):-El>64,El<91.
 isa_variable(El):-El=95.
+
+%Verifica se è stato inserito il delta Temporale dall'agente
+
+tempo(Me):- name(Me,L), nth0(0,L,El,L1), El==116, numbertime(L1).                       %controlla che il primo carattere è una t
+numbertime(L1):- nth0(0,L1,El,L_rest),check_number(El), scorri(L_rest).                 %controlla se il primo elemento della lista è un numero e scorre la lista
+check_number(El):- El>47, El<58.                                                        %range in ASCII per i numeri da 0 a 9
+scorri(L_rest):-if(L_rest=[],true, scorri_list(L_rest)).                                %controlla che tutti gli elementi della lista sono numeri 
+scorri_list(L_rest):- nth0(0,L_rest,X,L2), check_number(X),scorri(L2).
+scrittura(Me):- name(Me,L),nth0(0,L,R,L3), append([100,101,108,116,97,116,40],L3,L1),   %scrittura sul file pl del deltat inserito dall'agente
+                append(L1,[41],L2), clause(buffer(Parsed),_), retractall(buffer(_)),
+		append(Parsed,L2,Parola),assert(buffer(Parola)),
+		clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che è stato inserito
 
 
 
@@ -231,7 +240,7 @@ examine_label(Me):-name(Me,L),last(L,U),if(U=65,appA(L,U),if(U=69,appE(L,U),if(U
                       if(U=71,appG(L,U),if(U=84,appT(L,U),if(U=80,appP(L,U),if(U=78,appN(L,U),if(U=82,appR(L,U),true)))))))).
 appA(L,U):-length(L,N),nth1(N,L,U,R),append([97,40],R,L1),
                 re_write(L1),assert(evento_aperto).
-appE(L,U):-length(L,N),nth1(N,L,U,R),append([101,118,101,40],R,L1),
+appE(L,U):- conta_eventi_esterni,length(L,N),nth1(N,L,U,R),append([101,118,101,40],R,L1), %inserito conta_eventi_esterni 
                 re_write(L1),assert(evento_aperto).   
 appI(L,U):-length(L,N),nth1(N,L,U,R),append([101,118,105,40],R,L1),
                 re_write(L1),assert(evento_aperto). 
@@ -246,7 +255,7 @@ appN(L,U):-length(L,N),nth1(N,L,U,R),append([101,110,40],R,L1),
 appR(L,U):-length(L,N),nth1(N,L,U,R),append([114,101,109,40],R,L1),
                 re_write(L1),assert(evento_aperto). 
 
-
+conta_eventi_esterni:- clause(eventi_esterni(X),true), R is X+1, retractall(eventi_esterni(X)),assert(eventi_esterni(R)). %contatore degli eventi esterni
 
 conta_parentesi(El):-name(El,L),append(L,[fine],Lf),
               repeat,
@@ -311,8 +320,7 @@ non_aggiungi_le(L,Nf):-name(T,L),open(Nf,append,Stream,[]),
 write_NovarNolabel_le(Me,Nf):-if((member(Me,[':-',':>',':<',',','.',';','.%','~/','</','?/','EOL']),check_parentesi_le),                write_parentesi_le(Nf), true),
                                      
                                         name(Me,L),re_write(L,Nf).
-write_parentesi_le(Nf):-re_write1([41],Nf),retractall(evento_aperto_le),
-retractall(parentesi_le(_)),assert(parentesi_le(0)).
+write_parentesi_le(Nf):-re_write1([41],Nf),retractall(evento_aperto_le),retractall(parentesi_le(_)),assert(parentesi_le(0)).
 check_parentesi_le:-if((clause(evento_aperto_le,_),clause(parentesi_le(0),_)),true,false).
 
 examine_variable_le(Me,Nf):-name(Me,L),append([118,97,114,95],L,Lt),re_write1(Lt,Nf).

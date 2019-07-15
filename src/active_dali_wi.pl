@@ -41,6 +41,11 @@
 :-dynamic export_past_do/1.
 :-dynamic export_past_not_do/1.
 
+:-dynamic deltat/1, deltatime/1, simultaneity_interval/1, wishlist/1, tstart/1, mem_current/1, mem_no_dup/1, mem_past/1, verifica_lista/1.
+:-dynamic user_profile_location/1,dali_onto_location/1,server_obj/1, specialization/1,own_language/1, agente/4, agent/1, time_charge/1, da_agg/1.
+:-dynamic rule_base/1, mul/1,no_check/0,past/3,tep/2,fatto_mul/2,azi/1,even/1,evin/1,continue_mul_f/1,evN/1.
+
+
 
 :-op(500,xfy,:>).
 :-op(500,xfy,:<).
@@ -67,21 +72,16 @@ user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[]
 user:term_expansion((H:B),[],[],(ct(H,B)),[],[]).
 user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 
-
-
 :-use_module(library(random)),
   use_module(library(lists)),
   use_module(library(system)),
   use_module(library('linda/client')),
   use_module(library(clpq)),
-
   use_module(library(fdbg)),
-
   use_module(library(file_systems)).
 
 :-dynamic eve/1.
 :-dynamic eve_cond/1.
-
 :-['utils.pl'].
 
 start0(FI):-set_prolog_flag(redefine_warnings,off),
@@ -138,7 +138,7 @@ start1(Fe,AgentName,Libr,Fil):-
 
   togli_var_ple(Fe),
 
-  if(file_exists(FilePlf), controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
+  if(file_exists(FilePlf),controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
 
   load_directives(FilePlf),
   server_obj(Tee), %% questo si puo togliere se si passa ad una sola funzione
@@ -211,7 +211,6 @@ versa(F):-findall(X,clause(da_agg(X),_),L),
               T==U,!,
               close(Stream),retractall(da_agg(_)).
 
-%'
 
 aprifile(F):-see(F),
              repeat,
@@ -221,18 +220,14 @@ aprifile(F):-see(F),
                                 T == end_of_file,
              !,
              seen,take,costruisci0(F).
-%'
 
 take:-findall(T,clause(rule_base(T),_),L),
           last(L,U),
-         repeat,
+          repeat,
           member(M,L),
-
                spezza(M),
 
            M==U,!,retractall(rule_base(_)), if(clause(mul(_),_),ass_mul_first,true).
-
-
 
 examine_mul:-if(clause(mul(_),_),examine1_mul,true).
 examine1_mul:-findall(L,clause(mul(L),_),S),
@@ -298,7 +293,7 @@ recupera_fun0(F):-recupera_funE(F),recupera_funI(F),recupera_funA(F),recupera_to
 
 %ASSERISCE GLI EVENTI ESTERNI RELATIVI AGLI EVENTI MULTIPLI
 eve_mul_first(Head):-functor(Head,_,N),Head=..L_eve,if((arg(1,L_eve,_),N>1),continue_mul_f(L_eve),true).
-        continue_mul_f(L_eve):-arg(1,L_eve,X_eve),if((X_eve=eve,is_list(L_eve)),
+continue_mul_f(L_eve):-arg(1,L_eve,X_eve),if((X_eve=eve,is_list(L_eve)),
                      asse_cosa(mul(L_eve)),true).
 ass_mul_first:-findall(L,clause(mul(L),_),S),last(S,E),repeat,member(Me,S),
          keep_past_ass_first(Me),Me==E,!,retractall(mul(_)).
@@ -456,7 +451,7 @@ recupera_tot_even(F):- name(F,L),
 
 %INIZIALIZZA IL FILE PLF DELLE DIRETTIVE%
 
-inizializza_plf(F):- if(file_exists(F),leggirighe(F),true).
+inizializza_plf(F):-if(file_exists(F),leggirighe(F),true).
 leggirighe(F):-leggiriga(F,1),leggiriga(F,2),leggiriga(F,3),leggiriga(F,8),
                  clause(eventE(Le),_),clause(evintI(Li),_),clause(az(La),_),clause(rem_fact(Lr),_),
                  append(Le,Li,Lp1),append(Lp1,La,Lp2),append(Lp2,Lr,Lp3),
@@ -748,7 +743,7 @@ not_receivable_meta(AgM,IndM,Language,Ontology,Con):-write('Eliminated message:n
 
 
 %PROCESSA GLI EVENTI ESTERNI
-processa_eve:- clause(agente(_,_,S,_),_),leggiriga(S,1),clause(eventE(Es),_),
+processa_eve:-clause(agente(_,_,S,_),_),leggiriga(S,1),clause(eventE(Es),_),
               if(Es=[],true,(processa_eve_high,processa_eve_normal)).
 
 processa_eve_high:-if(clause(ev_high(_,_,_),_),processa_eve_high1,true).
@@ -764,16 +759,22 @@ processa_eve_high(AgM,E,T):-retractall(ev_high(AgM,E,T)),asse_cosa(executed_exte
 divP(E,T,program),clause(agente(_,_,S,_),_),leggiriga(S,5),
 clause(evN(Es),_),if(Es=[],true,if(member(E,Es),processa_eve3(E,T),true)).
 
-%%Aggiunto trace
+check_presence:- clause(eventi_esterni(X),true), if(X>1,clause(deltaT(1),true),true). %controlla che se gli eventi esteni sono >1 deve essere presente il deltat
 processa_eve_normal:-if(clause(ev_normal(_,_,_),_),processa_eve_normal1,true).
 processa_eve_normal1:-clause(ev_normal(AgM,E,T),_),
+                     if(check_presence,true,no_proc_eve_normal_no_time(AgM,E,T)),
                      if(once(eve_cond(E)),processa_eve_normal(AgM,E,T),no_proc_eve_normal(AgM,E,T)).
 
 no_proc_eve_normal(AgM,E,T):-write('External event preconditions not verified'),nl,retractall(ev_normal(_,E,T)),
                           asse_cosa(refused_external(AgM,E,T)).
 
-processa_eve_normal(AgM,E,T):-retractall(ev_normal(AgM,E,T)),
-divP(E,T,program),clause(agente(_,_,S,_),_),leggiriga(S,5),
+no_proc_eve_normal_no_time(AgM,E,T):-write('External event preconditions not verified: no DeltaTime'),nl,retractall(ev_normal(_,E,T)), % se gli eventi esterni sono maggiori di 1 e il deltaTime non è presente 
+                          asse_cosa(refused_external(AgM,E,T)).
+
+
+processa_eve_normal(AgM,E,T):-retractall(ev_normal(AgM,E,T)),simultaneity_interval(E), processa_eve.
+
+become_past(E,T):-divP(E,T,program),clause(agente(_,_,S,_),_),leggiriga(S,5),
 clause(evN(Es),_),if(Es=[],true,if(member(E,Es),processa_eve3(E,T),true)).
 
 
@@ -852,7 +853,8 @@ proc_rip_esterni(Me,Y,Stream):-
                     write(Stream,'),eve('),
                     write(Stream,X),write(Stream,').'),nl(Stream),
                     write(Stream,'cd('),write(Stream,X),write(Stream,'):-true.').
-
+     
+                    
 %EVENTI DEL PRESENTE
 
 asser_evN(S):-leggiriga(S,5),clause(evN(C),_),if(C=[],true,asser_evN1(C)).
@@ -952,7 +954,7 @@ fai(X,T,Ag):-functor(X,F,_),if(F=message,em_mess0(X,T,Ag),choose_action(X)),if(F
 choose_action(X):-functor(X,F,_),if(member(F,[drop_past,look_up_past,add_past,set_past,callasp]),
 take_past_actions(F,X),(print(make(X)),nl)),save_on_log_file(make(X)).
 
-take_past_actions(F,X):-arg(1,X,E),caso0_past(F,E,X).
+take_past_actions(F,X):-write('Sono in Take_past_actions'),arg(1,X,E),caso0_past(F,E,X).
 caso0_past(F,X,Y):-if(F=drop_past,drop_evento(X),caso1_past(F,X,Y)).
 caso1_past(F,X,Y):-if(F=add_past,add_evento(X),caso2_past(F,X,Y)).
 caso2_past(F,X,Y):-if(F=look_up_past,look_up_evento(X),caso3_past(F,X,Y)).
@@ -1497,7 +1499,7 @@ cond_true_remember_event_mod3(T,T1,T2):-T>=T1,T=<T2.
 pari:-sleep(1),random(1,10,R), R1 is R mod 2,
       if(R1=0,(internal,external),(external,internal)).
 
-internal:-blocco_constr,ricmess,ev_int, ev_goal, ev_int0,blocco_numero_ev_int,blocco_frequenza,
+internal:-blocco_constr,ricmess,ev_int, ev_goal,ev_int0,blocco_numero_ev_int,blocco_frequenza,
 ev_int2,controlla_freq_tent,svuota_coda_priority,controlla_freq_iv,scatena,blocco_constr,keep_action,execute_do_action_propose,prendi_action_normal,blocco_constr,controlla_vita.
 
 external:-blocco_constr,ricmess,processa_eve,examine_mul,keep_action,svuota_coda_priority,prendi_action_normal,blocco_constr,controlla_vita.
@@ -2161,4 +2163,39 @@ duplicate_file_profile(U,P,S):-
            M==38,!,
            close(Stream),
            retractall(base_cod_term(_)).
+
+% Controllo sull'intervallo di simultaneità durante l'arrivo degli eventi prima che diventino passati
+simultaneity_interval(E):- once(deltat(X)), assert(deltatime(X)),clause(agente(_,_,S,_),_),leggiriga(S,1),clause(eventE(Es),_),assert(wishlist(Es)), 
+             controllo_eventi(E).
+
+controllo_eventi(E):- if(verifica_tstart,existFirstTime(E),startFirstTime(E)).
+verifica_tstart:- clause(tstart(_),true).
+startFirstTime(E):- now(Time),assert(tstart(Time)), L=[], append([E],L,L1), write('This event is first events:'), write(L1), nl, assert(mem_current(L1)),total_member.
+existFirstTime(E):- if(check_while, controllo_intervallo(E), divento_pass_and_first(E)).
+check_while:- now(Time), deltatime(T), tstart(T0), Time-T0=<T. 
+controllo_intervallo(E):- if(check_while, operation_list(E) , divento_pass ).
+operation_list(E):-aggiorno_lista(E), if(verifica_lista,divento_pass,(write('Do not arrive all events'), nl)).
+total_member:- if(verifica_lista,divento_pass,(write('Do not arrive all events'), nl)).
+aggiorno_lista(E):- mem_current(L), append([E],L,L1),write('This is updated list:'),write(L1),nl, retract(mem_current(L)), assert(mem_current(L1)).
+verifica_lista:- remove_dup, verifica_contenuto. 
+remove_dup:- mem_current(L), remove_dups(L, L1), write('This is list without duplicates:'),write(L1),nl, assert(mem_no_dup(L1)).
+verifica_contenuto:- check_lenght, contain.
+check_lenght:- wishlist(L), mem_no_dup(L1),same_length(L,L1). 
+contain:- mem_no_dup(L1), if(L1=[],true , scorri_member).
+scorri_member:- mem_no_dup(L1), nth0(0,L1,X,L_rest), retract(mem_no_dup(L1)), assert(mem_no_dup(L_rest)), contain. 
+divento_pass:- retract(tstart(_)),svuota_lista, passato.
+svuota_lista:- mem_current(L), assert(mem_past(L)), retract(mem_current(L)), write('This is list of past event:'), write(L), nl.
+passato:- mem_past(L), if(L=[],true,scorri_past(L)).
+scorri_past(L):- nth0(0,L,E,L1), now(T), become_past(E,T), retract(mem_past(L)), assert(mem_past(L1)), passato.
+divento_pass_and_first(E):-retract(tstart(_)),svuota_lista, passato, startFirstTime(E).
+
+
+
+
+
+
+
+
+
+
 

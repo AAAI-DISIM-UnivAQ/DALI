@@ -1,1 +1,1 @@
-'mbp-g.local':3010.
+'asus-gdg':3010.

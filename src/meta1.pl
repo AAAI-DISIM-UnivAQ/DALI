@@ -50,7 +50,7 @@ chiama_send_message(F,E,_,_,AgM,_,Time):-meta(E,G,AgM),go_rvar(G),
 
 
 chiama_send_message(_,E,_,_,AgM,_,_):-
-                                      write(learning(E,AgM)),nl.
+                                     write('This event is not in desired event list:'), write(E),write(','), write(learning(E,AgM)),nl.
 
 %CHIAMATE A PROCEDURE
 
