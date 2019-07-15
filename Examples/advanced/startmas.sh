@@ -2,8 +2,7 @@
 #exec 1>/dev/null # @echo off
 clear # cls
 #title "MAS"
-SICSTUS_HOME=/usr/local/sicstus4.3.5
-#SICSTUS_HOME=/usr/local/sicstus4.2.3
+SICSTUS_HOME=/usr/local/sicstus4.4.1
 MAIN_HOME=../..
 DALI_HOME=../../src
 CONF_DIR=conf
