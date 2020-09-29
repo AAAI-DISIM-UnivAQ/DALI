@@ -32,3 +32,10 @@ If you want to use the 32bit version of the sictsus prolog within an ubuntu deri
     sudo dpkg --add-architecture i386
     sudo apt-get install gcc-multilib
     sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386
+    
+## OS X Issues
+
+### Fast restart of the MAS
+With OS X if you need to start the MAS during debug many times, you can avoid the server error, with the following command
+
+    sudo sysctl net.inet.tcp.msl=1
