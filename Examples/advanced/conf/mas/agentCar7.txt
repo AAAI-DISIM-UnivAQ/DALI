@@ -1,0 +1,1 @@
+agent('work/agentCar7','agentCar7','no',italian,['conf/communication'],['../../src/communication_fipa','../../src/learning','../../src/planasp'],'no','../../src/onto/dali_onto.txt',[]).

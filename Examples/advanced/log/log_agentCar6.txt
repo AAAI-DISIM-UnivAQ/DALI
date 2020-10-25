@@ -1,0 +1,2 @@
+send_message(send_message(richiesta_attraversamento(6),_27893))
+send_message(send_message(termine_attraversamento(6),_41439))

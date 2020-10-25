@@ -1,0 +1,35 @@
+:- use_module(library(system)).
+
+:- dynamic mioId/1.
+
+:- write('Sono una macchinina!').
+
+/* la vettura "arriva" al semaforo */
+initE(Id):>
+    assertz(mioId(Id)),
+    write('SONO APPENA ARRIVATO AL SEMAFORO'), nl,
+    stopA,
+    richiedi_attravarsamentoA(Id).
+
+/* quando la vettura "arriva" al semaforo, è obbligata a fermarsi */
+stopA:- 
+    mioId(Id),
+    Time is (Id*5),
+    write('PER MOSTRARE IL FUNZIONAMENTO DEL SOFTWARE, MI FEERMO PER '), write(Time), write(' SECONDI!'), nl,
+    sleep(Time).
+
+/* la vettura richiede di poter attraversare la strada. questa azione si limita solamente a comunicarlo al semaforo. */
+richiedi_attravarsamentoA(Id):- 
+    write('SONO PASSATI I SECONDI, ORA CHIEDO AL SEMAFORO DI PASSARE'), nl,
+    messageA(agentSemaphore1, send_message(richiesta_attraversamento(Id), Me)). 
+
+testE:> 
+    nl, write('IL SEMAFORO MI HA CONCESSO AUTORIZZAZIONE A PASSARE'), nl,
+    attraversoA.
+
+/* la macchina si mette in moto ed attraversa il semaforo */
+attraversoA:-
+    write('ATTRAVERSO QUINDI IL SEMAFORO'), nl,
+    mioId(Id),
+    write('ORA CHE HO ATTRAVERSATO IL SEMAFORO, COMUNICO CHE LA STRADA E TORNATA LIBERA'), nl,
+    messageA(agentSemaphore1, send_message(termine_attraversamento(Id), Me)).
