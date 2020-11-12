@@ -1,2 +1,0 @@
-send_message(send_message(richiesta_attraversamento(1),_3021))
-send_message(send_message(termine_attraversamento(1),_28289))
