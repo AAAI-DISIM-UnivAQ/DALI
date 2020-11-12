@@ -1,48 +1,35 @@
 :- use_module(library(system)).
 
-:- dynamic mio_id/1.
-
-:- dynamic stato_attraversamento/2.
+:- dynamic mioId/1.
 
 :- write('Sono una macchinina!').
 
-asserisci_ontologia(Semaforo, [], attraversamento) :- 
-    retractall(stato_attraversamento(_, _)),
-    assertz(stato_attraversamento('concesso', Semaforo)).
-
-/* inizializzazione della vettura */
-initE(Id):>
-    assertz(mio_id(Id)).
-
 /* la vettura "arriva" al semaforo */
-arrivo_al_semaforoE(Semaforo):>
-    assertz(stato_attraversamento('no')),
-    format('Sono arrivato presso incrocio del semaforo ~w', Semaforo), nl,
-    chiedo_di_attraversareA(Semaforo).
+initE(Id):>
+    assertz(mioId(Id)),
+    write('SONO APPENA ARRIVATO AL SEMAFORO'), nl,
+    stopA,
+    richiedi_attravarsamentoA(Id).
+
+/* quando la vettura "arriva" al semaforo, è obbligata a fermarsi */
+stopA:- 
+    mioId(Id),
+    Time is (Id*5),
+    write('PER MOSTRARE IL FUNZIONAMENTO DEL SOFTWARE, MI FEERMO PER '), write(Time), write(' SECONDI!'), nl,
+    sleep(Time).
 
 /* la vettura richiede di poter attraversare la strada. questa azione si limita solamente a comunicarlo al semaforo. */
-chiedo_di_attraversareA(Semaforo):- 
-    mio_id(Id),
-    write('Sto per chiedere al semaforo di attraversare'), nl,
-    messageA(Semaforo, send_message(richiesta_attraversamento(Id), Me)). 
+richiedi_attravarsamentoA(Id):- 
+    write('SONO PASSATI I SECONDI, ORA CHIEDO AL SEMAFORO DI PASSARE'), nl,
+    messageA(agentSemaphore1, send_message(richiesta_attraversamento(Id), Me)). 
 
-attraverso :- write('').
-
-attraversoI:- 
-    stato_attraversamento(Y, Semaforo),
-    'concesso' == Y,
-    retractall(stato_attraversamento(_, Semaforo)),
-    assertz(stato_attraversamento('incorso', Semaforo)),
-    messageA(agentSemaphore1, accept_proposal(test, [], Me)),
-    write('Il semaforo mi ha appena concesso ad attraversare incrocio, dunque lo attraverso'), nl,
-    termino_attraversamentoA.
+testE:> 
+    nl, write('IL SEMAFORO MI HA CONCESSO AUTORIZZAZIONE A PASSARE'), nl,
+    attraversoA.
 
 /* la macchina si mette in moto ed attraversa il semaforo */
-termino_attraversamentoA:-
-    mio_id(Id),
-    stato_attraversamento(X, Semaforo),
-    X == 'incorso',
-    retractall(stato_attraversamento(_, Semaforo)),
-    assertz(stato_attraversamento('terminato', Semaforo)),
-    write('Ho attraversato incrocio, dunque comunico al semaforo di aver terminato'), nl,
-    messageA(Semaforo, send_message(termine_attraversamento(Id), Me)).
+attraversoA:-
+    write('ATTRAVERSO QUINDI IL SEMAFORO'), nl,
+    mioId(Id),
+    write('ORA CHE HO ATTRAVERSATO IL SEMAFORO, COMUNICO CHE LA STRADA E TORNATA LIBERA'), nl,
+    messageA(agentSemaphore1, send_message(termine_attraversamento(Id), Me)).
