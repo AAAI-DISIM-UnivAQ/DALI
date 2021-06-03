@@ -77,6 +77,10 @@ To complete
 4. Push to the branch (`git push origin feature/fooBar`)
 5. Create a new Pull Request
 
+## Examples of Applications:
+
+* in Robotics: coordination among store delivery robots: [Video](https://youtu.be/1dfWthhUovk) from S. Valentini:
+   [![Delivery robots cordination](https://img.youtube.com/vi/1dfWthhUovk/0.jpg)](https://www.youtube.com/watch?v=1dfWthhUovk)
 
 ## References
 * [DALI 1.0](http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI)
