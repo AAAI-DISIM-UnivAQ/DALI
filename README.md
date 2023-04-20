@@ -83,8 +83,8 @@ To complete
    [![Delivery robots cordination](https://img.youtube.com/vi/1dfWthhUovk/0.jpg)](https://www.youtube.com/watch?v=1dfWthhUovk)
 
 ## References
-* [DALI 1.0](http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI)
-* COSTANTINI, Stefania. [*The DALI Agent-Oriented Logic Programming Language: Summary and References 2015.*](http://costantini.di.univaq.it/pubbls/Dali_References.pdf)
+* DALI 1.0 original URL: http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI (no more active)
+* COSTANTINI, Stefania. [*The DALI Agent-Oriented Logic Programming Language: Summary and References 2015.*](http://people.disim.univaq.it/stefcost/pubbls/Dali_References.pdf)
 * COSTANTINI S, TOCCHIO A. [*A logic programming language for multi-agent systems.*](docs/DALI_Language_description.pdf) Logics in Artificial Intelligence, Springer Berlin Heidelberg, 2002, pp:1-13.
 * COSTANTINI S, TOCCHIO A. *The DALI logic programming agent-oriented language.* In Logics in Artificial Intelligence Springer Berlin Heidelberg, 2004, pp:685-688.
 * COSTANTINI S, TOCCHIO A. *DALI: An Architecture for Intelligent Logical Agents.* In: AAAI Spring Symposium: Emotion, Personality, and Social Behavior. 2008. pp:13-18.
@@ -94,3 +94,4 @@ To complete
 * COSTANTINI, Stefania; DE GASPERIS, Giovanni; NAZZICONE, Giulio. *DALI for cognitive robotics: principles and prototype implementation.* In: International Symposium on Practical Aspects of Declarative Languages. Springer, Cham, 2017. p. 152-162.
 * COSTANTINI, Stefania, DE GASPERIS, Giovanni, PITONI Valentina, SALUTARI Agnese. [*DALI: A multi agent system framework for the web, cognitive robotic and complex event processing.*](http://ceur-ws.org/Vol-1949/CILCpaper05.pdf), [CILC 2017](http://cilc2017.unina.it), 32nd Italian Conference on Computational Logic
 26-28 September 2017, Naples, Italy
+* RAFANELLI, Andrea; COSTANTINI, Stefania; DE GASPERIS, Giovanni. [*A Multi-Agent-System framework for flooding events. 2022*](https://ceur-ws.org/Vol-3261/paper11.pdf). WOA 2022: 23rd Workshop From Objects to Agents, September 1–2, Genova, Italy
