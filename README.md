@@ -95,3 +95,4 @@ To complete
 * COSTANTINI, Stefania, DE GASPERIS, Giovanni, PITONI Valentina, SALUTARI Agnese. [*DALI: A multi agent system framework for the web, cognitive robotic and complex event processing.*](http://ceur-ws.org/Vol-1949/CILCpaper05.pdf), [CILC 2017](http://cilc2017.unina.it), 32nd Italian Conference on Computational Logic
 26-28 September 2017, Naples, Italy
 * RAFANELLI, Andrea; COSTANTINI, Stefania; DE GASPERIS, Giovanni. [*A Multi-Agent-System framework for flooding events. 2022*](https://ceur-ws.org/Vol-3261/paper11.pdf). WOA 2022: 23rd Workshop From Objects to Agents, September 1–2, Genova, Italy
+* COSTANTINI, Stefania. [*Ensuring trustworthy and ethical behaviour in intelligent logical agents](https://academic.oup.com/logcom/article/32/2/443/6513773). Journal of Logic and Computation, 2022, 32.2: 443-478.
