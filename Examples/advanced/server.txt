@@ -1,1 +1,1 @@
-'asus-gdg':3010.
+'archlinux':3010.
