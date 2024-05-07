@@ -10,7 +10,8 @@
 %%
 
 :- multifile user:term_expansion/6.
-:- set_prolog_flag(discontiguous_warnings,off).
+:- set_prolog_flag(discontiguous_warnings,off),
+   set_prolog_flag(single_var_warnings,off).
 
 %%
 :-['communication_onto.pl'].
@@ -768,7 +769,7 @@ processa_eve_normal1:-clause(ev_normal(AgM,E,T),_),
 no_proc_eve_normal(AgM,E,T):-write('External event preconditions not verified'),nl,retractall(ev_normal(_,E,T)),
                           asse_cosa(refused_external(AgM,E,T)).
 
-no_proc_eve_normal_no_time(AgM,E,T):-write('External event preconditions not verified: no DeltaTime'),nl,retractall(ev_normal(_,E,T)), % se gli eventi esterni sono maggiori di 1 e il deltaTime non è presente 
+no_proc_eve_normal_no_time(AgM,E,T):-write('External event preconditions not verified: no DeltaTime'),nl,retractall(ev_normal(_,E,T)), % se gli eventi esterni sono maggiori di 1 e il deltaTime non ï¿½ presente 
                           asse_cosa(refused_external(AgM,E,T)).
 
 
@@ -2164,7 +2165,7 @@ duplicate_file_profile(U,P,S):-
            close(Stream),
            retractall(base_cod_term(_)).
 
-% Controllo sull'intervallo di simultaneità durante l'arrivo degli eventi prima che diventino passati
+% Controllo sull'intervallo di simultaneitï¿½ durante l'arrivo degli eventi prima che diventino passati
 simultaneity_interval(E):- once(deltat(X)), assert(deltatime(X)),clause(agente(_,_,S,_),_),leggiriga(S,1),clause(eventE(Es),_),assert(wishlist(Es)), 
              controllo_eventi(E).
 
