@@ -2,7 +2,7 @@
 #exec 1>/dev/null # @echo off
 clear # cls
 #title "MAS"
-SICSTUS_HOME=/usr/local/sicstus4.6.0
+SICSTUS_HOME=/usr/local/sicstus4.9.0
 MAIN_HOME=../..
 DALI_HOME=../../src
 CONF_DIR=conf
@@ -30,11 +30,11 @@ done
 
 cp $BUILD_HOME/*.txt work
 
-$XTERM -hold -e "$PROLOG -l $DALI_HOME/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%PROLOG%" -l "%DALI_HOME%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
+$XTERM -hold -e "$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%PROLOG%" -l "%DALI_HOME%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
 echo Server ready. Starting the MAS....
 $WAIT > /dev/null # %WAIT% >nul
 
-$XTERM -hold -e "$PROLOG -l $DALI_HOME/active_user_wi.pl --goal utente." & # start /B "" "%PROLOG%" -l "%DALI_HOME%/active_user_wi.pl" --goal utente.
+$XTERM -hold -e "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente." & # start /B "" "%PROLOG%" -l "%DALI_HOME%/active_user_wi.pl" --goal utente.
 echo Launching agents instances...
 $WAIT > /dev/null # %WAIT% > nul
 
