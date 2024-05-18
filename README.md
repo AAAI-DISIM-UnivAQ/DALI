@@ -8,9 +8,18 @@ DALI is a meta interpreter built on top of Sicstus Prolog (R) (at the moment).
 
 ## Installation
 
+DALI is built upon the SICStus Prolog implementation, following instructions at https://sicstus.sics.se/download4.html, for which you a need a valid license. 
+You may use any latest SICStus verion, but DALI has been tested to work well with the archived 4.6.0 version available at these URLS:
+
+* macOS: https://sicstus.sics.se/sicstus/products4/sicstus/4.6.0/binaries/darwin/sp-4.6.0-x86_64-darwin-17.0.0.tar.gz
+* GNU/Linux:  https://sicstus.sics.se/sicstus/products4/sicstus/4.6.0/binaries/linux/sp-4.6.0-x86_64-linux-glibc2.17.tar.gz
+* Windows: https://sicstus.sics.se/sicstus/products4/sicstus/4.6.0/binaries/win32/InstallSICStus-4.6.0-x64-VC16.exe
+
+Also some OS-specific isntructions:
+
 **OS X & Linux:**
-1.  To download and install SICStus Prolog (it is needed), follow the instructions at https://sicstus.sics.se/download4.html.
-2.  Then, you can download DALI and test it by running an example DALI MAS:
+
+You can download DALI and test it by running an example DALI MAS:
 ```sh
 git clone https://github.com/AAAI-DISIM-UnivAQ/DALI.git
 cd DALI/Examples/advanced
@@ -22,9 +31,9 @@ bash startmas.sh
 * &nbsp;&nbsp;&nbsp;&nbsp; 1 instance of DALI metaintepreter for each agent (active_dali_wi.pl)
 
 **Windows:**
-1.  To download and install SICStus Prolog (it is needed), follow the instructions at https://sicstus.sics.se/download4.html.
-2.  Then, you can download DALI from https://github.com/AAAI-DISIM-UnivAQ/DALI.git.
-3.  Unzip the repository, go to the folder "DALI/Examples/basic", and test if DALI works by duble clicking "startmas.bat" file (this will launch an example DALI MAS). \
+
+You can download DALI from https://github.com/AAAI-DISIM-UnivAQ/DALI.git.
+*  Unzip the repository, go to the folder "DALI/Examples/basic", and test if DALI works by duble clicking "startmas.bat" file (this will launch an example DALI MAS). \
 \
 &nbsp;&nbsp;&nbsp;&nbsp; You will see different windows opening:
 * &nbsp;&nbsp;&nbsp;&nbsp; Prolog LINDA server (active_server_wi.pl)
@@ -62,7 +71,7 @@ Check [release history](http://github.com/AAAI-DISIM-UnivAQ/DALI/releases) page.
 
 ## Contacts
 
-Giovanni De Gasperis – [@giodegas](http://twitter.com/giodegas) – giovanni.degasperis-at-univaq-it
+Giovanni De Gasperis – [@giodegas](http://x.com/giodegas) – giovanni.degasperis-at-univaq-it
 
 Distributed under the Apache License 2.0. See ``LICENSE`` for more information.
 
