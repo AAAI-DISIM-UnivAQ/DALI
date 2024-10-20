@@ -23,7 +23,7 @@ else
 fi
 
 # Create or attach to the tmux session
-tmux new-session -d -s DALI_session
+# tmux new-session -d -s DALI_session top
 
 # Define paths and variables
 SICSTUS_HOME=$HOME/sicstus4.4.1
@@ -31,7 +31,7 @@ MAIN_HOME=../..
 DALI_HOME=../../src
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
-WAIT="ping -c 4 127.0.0.1"
+WAIT="ping -c 3 127.0.0.1"
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
@@ -52,19 +52,22 @@ rm -rf conf/mas/*
 
 # Build agents based on instances
 for instance_filename in $INSTANCES_HOME/*.txt; do
-    echo "Instance: " $instance_filename
     type=$(<$instance_filename)  # Agent type name is the content of the instance file
     type_filename="$TYPES_HOME/$type.txt"
+    echo "Instance: " $instance_filename " of type: " $type_filename
     instance_base="${instance_filename##*/}"  # Extract instance base name
-    echo "$type_filename"
     cat "$type_filename" >> "$BUILD_HOME/$instance_base"
 done
 
-ls -lisa $BUILD_HOME
+ls $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 
-# Start server in a new vertical split
-tmux split-window -v -t DALI_session $PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal "go(3010,'server.txt')."
+srvcmd="$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
+echo "server: " $srvcmd
+tmux new-session -d -s DALI_session $srvcmd
+
+# Start the LINDA server in a new console
+tmux -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
 echo "Server ready. Starting the MAS..."
 $WAIT > /dev/null  # Wait for a while
 
@@ -79,11 +82,8 @@ for agent_filename in $BUILD_HOME/*; do
     echo "Agent: $agent_base"
     # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
-    # Pause a bit to ensure the pane is ready before splitting again
-    sleep 1
     # Start the agent in the new pane
-    tmux split-window -h -t DALI_session "/bin/bash -c $current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
-    sleep 1
+    tmux split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
 
@@ -100,5 +100,3 @@ read
 
 # Clean up processes
 killall sicstus
-killall tmux
-

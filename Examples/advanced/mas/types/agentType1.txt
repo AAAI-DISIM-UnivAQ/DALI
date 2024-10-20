@@ -1,6 +1,5 @@
 :- write('Hello world!').
 
-t60.
 
 eventE:> write('which event?').
 

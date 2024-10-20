@@ -12,7 +12,7 @@ with agent type, instances, each agent living in a separated terminal console
 ### Fast restart of the MAS
 With Linux if you need to start the MAS during debug many times, you can avoid the server error, with the following command
 
-    sudo sysctl net.ipv4.tcp_tw_recycle=1
+    sudo sysctl -w net.ipv4.tcp_tw_reuse=1
 
 (Note: this does not work if you have kernel version >= 4.12. See [this](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=4396e46187ca5070219b81773c4e65088dac50cc) for more information.)
 
