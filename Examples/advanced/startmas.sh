@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Enable debugging with `set -x` and disable with `set +x`
+set -x  # Start debugging
+
 #exec 1>/dev/null # @echo off
 clear # cls
 
@@ -26,6 +29,13 @@ INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
 XTERM=xterm
+
+if [[ -x "$PROLOG" ]]; then
+  printf "SICStus Prolog found at %s\n" "$PROLOG"
+else
+  printf "Error: SICStus Prolog not found at %s or is not executable.\n" "$PROLOG" >&2
+  exit -1
+fi
 
 rm -rf tmp/*
 rm -rf build/*
@@ -67,4 +77,4 @@ echo Press a key to shutdown the MAS
 read -p "$*"
 echo Halting the MAS...
 killall sicstus
-killall xterm
+killall tmux
