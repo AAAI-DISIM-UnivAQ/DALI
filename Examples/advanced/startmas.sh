@@ -84,7 +84,7 @@ for agent_filename in $BUILD_HOME/*; do
     sleep 1
 
     # Start the agent in the new pane
-    tmux split-window -h -t DALI_session "/bin/bash -c "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME""
+    tmux split-window -h -t DALI_session "/bin/bash -c $current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
     sleep 2
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
