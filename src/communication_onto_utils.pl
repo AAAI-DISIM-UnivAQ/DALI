@@ -25,7 +25,7 @@ normalize(Var, Result, NormalizedValue):-
         member(binding([name=Var], Type, Value), BindList),
         if(Type=uri,
                 take_name_uri(Value, NormalizedValue), 
-                if(Type=literal, take_name(Value,NormalizedValue), Value=NormalizedValue) %% ultimo caso significa che c'è un nodo blank.
+                if(Type=literal, take_name(Value,NormalizedValue), Value=NormalizedValue) %% ultimo caso significa che c'ï¿½ un nodo blank.
         ),!.
 
 fetch_ask(Response,Bool):-

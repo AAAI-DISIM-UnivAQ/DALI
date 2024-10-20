@@ -10,7 +10,7 @@ plv_from_name(Name, NameExt):- name(Name,L), append(L,[46,112,108,118],L1), name
 ple_from_name(Name, NameExt):- name(Name,L), append(L,[46,112,108,101],L1), name(NameExt,L1).
 plf_from_name(Name, NameExt):- name(Name,L), append(L,[46,112,108,102],L1), name(NameExt,L1).
 txt_from_name(Name, NameExt):- name(Name,L), append(L,[46,116,120,116],L1), name(NameExt,L1).
-log_from_name(Name, NameExt):- name('log/log_',L0), name(Name,L1), name('.txt',L2), append(L0,L1,L01), append(L01,L2,L02), name(NameExt,L02).
+log_from_name(Name, NameExt):- name('Examples/advanced/log/log_',L0), name(Name,L1), name('.txt',L2), append(L0,L1,L01), append(L01,L2,L02), name(NameExt,L02).
 
 %% Eliminates agent files except plf
 delete_agent_files(F):-

@@ -13,7 +13,7 @@ leggiFile_var(Infile,Txt) :-			%apertura file,lettura righe
 					%e chiusura file
 	
 	atom_concat(Infile,'.pl',File),
-	see(File),   
+	see(File),  
 	leggiChars_var(Txt), !,
 	seen.
 
