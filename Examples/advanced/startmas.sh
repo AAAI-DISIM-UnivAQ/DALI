@@ -62,12 +62,11 @@ done
 ls $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 
+# Start the LINDA server in a new console
 srvcmd="$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
 echo "server: " $srvcmd
 tmux new-session -d -s DALI_session $srvcmd
 
-# Start the LINDA server in a new console
-tmux -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
 echo "Server ready. Starting the MAS..."
 $WAIT > /dev/null  # Wait for a while
 
