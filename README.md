@@ -8,8 +8,11 @@ DALI is a meta interpreter built on top of Sicstus Prolog (R) (_at the moment_).
 
 ## Installation
 
-DALI is built upon the SICStus Prolog implementation, following instructions at https://sicstus.sics.se/download4.html, for which you a need a valid license. 
-You may use any latest SICStus version, but DALI has been tested to work well with the archived 4.6.0 version available at these URLS:
+DALI is built upon the SICStus Prolog implementation, 
+following instructions at https://sicstus.sics.se/download4.html, 
+for which you a need a valid license. 
+You may use any latest SICStus version at your own risk, but DALI has been tested 
+to work reasonably well with the archived 4.6.0 version available at these URLS:
 
 * macOS: https://sicstus.sics.se/sicstus/products4/sicstus/4.6.0/binaries/darwin/sp-4.6.0-x86_64-darwin-17.0.0.tar.gz
 * GNU/Linux:  https://sicstus.sics.se/sicstus/products4/sicstus/4.6.0/binaries/linux/sp-4.6.0-x86_64-linux-glibc2.17.tar.gz
