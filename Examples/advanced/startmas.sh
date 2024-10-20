@@ -79,7 +79,7 @@ for agent_filename in $BUILD_HOME/*; do
     echo "Agent: $agent_base"
 
     # Create the agent configuration in a new horizontal split
-    tmux split-window -h -t DALI_session "$current_dir/conf/makeconf.sh $agent_base $DALI_HOME"
+    $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
 
     # Pause a bit to ensure the pane is ready before splitting again
     sleep 1
