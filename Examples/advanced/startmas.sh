@@ -77,16 +77,13 @@ $WAIT > /dev/null  # Wait for a while
 for agent_filename in $BUILD_HOME/*; do
     agent_base="${agent_filename##*/}"
     echo "Agent: $agent_base"
-
-    # Create the agent configuration in a new horizontal split
+    # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
-
     # Pause a bit to ensure the pane is ready before splitting again
     sleep 1
-
     # Start the agent in the new pane
     tmux split-window -h -t DALI_session "/bin/bash -c $current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
-    sleep 2
+    sleep 1
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
 
