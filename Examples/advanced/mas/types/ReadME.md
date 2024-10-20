@@ -3,9 +3,9 @@ exist as DALI sources. From these files all the agent
 instances will be forked from the same type, 
 sharing the same DALI code.
 
-The first line:
+If you add this fact at the first line of agent:
 
-    t.60.
+    t60.
 
 indicate a default time windows of 60 seconds in which 
 two subsequent external events have to be considered simultaneous.
