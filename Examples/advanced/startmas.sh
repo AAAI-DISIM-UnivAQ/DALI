@@ -45,10 +45,10 @@ else
 fi
 
 # Clean directories
-rm -rf "tmp/*"
-rm -rf "build/*"
-rm -f "work/*"  # Remove agent history
-rm -rf "conf/mas/*"
+rm -rf tmp/*
+rm -rf build/*
+rm -f work/*  # Remove agent history
+rm -rf conf/mas/*
 
 # Build agents based on instances
 for instance_filename in $INSTANCES_HOME/*.txt; do
@@ -60,7 +60,8 @@ for instance_filename in $INSTANCES_HOME/*.txt; do
     cat "$type_filename" >> "$BUILD_HOME/$instance_base"
 done
 
-cp "$BUILD_HOME/*.txt" "work"
+ls -lisa $BUILD_HOME
+cp $BUILD_HOME/*.txt work
 
 # Start server in a new vertical split
 tmux split-window -v -t DALI_session $PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal "go(3010,'server.txt')."
