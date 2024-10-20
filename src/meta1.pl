@@ -221,7 +221,7 @@ ext_event(_,_,AgM,_,_,ME,T):-functor(ME,E,_),clause(external_event(E,P),_),
 
 
 %CHECK PER PROPOSE
-esegui_propose(H,C,Ag):-vere_cond(H,C,Ag).
+esegui_propose(H,C,Ag):-write(C),vere_cond(H,C,Ag).
 vere_cond(A,Lc,Ag):-Lc=[H|T],functor(H,F,N),current_predicate(F/N),call(H),!,vere_cond(A,T,Ag).
 vere_cond(A,Lc,Ag):-Lc=[H|T],evp(H),!,vere_cond(A,T,Ag).
 vere_cond(A,[],Ag):-assert((do_propose(A,Ag):-cd(A),asse_cosa(do_action(A,Ag)))),assert(do_action_propose(A,Ag)).

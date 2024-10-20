@@ -89,7 +89,7 @@ start0(FI):-set_prolog_flag(redefine_warnings,off),
             set_prolog_flag(discontiguous_warnings,off),
             open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
             Me \= end_of_file,
-            agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
+            agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization,AgentType) = Me,
             open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
             if(UP=no, true, assert(user_profile_location(UP))),
             if(DO=no,true,assert(dali_onto_location(DO))),
@@ -104,8 +104,12 @@ start0(FI):-set_prolog_flag(redefine_warnings,off),
 
             delete_agent_files(File),
             token(File),
-            start1(File, AgentName, Lib, Fil).
-
+            start1(File, AgentName, Lib, Fil,AgentType).
+replace_substring(String, To_Replace, Replace_With, Result) :-
+    (    append([Front, To_Replace, Back], String)
+    ->   append([Front, Replace_With, Back], Result)
+    ;    Result = String
+    ).
 load_ontology_file(Ontolog,Agent):-
         open(Ontolog,read,Stream,[]),
         read(Stream,PrefixesC),
@@ -119,7 +123,7 @@ load_ontology_file(Ontolog,Agent):-
 
 filtra_fil(FI):-arg(1,FI,File),token_fil(File),retractall(parentesi(_)),togli_var_fil(File).
 
-start1(Fe,AgentName,Libr,Fil):-
+start1(Fe,AgentName,Libr,Fil,AgentType):-
   set_prolog_flag(discontiguous_warnings,off),
   if(Libr=no,true,libreria(Fe,Libr,Fil)),
 
@@ -165,9 +169,13 @@ start1(Fe,AgentName,Libr,Fil):-
   ass_internal_repeat,
 
   ass_stringhe_mul(FilePlv),
-
+  open(FilePlv, append, Stream), 
+  atom_concat(' ?-',AgentType,E1),
+  atom_concat(E1,'.',E2),
+  write(Stream, E2),          
+  close(Stream),                  
   compile(FilePlv),
-
+  
   apri_learn(FileTxt),
   start_learn,
   manage_export_past,
@@ -227,7 +235,6 @@ take:-findall(T,clause(rule_base(T),_),L),
           repeat,
           member(M,L),
                spezza(M),
-
            M==U,!,retractall(rule_base(_)), if(clause(mul(_),_),ass_mul_first,true).
 
 examine_mul:-if(clause(mul(_),_),examine1_mul,true).
@@ -539,7 +546,7 @@ controlla_ev_all(F):-
 
                    name(F,Lista),append(Lista1,[101],Lista),
                    append(Lista1,[102],Lista3),name(Plf,Lista3),
-
+                  
                    see(Plf),
                         repeat,
                         read(T),
@@ -656,7 +663,7 @@ load_directives(F):-open(F,read,Stream,[]),
 
 
 
-aprifile_en(F):-see(F),
+aprifile_en(F):-see(F), 
          repeat,
         read(T),
                         assert(clause_man(T)),
@@ -693,7 +700,7 @@ ricmess0(Ag,Ind,AgM,IndM,Language,Ontology,Con):-
           %print('RECEIVED: '),print(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),nl,
           if(clause(receive(Con),_),chiama_con(AgM,IndM,Language,Ontology,Con),not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
 
-chiama_con(AgM,IndM,Language,Ontology,Con):-if(receive(Con),true,not_receivable_message(AgM,IndM,Language,Ontology,Con)).
+chiama_con(AgM,IndM,Language,Ontology,Con):-write(Con),if(receive(Con),true,not_receivable_message(AgM,IndM,Language,Ontology,Con)).
 
 %%EDITONTO asserisci_ontologia/2
 send_message(E,AgM):-clause(ext_agent(AgM,IndM,Ontology,_),_),
@@ -953,7 +960,7 @@ prendi_action_normal1:-findall(act_n(X,T,Ag),clause(normal_action(X,T,Ag),_),L),
 fai(X,T,Ag):-functor(X,F,_),if(F=message,em_mess0(X,T,Ag),choose_action(X)),if(F\=message,(ver_az_int(X,T,Ag),!),true).
 
 choose_action(X):-functor(X,F,_),if(member(F,[drop_past,look_up_past,add_past,set_past,callasp]),
-take_past_actions(F,X),(print(make(X)),nl)),save_on_log_file(make(X)).
+take_past_actions(F,X),(print(make(X)),nl)).
 
 take_past_actions(F,X):-write('Sono in Take_past_actions'),arg(1,X,E),caso0_past(F,E,X).
 caso0_past(F,X,Y):-if(F=drop_past,drop_evento(X),caso1_past(F,X,Y)).
@@ -994,9 +1001,8 @@ manda_a(To,M,S,IndS):-
 %% Azione di invio del messaggio
 emetti_ms(To,M,S,IndS,IndTo):-clause(own_language(Lang),_),
           invia_terms_ontology(O),
-          out(message(IndTo,To,IndS,S,Lang,O,M)),
+          out(message(IndTo,To,IndS,S,Lang,O,M)).
           %print(send_message_to(To,M,Lang,O)),nl,
-          save_on_log_file(send_message(M)).
 
 invia_terms_ontology(O):-
         clause(agent(Agent),_),
@@ -1579,7 +1585,7 @@ ass_stringhe_mul1(Nf,L):-open(Nf,append,Stream,[]),
 %APRE IL FILE PLV ED ASSERISCE LE REGOLE PER GLI EVENTI SINGOLI DEGLI EVENTI ESTERNI MULTIPLI
 %% e' chiamato dalla "take_meta_var" contenuta in "togli_var.pl"
 %% Il file PLV non è vuoto. Contiene cioè che è scritto nel file PL.
-aprifile_head_mul(F):-see(F),
+aprifile_head_mul(F):- see(F),
          repeat,
         read(T),expand_term(T,Te),
                                                 if(T=end_of_file,true,
@@ -1685,7 +1691,7 @@ ass_learn:-assert(learn_if(_,_,_)).
 
 
 
-apri_learn(F):-see(F),
+apri_learn(F):-see(F), 
              repeat,
                 read(T),expand_term(T,Te),
                             if(T=end_of_file,true,
@@ -1706,7 +1712,7 @@ learn_clause(H,Ag):-clause(modified_clause(H,Name),_),
             format(Stream,"'~p'.",[T]),nl(Stream),
             close(Stream),leggi_l(Ag).
 
-leggi_l(Ag):-clause(agent(A),_),see('prova1%13%.txt'),
+leggi_l(Ag):-clause(agent(A),_),see('prova1%13%.txt'), 
        read(T),send_msg_learn(T,A,Ag),
        seen, if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
 
@@ -1992,7 +1998,7 @@ intersection([_|T],S2,S3):-intersection(T,S2,S3).
 
 
 save_on_log_file(P):-clause(agent(N),_),
-        name('log/log_',L0),name(N,L1),name('.txt',L2),
+        name('Examples/advanced/log/log_',L0),name(N,L1),name('.txt',L2),
         append(L0,L1,L01),append(L01,L2,L02),name(Q,L02),
         open(Q,append,Stream,[]),
         write(Stream,P),nl(Stream),
