@@ -1,6 +1,20 @@
 #!/bin/bash
+
 #exec 1>/dev/null # @echo off
 clear # cls
+
+# Test if tmux is installed
+if command -v tmux &> /dev/null
+then
+    echo "tmux is installed."
+    tmux -V  # Display tmux version
+else
+    echo "TMUX is a requirement in Unix-like OS to run DALI"
+    echo "tmux is not installed."
+    echo "check installation instructions at https://github.com/tmux/tmux/wiki/Installing"
+    exit -1
+fi
+
 #title "MAS"
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 MAIN_HOME=../..
@@ -30,11 +44,10 @@ done
 
 cp $BUILD_HOME/*.txt work
 
-$XTERM -hold -e "$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal \"go(3010,'server.txt').\"" & #start /B "" "%PROLOG%" -l "%DALI_HOME%/active_server_wi.pl" --goal go(3010,'%daliH%/server.txt').
-echo Server ready. Starting the MAS....
+tmux split-window -h "$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal \"go(3010,'server.txt').\""echo Server ready. Starting the MAS....
 $WAIT > /dev/null # %WAIT% >nul
 
-$XTERM -hold -e "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente." & # start /B "" "%PROLOG%" -l "%DALI_HOME%/active_user_wi.pl" --goal utente.
+tmux split-window -h "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 echo Launching agents instances...
 $WAIT > /dev/null # %WAIT% > nul
 
@@ -43,8 +56,8 @@ for agent_filename in $BUILD_HOME/*
 do
 	agent_base="${agent_filename##*/}"
     echo "Agente: $agent_base"
-    $XTERM -e "./conf/makeconf.sh $agent_base $DALI_HOME" &
-    $XTERM -T "$agent_base" -hold -e "./conf/startagent.sh $agent_base $PROLOG $DALI_HOME" &
+    tmux split-window -v "./conf/makeconf.sh $agent_base $DALI_HOME" &
+    tmux split-window -v -t "$agent_base" "./conf/startagent.sh $agent_base $PROLOG $DALI_HOME" &
     sleep 2s
     $WAIT > /dev/null # %WAIT% >nul
 done
