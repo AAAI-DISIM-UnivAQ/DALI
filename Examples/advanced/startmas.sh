@@ -26,9 +26,14 @@ fi
 # tmux new-session -d -s DALI_session top
 
 # Define paths and variables
-SICSTUS_HOME=$HOME/sicstus4.4.1
-MAIN_HOME=../..
-DALI_HOME=../../src
+SICSTUS_HOME=$HOME/sp-4.6.0-x86_64-darwin-17.0.0
+
+DALI_HOME="../../"
+CORE_DIR="$DALI_HOME/src/core"
+COMMUNICATION_DIR="$DALI_HOME/src/communication"
+EVENT_DIR="$DALI_HOME/src/event"
+UTILS_DIR="$DALI_HOME/src/utils"
+
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 3 127.0.0.1"
@@ -63,18 +68,16 @@ ls $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 
 # Start the LINDA server in a new console
-srvcmd="$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
+export srvcmd=$PROLOG --noinfo -l "$COMMUNICATION_DIR/communication_server.pl" --goal "initialize_server(3010) ,server_loop." &
 echo "server: " $srvcmd
-tmux new-session -d -s DALI_session $srvcmd
+tmux new-session -d -s DALI_Session $srvcmd
+$srvcmd
+sleep 1
 
 echo "Server ready. Starting the MAS..."
 $WAIT > /dev/null  # Wait for a while
 
-# Start user agent in another vertical split
-tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 echo "Launching agents instances..."
-$WAIT > /dev/null  # Wait for a while
-
 # Launch agents in horizontal splits, one after the other
 for agent_filename in $BUILD_HOME/*; do
     agent_base="${agent_filename##*/}"
@@ -82,9 +85,13 @@ for agent_filename in $BUILD_HOME/*; do
     # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
     # Start the agent in the new pane
-    tmux split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
+    tmux split-window -v -t DALI_session $current_dir/conf/startagent.sh $agent_base $PROLOG "$CORE_DIR/core_interpreter.pl" --goal "initialize_agent('$agent'),reasoning_cycle." &
+    sleep 1
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
+
+# Start user agent in another vertical split
+tmux split-window -v -t DALI_session $PROLOG --noinfo -l "$COMMUNICATION_DIR/communication_client.pl" --goal "initialize_client('localhost', 3010),client_loop." &
 
 echo "MAS started."
 
