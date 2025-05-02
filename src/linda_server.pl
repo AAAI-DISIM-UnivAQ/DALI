@@ -18,3 +18,13 @@ go(Port,Path):- linda((Host:Port)-(user:on_open(Host,Port,Path))).
 on_open(Host,Port,Path):-open(Path,write,Stream,[]),
                          format(Stream,'\'~s\':~d.\n', [Host, Port]),
                          close(Stream).
+
+% Initialize the server with the given port
+initialize_server(Port) :-
+    go(Port, 'server.txt').
+
+% Server loop that keeps the server running
+server_loop :-
+    repeat,
+    sleep(1),
+    fail.

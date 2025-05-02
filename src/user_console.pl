@@ -36,7 +36,7 @@ variables(A,A,T,L0,L):-retractall(result_format(_)),assert(result_format(T)),!,L
 variables(A0,A,T,L0,L):-A0<A, A1 is A0+1, arg(A1,T,X), variables(X,L0,L1), variables(A1,A,T,L1,L).
 
 % similar as the following, but it is called within by the goal 'utente.'.
-utente:-% open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
+initialize_client:-% open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
         linda_client('localhost':3010),
         out(agent_x_active(user,'localhost':3010)),
         procedure_message('localhost':3010).

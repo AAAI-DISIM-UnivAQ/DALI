@@ -78,7 +78,7 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-dynamic eve_cond/1.
 :-['utils.pl'].
 
-start0(FI):-set_prolog_flag(redefine_warnings,off),
+initialize_agent(FI):-set_prolog_flag(redefine_warnings,off),
             set_prolog_flag(discontiguous_warnings,off),
             open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
             Me \= end_of_file,
