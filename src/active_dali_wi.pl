@@ -680,395 +680,91 @@ split3man(X,A):-functor(X,H,N),if(N>0,continman(X,H,A),true).
 
 continman(X,H,A):-arg(1,X,I),if(H=en,( assert_this(linked_en(A,I)), write(A),nl,write(I),nl ),true).
 
-% Message reception
-receive_message:-clause(agent_x(Ag,Ind,_,_),_),
-         if(rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
-         receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con),true).
-
-receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con):-
-          assert_this(ext_agent_x(AgM,IndM,Ontology,Language)),
-          in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
-          if(clause(receive(Con),_),call_con(AgM,IndM,Language,Ontology,Con),not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
-
-call_con(AgM,IndM,Language,Ontology,Con):-if(receive(Con),true,not_receivable_message(AgM,IndM,Language,Ontology,Con)).
-
-not_receivable_meta(AgM,IndM,Language,Ontology,Con):-write('Message not receivable: '),write(Con),nl,
-                                                    assert_this(not_receivable(AgM,IndM,Language,Ontology,Con)).
-
-not_receivable_message(AgM,IndM,Language,Ontology,Con):-write('Message not receivable: '),write(Con),nl,
-                                                       assert_this(not_receivable(AgM,IndM,Language,Ontology,Con)).
-
-% Message sending
-send_message(AgM,IndM,Language,Ontology,Con):-clause(agent_x(Ag,Ind,_,_),_),
-                                             out(message(IndM,AgM,Ind,Ag,Language,Ontology,Con)).
-
-send_message_learn(AgM,IndM,Language,Ontology,Con):-clause(agent_x(Ag,Ind,_,_),_),
-                                                   out(message(IndM,AgM,Ind,Ag,Language,Ontology,Con)),
-                                                   assert_this(sent_message(AgM,IndM,Language,Ontology,Con)).
-
-% Internal event handling
+% Gestione degli eventi interni
 internal_event :- 
     clause(agent_x(_,_,S,_), _),
     read_line(S,2),
     clause(evintI(L), _),
     (L \= [] -> check_internal_event1(L,S) ; true).
 
-check_internal_event1(L,S):-read_line(S,3),
-  clause(az(As),_),
-  retractall(evintI(_)),
-  retractall(az(_)),
-  if(As=[],freq_all1(L),freq_single1(L,As)).
-
-freq_all1(L):-last(L,Ul),
-        repeat,
-        member(Me,L),
-        assert_prov0(Me),
-    Me==Ul,!.
-
-freq_single1(L,As):-last(L,Ul),
-        repeat,
-        member(Me,L),
-        if(member(Me,As),true,assert_prov0(Me)),
-    Me==Ul,!.
-
-assert_prov0(Me):-if(clause(prov_int0(Me),_),true,assert(prov_int0(Me))).
-
-% Internal event goal handling
-internal_event_goal:-findall(M,clause(prov_int0(M),_),L),
-         if(L=[],true,internal_event_goal1(L)).
-
-internal_event_goal1(L):-clause(agent_x(_,_,S,_),_),
-        read_line(S,6),
-        clause(obtgoal(X),true),if(X=[],move_to_prov_int(L),internal_event_goal21(X,L)).
-
-internal_event_goal21(X,L):-last(X,U),
-              repeat,
-                member(Me,X),
-                  functor(Me,F,_),
-                  assert_this(see_goal(F)),
-              Me==U,!,internal_event_goal2(L).
-
-internal_event_goal2(L):-findall(V,clause(see_goal(V),_),Lv),
-              last(L,U),
-              repeat,
-                member(Me,L),
-                functor(Me,F,_),
-                  if(member(F,Lv),ex_internal_event_goal(Me),assert_prov(Me)),
-              Me==U,!,retractall(see_goal(_)).
-
-ex_internal_event_goal(Me):-if(clause(activate_goal(Me),_),assert_prov(Me),unload_prov(Me)).
-
-move_to_prov_int(L):-last(L,U),
-              repeat,
-                member(Me,L),
-                  assert_prov(Me),retractall(prov_int0(Me)),
-              Me==U,!.
-
-assert_prov(Me):-if(clause(prov_int(Me),_),true,assert(prov_int(Me))).
-unload_prov(Me):-if(clause(prov_int(Me),_),retractall(prov_int(Me)),true).
-
-% Internal event processing
-internal_event0:-if(clause(prov_int(_),_),internal_event01,true).
-internal_event01:-findall(M,prov_int(M),L),
-         last(L,U),
-         repeat,
-           member(Me,L),
-             clause(internal_event(Me,_,_,_,C),_),
-             functor(C,F,_),
-             if(F=forever,load(Me),internal_event011(Me,F,C)),
-        Me==U,!.
-
-internal_event011(Me,C0,C):-if(C0=until_cond,examine_cd(Me,C),internal_event012(Me,C0,C)).
-internal_event012(Me,C0,C):-if(C0=in_date,examine_dt(Me,C),print('Writing_error1')).
-examine_cd(Me,C):-arg(1,C,C1),if(clause(C1,true),unload(Me),load(Me)).
-examine_dt(Me,C):-arg(1,C,D),arg(2,C,A),verify_time(Me,D,A).
-
-% Time verification
-verify_time(Iv,D,A):-datime(C),arg(1,C,Ac),arg(1,D,A1),arg(1,A,A2),
-              if((Ac>A1,Ac<A2),load(Iv),if((Ac=A1,Ac=\=A2),
-              conf_date_max(Iv,D,A,C),
-              if((Ac=A2,A1=\=Ac),conf_date_min(Iv,D,A,C),
-              if((Ac=A1,Ac=A2),
-              conf_date_3(Iv,D,A,C),unload(Iv))))).
-
-conf_date_max(Iv,D,A,C):-arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
-                       R1 is (Me1*43790+G1*1440),
-                       R is (Me*43790+G*1440),
-                       if(R>R1,check_hours(Iv,D,A,C),unload(Iv)).
-
-conf_date_min(Iv,D,A,C):-arg(2,A,Me1),arg(3,A,G1),arg(2,C,Me),arg(3,C,G),
-                       R2 is (Me1*43790+G1*1440),
-                       R is (Me*43790+G*1440),
-                       if(R=<R2,check_hours(Iv,D,A,C),unload(Iv)).
-
-conf_date_3(Iv,D,A,C):-
-                arg(2,D,Me1),arg(3,D,G1),arg(2,C,Me),arg(3,C,G),
-                                   arg(2,A,Me2),arg(3,A,G2),
-                                   R1 is (Me1*43790+G1*1440),
-                                   R2 is (Me2*43790+G2*1440),
-                                   R is (Me*43790+G*1440),
-                                   if((R>=R1,R=<R2),check_hours(Iv,D,A,C),unload(Iv)).
-
-check_hours(Iv,D,A,C):-arg(4,D,H1),arg(5,D,M1),arg(6,D,S1),arg(4,A,H2),arg(5,A,M2),arg(6,A,S2),arg(4,C,H),arg(5,C,M),arg(6,C,S),
-                        O1 is (H1*3600+M1*60+S1),
-                        O2 is (H2*3600+M2*60+S2),
-                        O is (H*3600+M*60+S),
-                        if(O2>O1,normal_hour(Iv,O,O1,O2),print('To insert a correct temporal interval')).
-
-normal_hour(Iv,O,O1,O2):-if((O>O1,O<O2),load(Iv),unload(Iv)).
-
-load(Me):-if(clause(prov_int1(Me),_),true,assert(prov_int1(Me))).
-
-unload(Me):-if(clause(prov_int1(Me),_),retractall(prov_int1(Me)),true).
-
-% Block number internal event
-block_number_internal_event:-if(clause(prov_int1(_),_),block_number1,true).
-block_number1:-findall(M,clause(prov_int1(M),_),L),
-                if(L=[],true,block_number2(L)).
-
-block_number2(L):-last(L,U),
-        repeat,
-        member(Me,L),
-        clause(internal_event(Me,_,N,_,_),_),
-        if(N=forever,assert(prov_int2(Me)),check_time_rep(Me,N)),
-        Me==U,!,retractall(prov_int1(_)).
-
-check_time_rep(Me,N):-functor(Me,F,_),
-                      if(cond_int_repeat(F,N),check_cond_repeat(Me,N),
-                      assert_prov_int2(Me)).
-
-cond_int_repeat(F,N):-clause(internal_repeat(F,P),_),P>=N.
-assert_prov_int2(Me):-assert_this(prov_int2(Me)).
-
-check_cond_repeat(Me,N):-clause(internal_event(Me,_,N,Cn,_),_),
-                         if(Cn=true,true,check_cond_repeat1(Me,Cn)).
-
-check_cond_repeat1(Me,Cn):-functor(Cn,F,_),
-                             if(F=change,check_cond_change(Me,Cn),true).
-
-check_cond_change(Me,Cn):-if(Cn\=[],arg(1,Cn,L),false),if(L=[],true,check_cond_change1(Me,L)).
-check_cond_change1(Me,L):-last(L,U),
-          repeat,
-                 member(M,L),
-                 if(change_fact_or_evp(M,Me),
-                 fact_evp_changed(Me),
-                true),
-           M==U,!.
-
-fact_evp_changed(Me):-functor(Me,F,_),retractall(internal_repeat(F,_)),
-          assert(internal_repeat(F,0)).
-
-change_fact_or_evp(M,Me):-functor(Me,F,_),clause(internal_reaction(F,Ti),_),
-          if(clause(isa(M,_,_),_),
-          change_fact(M,Ti),(if(clause(past(M,_,_),_),
-          change_past(M,Ti),false))).
-
-change_fact(M,Ti):-clause(isa(M,_,Tf),_),
-          if(Tf>Ti,true,false).
-
-change_past(M,Ti):-clause(past(M,Tp,_),_),
-          if(Tp>Ti,true,false).
-
-% Block frequency
-block_frequency:-if(clause(prov_int2(_),_),block_frequency1,true).
-block_frequency1:-findall(M,clause(prov_int2(M),_),L),
-        if(L=[],true,block_frequency2(L)).
-
-block_frequency2(L):-last(L,U),
-        repeat,
-        member(Me,L),
-        if(clause(reacted(Me,_),_),true,assert_tempI(Me)),
-         Me==U,!,retractall(prov_int2(_)).
-
-assert_tempI(Me):-if(clause(tempI(Me),_),true,assert(tempI(Me))).
-
-% Internal event processing
-internal_event2:-if(clause(tempI(_),_),internal_eventp,true).
-
-internal_eventp:-findall(Y,tempI(Y),Ls),
-         statistics(walltime,[Tc,_]),
-         last(Ls,La),
-         repeat,
-           member(Me,Ls),
-       if(clause(tried_event(Me,_),_),true,internal_event_p_no_tent(Me,Tc)),
-         Me==La,!.
-
-internal_event_p_no_tent(Me,Tc):-if(once(Me),assert_iv(Me,Tc),retractall(tempI(Me))).
-
-assert_iv(Me,Tc):-assert(tried_event(Me,Tc)),
-         if(clause(iv(Me,Tc),_),true,assert(iv(Me,Tc))),
-         retractall(tempI(Me)),
-         if(clause(activate_goal(Me),_),
-         cancel_goal(Me),true),
-         findall(X,clause(linked_en(Me,X),_),L),
-         if(L=[],true,(internal_pres(Me,L),ass_ev_pre_i(Me,Tc))).
-
-internal_pres(Me,L):-last(L,Lu),
-   member(X,L),
-          clause(en(X,T1),true),
-           assert(link_int_time(Me,T1)),
-          retractall(en(X,T1)),
-   X==Lu,!.
-
-ass_ev_pre_i(Me,Tc):-setof(T,clause(link_int_time(Me,T),_),L1),
-   retractall(link_int_time(Me,_)),
-   if(clause(ev_pre_time(Me,_,_),_),
-         (retractall(ev_pre_time(Me,_,_)),assert(ev_pre_time(Me,Tc,L1))),
-        assert(ev_pre_time(Me,Tc,L1))).
-
-% Check frequency attempts
-check_freq_tent:-clause(agent_x(_,_,S,_),_),statistics(walltime,[T,_]),
-                  read_line(S,2),clause(evintI(L),_),
-        if(L\=[],check_freq_tent0(L,T),true).
-
-check_freq_tent0(Ls,T):-last(Ls,U),
-           repeat,
-           member(X,Ls),
-           if(clause(internal_event(X,Tp,_,_,_),_),
-           check_freq_tent1(X,T,Tp),true),
-                X==U,!.
-
-check_freq_tent1(X,T,Tp):-if(clause(tried_event(X,Tc),_),check_freq_tent2(X,T,Tp,Tc),true).
-
-check_freq_tent2(X,T,Tp,Tc):-Tp1 is Tp*1000,
-                       ST is Tp1+Tc,
-                       if(T>ST,cancel_tried(X,Tc),true).
-
-cancel_tried(X,Tc):-retractall(tried_event(X,Tc)).
-
-% Check frequency internal events
-check_freq_iv:-clause(agent_x(_,_,S,_),_),statistics(walltime,[T,_]),
-                  read_line(S,2),clause(evintI(L),_),
-        if(L\=[],check_freq_iv0(L,T),true).
-
-check_freq_iv0(Ls,T):-last(Ls,U),
-           repeat,
-           member(X,Ls),
-           if(clause(internal_event(X,Tp,_,_,_),_),
-           check_freq_iv1(X,T,Tp),true),
-                X==U,!.
-
-check_freq_iv1(X,T,Tp):-if(clause(reacted(X,Tc),_),check_freq_int2(X,T,Tp,Tc),true).
-
-check_freq_int2(X,T,Tp,Tc):-Tp1 is Tp*1000,
-                       ST is Tp1+Tc,
-                       if(T>ST,cancel_reacted(X,Tc),true).
-
-cancel_reacted(X,Tc):-retractall(reacted(X,Tc)).
-
-% Process external events
+% Gestione degli eventi esterni
 process_external_events :-
     clause(agent_x(_,_,S,_), _),
     read_line(S,1),
     clause(eventE(Es), _),
     (Es = [] -> true ; (process_high_events, process_normal_events)).
 
-process_high_events:-if(clause(ev_high(_,_,_),_),process_high_events1,true).
-process_high_events1:-findall(ev_high(AgM,E,T),clause(ev_high(AgM,E,T),_),L),
-last(L,ev_high(Ag,E,T)),
-if(once(eve_cond(E)),process_high_event(Ag,E,T),no_process_high_event(Ag,E,T)),
-Ag==Ag,E==E,T==T,!.
+% Gestione degli eventi ad alta priorità
+process_high_events :-
+    (clause(ev_high(_,_,_), _) -> process_high_events1 ; true).
 
-no_process_high_event(AgM,E,T):-write('External event preconditions not verified'),nl,retractall(ev_high(_,E,T)),assert_this(refused_external(AgM,E,T)).
-process_high_event(AgM,E,T):-retractall(ev_high(AgM,E,T)),assert_this(executed_external(AgM,E,T)),
-clause(evN(Es),_),if(Es=[],true,if(member(E,Es),process_event3(E,T),true)).
+process_high_events1 :-
+    findall(ev_high(AgM,E,T), clause(ev_high(AgM,E,T), _), L),
+    last(L, ev_high(Ag,E,T)),
+    (once(eve_cond(E)) -> 
+        process_high_event(Ag,E,T) ; 
+        no_process_high_event(Ag,E,T)),
+    Ag = Ag, E = E, T = T, !.
 
-process_normal_events:-if(clause(ev_normal(_,_,_),_),process_normal_events1,true).
-process_normal_events1:-clause(ev_normal(AgM,E,T),_),
-if(once(eve_cond(E)),process_normal_event(AgM,E,T),no_process_normal_event(AgM,E,T)).
+% Gestione degli eventi normali
+process_normal_events :-
+    (clause(ev_normal(_,_,_), _) -> process_normal_events1 ; true).
 
-no_process_normal_event(AgM,E,T):-write('External event preconditions not verified'),nl,retractall(ev_normal(_,E,T)),
-assert_this(refused_external(AgM,E,T)).
+process_normal_events1 :-
+    clause(ev_normal(AgM,E,T), _),
+    (once(eve_cond(E)) -> 
+        process_normal_event(AgM,E,T) ; 
+        no_process_normal_event(AgM,E,T)).
 
-no_process_normal_event_no_time(AgM,E,T):-write('External event preconditions not verified: no DeltaTime'),nl,retractall(ev_normal(_,E,T)),
-assert_this(refused_external(AgM,E,T)).
+% Gestione dei messaggi
+receive_message :-
+    clause(agent_x(Ag,Ind,_,_), _),
+    (rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)) ->
+        receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) ; 
+        true).
 
-process_normal_event(AgM,E,T):-retractall(ev_normal(AgM,E,T)),simultaneity_interval(E), process_events.
-clause(evN(Es),_),if(Es=[],true,if(member(E,Es),process_event3(E,T),true)).
+receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) :-
+    assert_this(ext_agent_x(AgM,IndM,Ontology,Language)),
+    in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
+    (clause(receive(Con), _) ->
+        call_con(AgM,IndM,Language,Ontology,Con) ;
+        not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
 
-process_event3(E,T):-findall(I,clause(linked_en(I,E),_),Ls),
-if(clause(ev_pre_time(X,T),_),process_event4(E,T,Ls),process_event5(E,T,Ls)).
+% Gestione degli obiettivi
+manage_goals :-
+    (clause(goal(_), _) -> manage_goals1 ; true).
 
-process_event4(E,T,Ls):-if(Ls=[],true,process_event6(E,T,Ls)).
-process_event5(E,T,Ls):-if(Ls=[],true,process_event7(E,T,Ls)).
+manage_goals1 :-
+    findall(goal(G), clause(goal(G), _), L),
+    last(L, U),
+    repeat,
+    member(Me, L),
+    (clause(goal_completed(Me), _) -> true ; manage_goals2(Me)),
+    Me = U, !.
 
-process_event6(E,T,Ls):-last(Ls,U),
-                          repeat,
-member(I,Ls),
-if(clause(ev_pre_time(I,T),_),true,assert(ev_pre_time(I,T,[]))),
-I==U,!.
+% Gestione del tempo
+manage_time :-
+    (clause(time(_), _) -> manage_time1 ; true).
 
-process_event7(E,T,Ls):-last(Ls,U),
-                repeat,
-member(I,Ls),
-assert(ev_pre_time(I,T,[])),
-I==U,!.
+manage_time1 :-
+    findall(time(T), clause(time(T), _), L),
+    last(L, U),
+    repeat,
+    member(Me, L),
+    (clause(time_completed(Me), _) -> true ; manage_time2(Me)),
+    Me = U, !.
 
-% Goal management
-manage_goals:-if(clause(goal(_),_),manage_goals1,true).
+% Gestione delle condizioni
+check_conditions :-
+    (clause(condition(_), _) -> check_conditions1 ; true).
 
-manage_goals1:-findall(goal(G),clause(goal(G),_),L),
-         last(L,U),
-                  repeat,
-           member(Me,L),
-             if(clause(goal_completed(Me),_),true,manage_goals2(Me)),
-         Me==U,!.
-
-manage_goals2(Me):-if(clause(goal_precondition(Me,Pre),_),manage_goals3(Me,Pre),manage_goals4(Me)).
-
-manage_goals3(Me,Pre):-if(Pre,manage_goals4(Me),true).
-
-manage_goals4(Me):-if(clause(goal_do(Me,Do),_),manage_goals5(Me,Do),true).
-
-manage_goals5(Me,Do):-if(Do,manage_goals6(Me),true).
-
-manage_goals6(Me):-if(clause(goal_postcondition(Me,Post),_),manage_goals7(Me,Post),manage_goals8(Me)).
-
-manage_goals7(Me,Post):-if(Post,manage_goals8(Me),true).
-
-manage_goals8(Me):-assert_this(goal_completed(Me)).
-
-cancel_goal(Me):-retractall(goal(Me)),retractall(goal_precondition(Me,_)),
-                 retractall(goal_do(Me,_)),retractall(goal_postcondition(Me,_)),
-                 retractall(goal_completed(Me)).
-
-% Time management
-manage_time:-if(clause(time(_),_),manage_time1,true).
-
-manage_time1:-findall(time(T),clause(time(T),_),L),
-          last(L,U),
-                        repeat,
-                           member(Me,L),
-             if(clause(time_completed(Me),_),true,manage_time2(Me)),
-          Me==U,!.
-
-manage_time2(Me):-if(clause(time_precondition(Me,Pre),_),manage_time3(Me,Pre),manage_time4(Me)).
-
-manage_time3(Me,Pre):-if(Pre,manage_time4(Me),true).
-
-manage_time4(Me):-if(clause(time_do(Me,Do),_),manage_time5(Me,Do),true).
-
-manage_time5(Me,Do):-if(Do,manage_time6(Me),true).
-
-manage_time6(Me):-if(clause(time_postcondition(Me,Post),_),manage_time7(Me,Post),manage_time8(Me)).
-
-manage_time7(Me,Post):-if(Post,manage_time8(Me),true).
-
-manage_time8(Me):-assert_this(time_completed(Me)).
-
-cancel_time(Me):-retractall(time(Me)),retractall(time_precondition(Me,_)),
-                 retractall(time_do(Me,_)),retractall(time_postcondition(Me,_)),
-                 retractall(time_completed(Me)).
-
-% Condition checking
-check_conditions:-if(clause(condition(_),_),check_conditions1,true).
-
-check_conditions1:-findall(condition(C),clause(condition(C),_),L),
-          last(L,U),
-         repeat,
-           member(Me,L),
-             if(clause(condition_completed(Me),_),true,check_conditions2(Me)),
-                     Me==U,!.
+check_conditions1 :-
+    findall(condition(C), clause(condition(C), _), L),
+    last(L, U),
+    repeat,
+    member(Me, L),
+    (clause(condition_completed(Me), _) -> true ; check_conditions2(Me)),
+    Me = U, !.
 
 check_conditions2(Me):-if(clause(condition_precondition(Me,Pre),_),check_conditions3(Me,Pre),check_conditions4(Me)).
 
