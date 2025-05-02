@@ -83,6 +83,15 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :- use_module(library(lists)).
 :- use_module(library(system)).
 :- use_module(library(file_systems)).
+:- use_module(library(random)).
+:- use_module(library('linda/client')).
+:- use_module(library(clpq)).
+:- use_module(library(fdbg)).
+
+% Definizione del predicato get0/1
+get0(Char) :-
+    current_input(Stream),
+    get_char(Stream, Char).
 
 initialize_agent(FI) :-
     (is_list(FI) -> 
@@ -698,9 +707,11 @@ send_message_learn(AgM,IndM,Language,Ontology,Con):-clause(agent_x(Ag,Ind,_,_),_
                                                    assert_this(sent_message(AgM,IndM,Language,Ontology,Con)).
 
 % Internal event handling
-internal_event:-clause(agent_x(_,_,S,_),_),
-        read_line(S,2),clause(evintI(L),_),
-        if(L\=[],check_internal_event1(L,S),true).
+internal_event :- 
+    clause(agent_x(_,_,S,_), _),
+    read_line(S,2),
+    clause(evintI(L), _),
+    (L \= [] -> check_internal_event1(L,S) ; true).
 
 check_internal_event1(L,S):-read_line(S,3),
   clause(az(As),_),
@@ -946,8 +957,11 @@ check_freq_int2(X,T,Tp,Tc):-Tp1 is Tp*1000,
 cancel_reacted(X,Tc):-retractall(reacted(X,Tc)).
 
 % Process external events
-process_external_events:-clause(agent_x(_,_,S,_),_),read_line(S,1),clause(eventE(Es),_),
-if(Es=[],true,(process_high_events,process_normal_events)).
+process_external_events :-
+    clause(agent_x(_,_,S,_), _),
+    read_line(S,1),
+    clause(eventE(Es), _),
+    (Es = [] -> true ; (process_high_events, process_normal_events)).
 
 process_high_events:-if(clause(ev_high(_,_,_),_),process_high_events1,true).
 process_high_events1:-findall(ev_high(AgM,E,T),clause(ev_high(AgM,E,T),_),L),
