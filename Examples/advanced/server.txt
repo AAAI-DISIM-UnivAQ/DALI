@@ -1,1 +1,1 @@
-'localhost':3010.
+'mbpg.local':3010.
