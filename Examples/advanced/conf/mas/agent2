@@ -1,1 +1,0 @@
-agent('work/agent2','agent2','no',italian,['conf/communication'],['../..//communication_fipa','../..//learning','../..//planasp'],'no','../..//onto/dali_onto.txt',[]).

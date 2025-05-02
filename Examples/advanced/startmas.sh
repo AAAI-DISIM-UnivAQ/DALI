@@ -26,7 +26,7 @@ fi
 # tmux new-session -d -s DALI_session top
 
 # Define paths and variables
-SICSTUS_HOME=$HOME/sp-4.6.0-x86_64-darwin-17.0.0
+SICSTUS_HOME=/usr/local/sicstus4.6.0
 
 DALI_HOME="../../"
 CORE_DIR="$DALI_HOME/src/core"
@@ -68,10 +68,9 @@ ls $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 
 # Start the LINDA server in a new console
-export srvcmd=$PROLOG --noinfo -l "$COMMUNICATION_DIR/communication_server.pl" --goal "initialize_server(3010) ,server_loop." &
-echo "server: " $srvcmd
-tmux new-session -d -s DALI_Session $srvcmd
-$srvcmd
+srvcmd="$PROLOG --noinfo -l $COMMUNICATION_DIR/communication_server.pl --goal 'initialize_server(3010),server_loop.'"
+echo "server: $srvcmd"
+tmux new-session -d -s DALI_session "$srvcmd"
 sleep 1
 
 echo "Server ready. Starting the MAS..."
@@ -85,13 +84,13 @@ for agent_filename in $BUILD_HOME/*; do
     # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
     # Start the agent in the new pane
-    tmux split-window -v -t DALI_session $current_dir/conf/startagent.sh $agent_base $PROLOG "$CORE_DIR/core_interpreter.pl" --goal "initialize_agent('$agent'),reasoning_cycle." &
+    tmux split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $CORE_DIR/core_interpreter.pl --goal 'initialize_agent(\"$agent\"),reasoning_cycle.'"
     sleep 1
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
 
 # Start user agent in another vertical split
-tmux split-window -v -t DALI_session $PROLOG --noinfo -l "$COMMUNICATION_DIR/communication_client.pl" --goal "initialize_client('localhost', 3010),client_loop." &
+tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/communication_client.pl --goal 'initialize_client(\"localhost\", 3010),client_loop.'"
 
 echo "MAS started."
 
