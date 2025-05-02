@@ -78,26 +78,15 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-dynamic eve_cond/1.
 :-['utils.pl'].
 
-initialize_agent(FI):-set_prolog_flag(redefine_warnings,off),
-            set_prolog_flag(discontiguous_warnings,off),
-            open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
-            Me \= end_of_file,
-            agent_x(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
-            open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
-            if(UP=no, true, assert(user_profile_location(UP))),
-            if(DO=no,true,assert(dali_onto_location(DO))),
-            assert(server_obj('localhost':3010)), %% this can be removed if we move to a single function
-            filter_fil(Fil),
-            assert(specialization(Specialization)),
-            if(Ontolog=no,true,load_ontology_file(Ontolog,AgentName)),
-            assert(own_language(Lang)),
+:- module(active_dali_wi, [initialize_agent/1]).
 
-            linda_client('localhost':3010),
-            out(activating_agent_x(AgentName)),
-
-            delete_agent_x_files(File),
-            token(File),
-            start1(File, AgentName, Lib, Fil).
+initialize_agent(FI) :-
+    atom_codes(FI, FI_codes),
+    open(FI, read, Stream),
+    read(Stream, Term),
+    close(Stream),
+    assertz(agent_config(Term)),
+    initialize_agent_parameters(Term).
 
 load_ontology_file(Ontolog,Agent):-
         open(Ontolog,read,Stream,[]),
