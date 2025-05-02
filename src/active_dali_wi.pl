@@ -282,7 +282,7 @@ build0(F):-if((((clause(even(_),_);clause(evin(_),_));clause(azi(_),_));clause(e
                      recover_fun0(F),true).
 recover_fun0(F):-recover_funE(F),recover_funI(F),recover_funA(F),recover_tot_cd(F),recover_funEn(F),recover_gol_obt(F),recover_gol_test(F),recover_tot_rem(F),recover_E(F).
 
-%ASSERISCE GLI EVENTI ESTERNI RELATIVI AGLI EVENTI MULTIPLI
+%ASSERTS EXTERNAL EVENTS RELATED TO MULTIPLE EVENTS
 eve_mul_first(Head):-functor(Head,_,N),Head=..L_eve,if((arg(1,L_eve,_),N>1),continue_mul_f(L_eve),true).
 continue_mul_f(L_eve):-arg(1,L_eve,X_eve),if((X_eve=eve,is_list(L_eve)),
                      assert_this(mul(L_eve)),true).
@@ -294,7 +294,7 @@ keep_past_ass_first(Me):- append([eve],L,Me),examine_head_ass_first(L).
 examine_head_ass_first(L):-last(L,U),repeat,member(Me,L),assert_this(even(Me)),
                  Me==U,!.
 
-%RECUPERO FUNTORI EVENTI ESTERNI%
+%RECOVERY OF EXTERNAL EVENT FUNCTORS%
 recover_funE(F):-if(clause(even(_),_),(transf_external_events, recover_fun_even(F)),empty_list(F)).  % translated from 'recupera_funE' and 'lista_assente'
 transf_external_events:-findall(X,clause(even(X),_),Ls),  % translated from 'transf_eventi_esterni'
                 last(Ls,U),
@@ -313,7 +313,7 @@ recover_fun_even(F):- name(F,L),  % translated from 'recupera_fun_even'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                                   retractall(app_even(_)).
 
-%RECUPERO FUNTORI EVENTI INTERNI%
+%RECOVERY OF INTERNAL EVENT FUNCTORS%
 recover_funI(F):-if(clause(evin(_),_),recover_fun_evin(F),empty_list(F)).  % translated from 'recupera_funI' and 'lista_assente'
 
 recover_fun_evin(F):- name(F,L),  % translated from 'recupera_fun_evin'
@@ -325,7 +325,7 @@ recover_fun_evin(F):- name(F,L),  % translated from 'recupera_fun_evin'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(evin(_)).
 
-%RECUPERO AZIONI%
+%RECOVERY OF ACTIONS%
 recover_funA(F):-if(clause(azi(_),_),recover_fun_actions(F),empty_list(F)).  % translated from 'recupera_funA' and 'lista_assente'
 
 transf_message(Me):-arg(2,Me,Ar),functor(Ar,Far,_),assert(app_azi(message(Far))).  % translated from 'transf_message'
@@ -338,7 +338,7 @@ recover_fun_actions(F):- name(F,L),  % translated from 'recupera_fun_azioni'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(azi(_)).
 
-%RECUPERO CONDIZIONI-AZIONI %
+%RECOVERY OF CONDITIONS-ACTIONS%
 recover_tot_cd(F):-if(clause(cond(_),_),recover_cd(F),empty_list(F)).  % translated from 'recupera_tot_cd' and 'lista_assente'
 
 recover_cd(F):- name(F,L),  % translated from 'recupera_cd'
@@ -350,7 +350,7 @@ recover_cd(F):- name(F,L),  % translated from 'recupera_cd'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(cond(_)).
 
-%RECUPERO FUNTORI EVENTI PRESENTE%
+%RECOVERY OF PRESENT EVENT FUNCTORS%
 recover_funEn(F):-if(clause(evN(_),_),(transf_present_events, recover_fun_evN(F)),empty_list(F)).  % translated from 'recupera_funEn' and 'lista_assente'
 transf_present_events:-findall(X,clause(evN(X),_),Ls),  % translated from 'transf_eventi_presente'
                 last(Ls,U),
@@ -369,8 +369,7 @@ recover_fun_evN(F):- name(F,L),  % translated from 'recupera_fun_evN'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(app_evN(_)),retractall(evN(_)).
 
-
-%RECUPERO FUNTORI GOALS DA OTTENERE%
+%RECOVERY OF GOALS TO OBTAIN%
 recover_gol_obt(F):-if(clause(obt_goal(_),_),recover_fun_obt_goal(F),empty_list(F)).  % translated from 'recupera_gol_obt' and 'lista_assente'
 
 recover_fun_obt_goal(F):- name(F,L),  % translated from 'recupera_fun_obt_goal'
@@ -382,7 +381,7 @@ recover_fun_obt_goal(F):- name(F,L),  % translated from 'recupera_fun_obt_goal'
                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                         retractall(obt_goal(_)).
 
-%RECUPERO FUNTORI GOALS DA TESTARE%
+%RECOVERY OF GOALS TO TEST%
 recover_gol_test(F):-if(clause(test_goal(_),_),(transf_test_goal, recover_fun_test_goal(F)),empty_list(F)).  % translated from 'recupera_gol_test' and 'lista_assente'
 transf_test_goal:-findall(X,clause(test_goal(X),_),Ls),last(Ls,U),  % translated from 'transf_tes_goal'
                  repeat,
@@ -400,8 +399,7 @@ recover_fun_test_goal(F):- name(F,L),  % translated from 'recupera_fun_tes_goal'
                                  write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                           retractall(app_test_goal(_)).
 
-
-%RECUPERO FATTI DA RICORDARE E GESTIRE COME EVENTI DEL PASSATO%
+%RECOVERY OF FACTS TO REMEMBER AND MANAGE AS PAST EVENTS%
 recover_tot_rem(F):-  % translated from 'recupera_tot_rem'
         if(clause(fact_rem(_),_), recover_rem(F),empty_list(F)).
 
@@ -419,7 +417,7 @@ empty_list(F):- name(F,L),  % translated from 'lista_assente'
         name(Y,T),open(Y,append,Stream,[]),
                  write(Stream,[]),write(Stream,'.'),nl(Stream), close(Stream).
 
-%RECUPERO EVENTI ESTERNI%
+%RECOVERY OF EXTERNAL EVENTS%
 recover_E(F):-if(clause(even(_),_),recover_tot_even(F),empty_list(F)).  % translated from 'recupera_E'
 
 recover_tot_even(F):- name(F,L),  % translated from 'recupera_tot_even'
@@ -432,8 +430,7 @@ recover_tot_even(F):- name(F,L),  % translated from 'recupera_tot_even'
                  close(Stream),
   retractall(even(_)).
 
-
-%INIZIALIZZA IL FILE PLF DELLE DIRETTIVE%
+%INITIALIZES THE PLF FILE OF DIRECTIVES%
 initialize_plf(F):-if(file_exists(F),read_lines(F),true).  % translated from 'inizializza_plf'
 read_lines(F):-read_line(F,1),read_line(F,2),read_line(F,3),read_line(F,8).  % translated from 'leggirighe'
 
@@ -616,8 +613,6 @@ load_directives(F):-open(F,read,Stream,[]).  % translated from 'carica_le_dirett
                                  if(clause(T,_),true,assert((T))),
                         T==end_of_file,!,
         close(Stream).
-
-
 
 aprifile_en(F):-see(F),
          repeat,

@@ -30,7 +30,7 @@ examine0(Me,Nf):-if(Me='EOL',true,if(Me='.',(point_write(Nf),nl_write(Nf)),exami
 examine(Me,Nf):-name(Me,L),nth0(0,L,El),if(isa_variable(El),app_variable(L,Nf),re_write(L,Nf)).
 
 isa_variable(El):-El>64,El<91.
-isa_variabile(El):-El=95.
+is_underscore(El):-El=95.
 
 app_variable(L,Nf):-append([118,97,114,95],L,Lt),re_write(Lt,Nf).
 re_write(L,Nf):-name(T,L),open(Nf,append,Stream,[]),

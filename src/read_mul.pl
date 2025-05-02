@@ -27,11 +27,11 @@ take_rules1(F):-findall(X,clause(program_rule(X),_),L),
 examine_program_rule(Me,F):-if(arg(1,Me,Head),examine_program_head(Head,Me,F),true).
 
 examine_program_head(Head,Me,F):-functor(Head,Fu,N),
-                               if((N>1,not_tell_told(Fu)),testa_multiplo_evento(Head,Me,F),write_clause_no_mul(Me,F)).
+                               if((N>1,not_tell_told(Fu)),check_multiple_event(Head,Me,F),write_clause_no_mul(Me,F)).
 
-testa_multiplo_evento(Head,Me,F):-arg(2,Head,A2),functor(A2,Fu,_),if(Fu=eve,testa_multiplo_evento2(Head,Me),
+check_multiple_event(Head,Me,F):-arg(2,Head,A2),functor(A2,Fu,_),if(Fu=eve,check_multiple_event2(Head,Me),
                                 write_clause_no_mul(Me,F)).
-testa_multiplo_evento2(Head,Me):-ejec_mul(Head,Me).
+check_multiple_event2(Head,Me):-ejec_mul(Head,Me).
 not_tell_told(Fu):-Fu\=tell,Fu\=told.
 ejec_mul([],_).
 ejec_mul([S1|Resto],Me):-ejec_mul(S1,Me),!,ejec_mul(Resto,Me).
