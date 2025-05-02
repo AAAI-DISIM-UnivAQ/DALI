@@ -80,13 +80,40 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 
 :- module(active_dali_wi, [initialize_agent/1]).
 
+:- use_module(library(lists)).
+:- use_module(library(system)).
+:- use_module(library(file_systems)).
+
 initialize_agent(FI) :-
-    atom_codes(FI, FI_codes),
-    open(FI, read, Stream),
+    (is_list(FI) -> 
+        atom_codes(Atom, FI),
+        open(Atom, read, Stream)
+    ; 
+        open(FI, read, Stream)
+    ),
     read(Stream, Term),
     close(Stream),
     assertz(agent_config(Term)),
     initialize_agent_parameters(Term).
+
+initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization)) :-
+    % Inizializza le configurazioni dell'agente
+    if(UP = no, true, assert(user_profile_location(UP))),
+    if(DO = no, true, assert(dali_onto_location(DO))),
+    assert(server_obj('localhost':3010)),
+    filter_fil(Fil),
+    assert(specialization(Specialization)),
+    if(Ontolog = no, true, load_ontology_file(Ontolog, AgentName)),
+    assert(own_language(Lang)),
+    
+    % Connessione al server LINDA
+    linda_client('localhost':3010),
+    out(activating_agent_x(AgentName)),
+    
+    % Inizializzazione dei file dell'agente
+    delete_agent_x_files(File),
+    token(File),
+    start1(File, AgentName, Lib, Fil).
 
 load_ontology_file(Ontolog,Agent):-
         open(Ontolog,read,Stream,[]),
@@ -159,7 +186,7 @@ start1(Fe,AgentName,Libr,Fil):-
   delete_agent_x_log_file(AgentName),
   print('..................   Activated Agent '),print(AgentName),print(' ...................'),nl,go.
 
-%L0 should be communicationf/fipa
+% Library management
 library(F,L0,Fil):-name(F,Lf),append(Lf,[46,112,108],Ltf),
            append(L0,Fil,L),
            name(F1,Ltf),if(L=[],true,library1(F1,L)).
@@ -181,19 +208,20 @@ append_rules(Mef):-open(Mef,read,Stream,[]),
                            repeat,
                                          read(Stream,T),if(T=end_of_file,true,
                                          assert(to_add(T))),
-                                T==end_of_file,!, 
+                                T==end_of_file,!,
                 close(Stream).
 
-%%Write communication file
+% Write communication file
 pour(F):-findall(X,clause(to_add(X),_),L),
           last(L,U),
               open(F,append,Stream,[]),nl(Stream),
               repeat,
               member(T,L),
               write(Stream,T),write(Stream,'.'),nl(Stream),
-              T==U,!, 
+              T==U,!,
               close(Stream),retractall(to_add(_)).
 
+% File operations
 open_file(F):-see(F),
              repeat,
                 read(T),expand_term(T,Te),
@@ -211,6 +239,7 @@ take:-findall(T,clause(rule_base(T),_),L),
 
            M==U,!,retractall(rule_base(_)), if(clause(mul(_),_),assert_mul_first,true).
 
+% Examine multiple events
 examine_mul:-if(clause(mul(_),_),examine1_mul,true).
 examine1_mul:-findall(L,clause(mul(L),_),S),
               last(S,E),
@@ -238,6 +267,7 @@ take_time_ep(L):-last(L,U),repeat,member(M,L),clause(past(M,Tp,_),_),assign_what
 cont_tep(L):-findall(X,clause(tep(_,X),_),Le),retractall(tep(_,_)),
           if(clause(fact_mul(_,_),_),(retractall(fact_mul(_,_)),assert(fact_mul(L,Le))),assert(fact_mul(L,Le))).
 
+% Split and process rules
 split(C):-arg(1,C,Head),C=..L,eve_mul_first(Head),if(member(':-',L),is_clause(L,Head),true).
 
 is_clause(L,Head):-append([':-'],L1,L),execute(L1,Head).
@@ -258,6 +288,7 @@ go_to_if(M,Head):-arg(2,M,A1),arg(3,M,A2),execute(A1,Head),execute(A2,Head).
 
 assign_what(C):-if(clause(C,_),true,assert(C)).
 
+% Learning discrimination
 discriminate_learn(Az):-functor(Az,F,_),
                 if(F=message,discriminate_learn1(Az),assign_what(azi(Az))).
 
@@ -267,11 +298,12 @@ discriminate_learn2(Pe,Az):-arg(1,Pe,Le),functor(Le,F,_),if(F=learn,discriminate
 
 discriminate_learn3:-assert(azi(message(_254802,confirm(learn(_254655),_254800)))).
 
+% Build and recover functions
 build0(F):-if((((clause(even(_),_);clause(evin(_),_));clause(azi(_),_));clause(evN(_),_)),
                      recover_fun0(F),true).
 recover_fun0(F):-recover_funE(F),recover_funI(F),recover_funA(F),recover_tot_cd(F),recover_funEn(F),recover_gol_obt(F),recover_gol_test(F),recover_tot_rem(F),recover_E(F).
 
-%ASSERTS EXTERNAL EVENTS RELATED TO MULTIPLE EVENTS
+% Asserts external events related to multiple events
 eve_mul_first(Head):-functor(Head,_,N),Head=..L_eve,if((arg(1,L_eve,_),N>1),continue_mul_f(L_eve),true).
 continue_mul_f(L_eve):-arg(1,L_eve,X_eve),if((X_eve=eve,is_list(L_eve)),
                      assert_this(mul(L_eve)),true).
@@ -283,9 +315,9 @@ keep_past_ass_first(Me):- append([eve],L,Me),examine_head_ass_first(L).
 examine_head_ass_first(L):-last(L,U),repeat,member(Me,L),assert_this(even(Me)),
                  Me==U,!.
 
-%RECOVERY OF EXTERNAL EVENT FUNCTORS%
-recover_funE(F):-if(clause(even(_),_),(transf_external_events, recover_fun_even(F)),empty_list(F)).  % translated from 'recupera_funE' and 'lista_assente'
-transf_external_events:-findall(X,clause(even(X),_),Ls),  % translated from 'transf_eventi_esterni'
+% Recovery of external event functors
+recover_funE(F):-if(clause(even(_),_),(transf_external_events, recover_fun_even(F)),empty_list(F)).
+transf_external_events:-findall(X,clause(even(X),_),Ls),
                 last(Ls,U),
                          repeat,
                                 member(Me,Ls),
@@ -293,7 +325,7 @@ transf_external_events:-findall(X,clause(even(X),_),Ls),  % translated from 'tra
                                          assert(app_even(Fu)),
                 Me==U,!.
 
-recover_fun_even(F):- name(F,L),  % translated from 'recupera_fun_even'
+recover_fun_even(F):- name(F,L),
            append(L,[101],T),
            name(Y,T),
                         findall(X,clause(app_even(X),_),LA1),
@@ -302,10 +334,10 @@ recover_fun_even(F):- name(F,L),  % translated from 'recupera_fun_even'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                                   retractall(app_even(_)).
 
-%RECOVERY OF INTERNAL EVENT FUNCTORS%
-recover_funI(F):-if(clause(evin(_),_),recover_fun_evin(F),empty_list(F)).  % translated from 'recupera_funI' and 'lista_assente'
+% Recovery of internal event functors
+recover_funI(F):-if(clause(evin(_),_),recover_fun_evin(F),empty_list(F)).
 
-recover_fun_evin(F):- name(F,L),  % translated from 'recupera_fun_evin'
+recover_fun_evin(F):- name(F,L),
            append(L,[101],T),
            name(Y,T),
                         findall(X,clause(evin(X),_),LA1),
@@ -314,11 +346,11 @@ recover_fun_evin(F):- name(F,L),  % translated from 'recupera_fun_evin'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(evin(_)).
 
-%RECOVERY OF ACTIONS%
-recover_funA(F):-if(clause(azi(_),_),recover_fun_actions(F),empty_list(F)).  % translated from 'recupera_funA' and 'lista_assente'
+% Recovery of actions
+recover_funA(F):-if(clause(azi(_),_),recover_fun_actions(F),empty_list(F)).
 
-transf_message(Me):-arg(2,Me,Ar),functor(Ar,Far,_),assert(app_azi(message(Far))).  % translated from 'transf_message'
-recover_fun_actions(F):- name(F,L),  % translated from 'recupera_fun_azioni'
+transf_message(Me):-arg(2,Me,Ar),functor(Ar,Far,_),assert(app_azi(message(Far))).
+recover_fun_actions(F):- name(F,L),
            append(L,[101],T),
            name(Y,T),
                         findall(X,clause(azi(X),_),LA1),
@@ -327,10 +359,10 @@ recover_fun_actions(F):- name(F,L),  % translated from 'recupera_fun_azioni'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(azi(_)).
 
-%RECOVERY OF CONDITIONS-ACTIONS%
-recover_tot_cd(F):-if(clause(cond(_),_),recover_cd(F),empty_list(F)).  % translated from 'recupera_tot_cd' and 'lista_assente'
+% Recovery of conditions-actions
+recover_tot_cd(F):-if(clause(cond(_),_),recover_cd(F),empty_list(F)).
 
-recover_cd(F):- name(F,L),  % translated from 'recupera_cd'
+recover_cd(F):- name(F,L),
            append(L,[101],T),
            name(Y,T),
                         findall(X,clause(cond(X),_),LA1),
@@ -339,9 +371,9 @@ recover_cd(F):- name(F,L),  % translated from 'recupera_cd'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(cond(_)).
 
-%RECOVERY OF PRESENT EVENT FUNCTORS%
-recover_funEn(F):-if(clause(evN(_),_),(transf_present_events, recover_fun_evN(F)),empty_list(F)).  % translated from 'recupera_funEn' and 'lista_assente'
-transf_present_events:-findall(X,clause(evN(X),_),Ls),  % translated from 'transf_eventi_presente'
+% Recovery of present event functors
+recover_funEn(F):-if(clause(evN(_),_),(transf_present_events, recover_fun_evN(F)),empty_list(F)).
+transf_present_events:-findall(X,clause(evN(X),_),Ls),
                 last(Ls,U),
                          repeat,
                                 member(Me,Ls),
@@ -349,7 +381,7 @@ transf_present_events:-findall(X,clause(evN(X),_),Ls),  % translated from 'trans
                                          assert(app_evN(Fu)),
                 Me==U,!.
 
-recover_fun_evN(F):- name(F,L),  % translated from 'recupera_fun_evN'
+recover_fun_evN(F):- name(F,L),
            append(L,[101],T),
            name(Y,T),
                         findall(X,clause(app_evN(X),_),LA1),
@@ -358,10 +390,10 @@ recover_fun_evN(F):- name(F,L),  % translated from 'recupera_fun_evN'
                          write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                   retractall(app_evN(_)),retractall(evN(_)).
 
-%RECOVERY OF GOALS TO OBTAIN%
-recover_gol_obt(F):-if(clause(obt_goal(_),_),recover_fun_obt_goal(F),empty_list(F)).  % translated from 'recupera_gol_obt' and 'lista_assente'
+% Recovery of goals to obtain
+recover_gol_obt(F):-if(clause(obt_goal(_),_),recover_fun_obt_goal(F),empty_list(F)).
 
-recover_fun_obt_goal(F):- name(F,L),  % translated from 'recupera_fun_obt_goal'
+recover_fun_obt_goal(F):- name(F,L),
            append(L,[101],T),
            name(Y,T),
                         findall(X,clause(obt_goal(X),_),LA1),
@@ -370,16 +402,16 @@ recover_fun_obt_goal(F):- name(F,L),  % translated from 'recupera_fun_obt_goal'
                         write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                         retractall(obt_goal(_)).
 
-%RECOVERY OF GOALS TO TEST%
-recover_gol_test(F):-if(clause(test_goal(_),_),(transf_test_goal, recover_fun_test_goal(F)),empty_list(F)).  % translated from 'recupera_gol_test' and 'lista_assente'
-transf_test_goal:-findall(X,clause(test_goal(X),_),Ls),last(Ls,U),  % translated from 'transf_tes_goal'
+% Recovery of goals to test
+recover_gol_test(F):-if(clause(test_goal(_),_),(transf_test_goal, recover_fun_test_goal(F)),empty_list(F)).
+transf_test_goal:-findall(X,clause(test_goal(X),_),Ls),last(Ls,U),
                  repeat,
                         member(Me,Ls),
                                  functor(Me,Fu,_),
                                  assert(app_test_goal(Fu)),
                                 Me==U,!.
 
-recover_fun_test_goal(F):- name(F,L),  % translated from 'recupera_fun_tes_goal'
+recover_fun_test_goal(F):- name(F,L),
                    append(L,[101],T),
                    name(Y,T),
                                 findall(X,clause(app_test_goal(X),_),LA1),
@@ -388,11 +420,11 @@ recover_fun_test_goal(F):- name(F,L),  % translated from 'recupera_fun_tes_goal'
                                  write(Stream,LA),write(Stream,'.'),nl(Stream), close(Stream),
                           retractall(app_test_goal(_)).
 
-%RECOVERY OF FACTS TO REMEMBER AND MANAGE AS PAST EVENTS%
-recover_tot_rem(F):-  % translated from 'recupera_tot_rem'
+% Recovery of facts to remember and manage as past events
+recover_tot_rem(F):-
         if(clause(fact_rem(_),_), recover_rem(F),empty_list(F)).
 
-recover_rem(F):-findall(X,clause(fact_rem(X),_),Ls1),  % translated from 'recupera_rem'
+recover_rem(F):-findall(X,clause(fact_rem(X),_),Ls1),
         remove_dups(Ls1,Ls),
     name(F,L),
         append(L,[101],T),
@@ -401,15 +433,15 @@ recover_rem(F):-findall(X,clause(fact_rem(X),_),Ls1),  % translated from 'recupe
                  write(Stream,Ls),write(Stream,'.'),nl(Stream), close(Stream),
           retractall(fact_rem(_)).
 
-empty_list(F):- name(F,L),  % translated from 'lista_assente'
+empty_list(F):- name(F,L),
         append(L,[101],T),
         name(Y,T),open(Y,append,Stream,[]),
                  write(Stream,[]),write(Stream,'.'),nl(Stream), close(Stream).
 
-%RECOVERY OF EXTERNAL EVENTS%
-recover_E(F):-if(clause(even(_),_),recover_tot_even(F),empty_list(F)).  % translated from 'recupera_E'
+% Recovery of external events
+recover_E(F):-if(clause(even(_),_),recover_tot_even(F),empty_list(F)).
 
-recover_tot_even(F):- name(F,L),  % translated from 'recupera_tot_even'
+recover_tot_even(F):- name(F,L),
    append(L,[101],T),
    name(Y,T),
                 findall(X,clause(even(X),_),LA1),
@@ -419,17 +451,18 @@ recover_tot_even(F):- name(F,L),  % translated from 'recupera_tot_even'
                  close(Stream),
   retractall(even(_)).
 
-%INITIALIZES THE PLF FILE OF DIRECTIVES%
-initialize_plf(F):-if(file_exists(F),read_lines(F),true).  % translated from 'inizializza_plf'
-read_lines(F):-read_line(F,1),read_line(F,2),read_line(F,3),read_line(F,8).  % translated from 'leggirighe'
+% Initialize PLF file of directives
+initialize_plf(F):-if(file_exists(F),read_lines(F),true).
+read_lines(F):-read_line(F,1),read_line(F,2),read_line(F,3),read_line(F,8).
 
-disassemble(E,F):-last(E,Ls),  % translated from 'smonta'
+% Disassemble events
+disassemble(E,F):-last(E,Ls),
            name(F,Fe),
            append(L0,[101],Fe),
            append(L0,[102],Nf),
            name(Nof,Nf),
-           priority_actions(F,Nof),  % translated from 'priority_azi'
-           priority_events(F,Nof),  % translated from 'priority_eve'
+           priority_actions(F,Nof),
+           priority_events(F,Nof),
            repeat,
              member(Me,E),
              open(Nof,append,Stream,[]),
@@ -444,8 +477,9 @@ disassemble(E,F):-last(E,Ls),  % translated from 'smonta'
          close(Stream),
          Me==Ls,!.
 
-disassemble_internal(E,F):- if(E=[],true,disassemble_internal1(E,F)).  % translated from 'smonta_interno'
-disassemble_internal1(E,F):- name(F,Fe),  % translated from 'smonta_interno1'
+% Disassemble internal events
+disassemble_internal(E,F):- if(E=[],true,disassemble_internal1(E,F)).
+disassemble_internal1(E,F):- name(F,Fe),
            append(L0,[101],Fe),
            append(L0,[102],Nf),
            name(Nof,Nf),
@@ -460,6 +494,7 @@ disassemble_internal1(E,F):- name(F,Fe),  % translated from 'smonta_interno1'
                  write(Stream,Me), write(Stream,'))).'),nl(Stream), close(Stream),
            Me==Ls,!.
 
+% Priority actions
 priority_actions(Fe,Ff):-read_line(Fe,3),
            clause(az(L),_),if(L=[],true,priority_actions1(L,Ff)).
 
@@ -472,6 +507,7 @@ priority_actions1(L,Ff):-last(L,U),
                                 close(Stream),
                         Me==U,!.
 
+% Priority events
 priority_events(Fe,Ff):-read_line(Fe,1),
            clause(eventE(L),_),if(L=[],true,priority_events1(L,Ff)).
 
@@ -487,7 +523,8 @@ priority_events1(L,Ff):-last(L,U),
                                  nl(Stream),close(Stream),
                                                 Me==U,!.
 
-check_all_events(F):-  % translated from 'controlla_ev_all'
+% Check all events
+check_all_events(F):-
            read_line(F,2),clause(evintI(Li),_),
            read_line(F,3),clause(az(La),_),
            read_line(F,6),clause(obtgoal(Lo),_),
@@ -501,7 +538,7 @@ check_all_events(F):-  % translated from 'controlla_ev_all'
                    see(Plf),
                         repeat,
                         read(T),
-                           assert(temporary_values(T)),  % translated from 'valori_temporanei'
+                           assert(temporary_values(T)),
                           T==end_of_file,
                          seen,!,
                           findall(X,clause(temporary_values(past_event(X,_)),_),Ls),
@@ -509,24 +546,26 @@ check_all_events(F):-  % translated from 'controlla_ev_all'
                           diff(L6,Ls,Ld2),
                           append(Ld1,Ld2,Ldf),
                           if(Ldf=[], true,
-                          (different_events_all(L6),rewrite(F,Plf))),  % translated from 'diversi_ev_all' and 'riscrivi'
+                          (different_events_all(L6),rewrite(F,Plf))),
                           retractall(temporary_values(_)).
 
-different_events_all(L):-assert(k110055(1)),length(L,N),  % translated from 'diversi_ev_all'
+% Different events handling
+different_events_all(L):-assert(k110055(1)),length(L,N),
          repeat,
                  clause(k110055(K),_),
                  nth1(K,L,M),
-                 write_lines124(M),  % translated from 'scrivi_l124'
+                 write_lines124(M),
                  R is K+1,assert(k110055(R)),retractall(k110055(K)),
       K==N,!,retractall(k110055(_)).
 
-write_lines124(M):-if(clause(temporary_values(past_event(M,_)),_),true,assert(to_write(M))),!.  % translated from 'scrivi_l124'
+write_lines124(M):-if(clause(temporary_values(past_event(M,_)),_),true,assert(to_write(M))),!.
 
-rewrite(F,Plf):-  % translated from 'riscrivi'
+% Rewrite events
+rewrite(F,Plf):-
                 findall(E1,clause(to_write(E1),_),Ls1),
-                if(Ls1=[],true,write_to_write(Ls1,Plf,F)).  % translated from 'scrivi_da_scr'
+                if(Ls1=[],true,write_to_write(Ls1,Plf,F)).
 
-write_to_write(Ls1,Plf,F):-assert(k22(1)),length(Ls1,N),  % translated from 'scrivi_da_scr'
+write_to_write(Ls1,Plf,F):-assert(k22(1)),length(Ls1,N),
          repeat,
          clause(k22(K),_),
          nth1(K,Ls1,X),
@@ -535,74 +574,79 @@ write_to_write(Ls1,Plf,F):-assert(k22(1)),length(Ls1,N),  % translated from 'scr
                          write(Stream,remember_event_mod(X,number(5),last)),write(Stream,'.'),nl(Stream),
                          write(Stream,past_event(X,60)),write(Stream,'.'),nl(Stream),
                          close(Stream),
-                         belongs_to_event_set(X,Plf,F),  % translated from 'appart_set_event'
+                         belongs_to_event_set(X,Plf,F),
                           R is K+1,assert(k22(R)),retractall(k22(K)),
          K==N,!,retractall(k11(_)),retractall(to_write(_)).
 
-belongs_to_event_set(X,Plf,F):-read_line(F,1),clause(eventE(Le),_),  % translated from 'appart_set_event'
+% Event set management
+belongs_to_event_set(X,Plf,F):-read_line(F,1),clause(eventE(Le),_),
         read_line(F,2),clause(evintI(Li),_),
            read_line(F,3),clause(az(La),_),functor(X,Fun,_),
-           if(member(Fun,Le),write_ext_event(Fun,Plf),true),  % translated from 'writ_est_event'
-           if(member(X,Li),write_int_event(X,Plf),true),  % translated from 'writ_int_event'
-           if(member(X,La),write_action_event(X,Plf),true).  % translated from 'writ_actn_event'
+           if(member(Fun,Le),write_ext_event(Fun,Plf),true),
+           if(member(X,Li),write_int_event(X,Plf),true),
+           if(member(X,La),write_action_event(X,Plf),true).
 
-write_ext_event(X,Plf):-open(Plf,append,Stream,[]),  % translated from 'writ_est_event'
+% Write external event
+write_ext_event(X,Plf):-open(Plf,append,Stream,[]),
                   write(Stream,'external_event('),write(Stream,X),write(Stream,','),
                   write(Stream,'normal'),
                   write(Stream,').'),nl(Stream),
                  write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
                  nl(Stream),close(Stream).
 
-write_int_event(X,Plf):- open(Plf,append,Stream,[]),  % translated from 'writ_int_event'
+% Write internal event
+write_int_event(X,Plf):- open(Plf,append,Stream,[]),
            write(Stream,'internal_event('),write(Stream,X),write(Stream,','),
            write(Stream,'3'),write(Stream,','),write(Stream,forever),
            write(Stream,','),write(Stream,true),write(Stream,','),write(Stream,'until_cond(past('),
            write(Stream,X), write(Stream,'))).'),nl(Stream), close(Stream).
 
-write_action_event(X,Plf):- functor(X,F,_),  % translated from 'writ_actn_event'
-         if(F=message,write_msg_mod(X,Plf),write_action_mod(X,Plf)).  % translated from 'scr_msg_mod' and 'scr_act_mod'
+% Write action event
+write_action_event(X,Plf):- functor(X,F,_),
+         if(F=message,write_msg_mod(X,Plf),write_action_mod(X,Plf)).
 
-write_action_mod(X,Plf):-open(Plf,append,Stream,[]),  % translated from 'scr_act_mod'
+write_action_mod(X,Plf):-open(Plf,append,Stream,[]),
          write(Stream,'action('),write(Stream,X),write(Stream,','),
          write(Stream,'normal'),
          write(Stream,').'),nl(Stream),close(Stream).
 
-write_msg_mod(X,Plf):-open(Plf,append,Stream,[]),  % translated from 'scr_msg_mod'
+write_msg_mod(X,Plf):-open(Plf,append,Stream,[]),
          write(Stream,'action('),write(Stream,X),write(Stream,','),
          write(Stream,'normal'),
          write(Stream,').'),nl(Stream),
          write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
          nl(Stream),close(Stream).
 
-%DETERMINES IF AN ACTION (message) SHOULD BE SUBJECTED TO CHECK OR NOT
-check_message(Fe,Ff):-read_line(Fe,3),  % translated from 'check_messaggio'
-           clause(az(L),_),if(L=[],true,check_messages(L,Ff)).  % translated from 'check_mess'
+% Check message conditions
+check_message(Fe,Ff):-read_line(Fe,3),
+           clause(az(L),_),if(L=[],true,check_messages(L,Ff)).
 
-check_messages(L,Ff):-last(L,U),  % translated from 'check_mess'
+check_messages(L,Ff):-last(L,U),
           repeat,
                  member(Me,L),
                  functor(Me,Fu,_),
-                 if(Fu=message,write_plf_string(Me,Ff),true),  % translated from 'ass_plf_string'
+                 if(Fu=message,write_plf_string(Me,Ff),true),
           Me==U,!.
 
-write_plf_string(Me,Ff):-open(Ff,append,Stream,[]),  % translated from 'ass_plf_string'
+write_plf_string(Me,Ff):-open(Ff,append,Stream,[]),
            write(Stream,'mod('),write(Stream,Me),write(Stream,','),
            write(Stream,'check'),write(Stream,').'),nl(Stream),
            close(Stream).
 
-%UPDATES THE CONDITIONS OF EXTERNAL EVENTS
-write_cond_extevent(X,Plf):-name(Plf,L),append(Li,[102],L),append(Li,[118],Lj),name(F,Lj),clause(agent_x(_,_,S,_),_),read_line(S,4),  % translated from 'writ_cond_extevent'
+% Update external event conditions
+write_cond_extevent(X,Plf):-name(Plf,L),append(Li,[102],L),append(Li,[118],Lj),name(F,Lj),clause(agent_x(_,_,S,_),_),read_line(S,4),
         clause(condt(Y),true),
-        retractall(condt(_)),process_external_events(X,Y,F).  % translated from 'rip_esterni'
+        retractall(condt(_)),process_external_events(X,Y,F).
 
-%LOADS THE DIRECTIVES FROM THE .plf FILE%
-load_directives(F):-open(F,read,Stream,[]).  % translated from 'carica_le_direttive'
+% Load directives from PLF file
+load_directives(F):-open(F,read,Stream,[]).
                    repeat,
                                  read(Stream,T),
                                  if(clause(T,_),true,assert((T))),
                         T==end_of_file,!,
         close(Stream).
 
+% File operations for events
 aprifile_en(F):-see(F),
          repeat,
         read(T),
@@ -618,17 +662,16 @@ man_go:-setof(X,clause_man(X),L),
                           split1man(A,A1),
                 A==Lu,!.
 
-        %T è tutto, mentre A è la TESTA
-        split1man(T,A):-T=..L,member(X,L),if(member(X,[':-',',']),true,split2man(X,A)).
+% Split and process management
+split1man(T,A):-T=..L,member(X,L),if(member(X,[':-',',']),true,split2man(X,A)).
 
-        split2man(X,A):-functor(X,_,N),if(N>1,split1man(X,A),split3man(X,A)).
+split2man(X,A):-functor(X,_,N),if(N>1,split1man(X,A),split3man(X,A)).
 
-        % Cioè se cia esattamente un argomento
-        split3man(X,A):-functor(X,H,N),if(N>0,continman(X,H,A),true).
+split3man(X,A):-functor(X,H,N),if(N>0,continman(X,H,A),true).
 
-        continman(X,H,A):-arg(1,X,I),if(H=en,( assert_this(linked_en(A,I)), write(A),nl,write(I),nl ),true).
+continman(X,H,A):-arg(1,X,I),if(H=en,( assert_this(linked_en(A,I)), write(A),nl,write(I),nl ),true).
 
-%RICEZIONE EVENTI ESTERNI%
+% Message reception
 receive_message:-clause(agent_x(Ag,Ind,_,_),_),
          if(rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
          receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con),true).
@@ -646,6 +689,7 @@ not_receivable_meta(AgM,IndM,Language,Ontology,Con):-write('Message not receivab
 not_receivable_message(AgM,IndM,Language,Ontology,Con):-write('Message not receivable: '),write(Con),nl,
                                                        assert_this(not_receivable(AgM,IndM,Language,Ontology,Con)).
 
+% Message sending
 send_message(AgM,IndM,Language,Ontology,Con):-clause(agent_x(Ag,Ind,_,_),_),
                                              out(message(IndM,AgM,Ind,Ag,Language,Ontology,Con)).
 
@@ -653,6 +697,7 @@ send_message_learn(AgM,IndM,Language,Ontology,Con):-clause(agent_x(Ag,Ind,_,_),_
                                                    out(message(IndM,AgM,Ind,Ag,Language,Ontology,Con)),
                                                    assert_this(sent_message(AgM,IndM,Language,Ontology,Con)).
 
+% Internal event handling
 internal_event:-clause(agent_x(_,_,S,_),_),
         read_line(S,2),clause(evintI(L),_),
         if(L\=[],check_internal_event1(L,S),true).
@@ -677,6 +722,7 @@ freq_single1(L,As):-last(L,Ul),
 
 assert_prov0(Me):-if(clause(prov_int0(Me),_),true,assert(prov_int0(Me))).
 
+% Internal event goal handling
 internal_event_goal:-findall(M,clause(prov_int0(M),_),L),
          if(L=[],true,internal_event_goal1(L)).
 
@@ -710,6 +756,7 @@ move_to_prov_int(L):-last(L,U),
 assert_prov(Me):-if(clause(prov_int(Me),_),true,assert(prov_int(Me))).
 unload_prov(Me):-if(clause(prov_int(Me),_),retractall(prov_int(Me)),true).
 
+% Internal event processing
 internal_event0:-if(clause(prov_int(_),_),internal_event01,true).
 internal_event01:-findall(M,prov_int(M),L),
          last(L,U),
@@ -725,6 +772,7 @@ internal_event012(Me,C0,C):-if(C0=in_date,examine_dt(Me,C),print('Writing_error1
 examine_cd(Me,C):-arg(1,C,C1),if(clause(C1,true),unload(Me),load(Me)).
 examine_dt(Me,C):-arg(1,C,D),arg(2,C,A),verify_time(Me,D,A).
 
+% Time verification
 verify_time(Iv,D,A):-datime(C),arg(1,C,Ac),arg(1,D,A1),arg(1,A,A2),
               if((Ac>A1,Ac<A2),load(Iv),if((Ac=A1,Ac=\=A2),
               conf_date_max(Iv,D,A,C),
@@ -762,6 +810,7 @@ load(Me):-if(clause(prov_int1(Me),_),true,assert(prov_int1(Me))).
 
 unload(Me):-if(clause(prov_int1(Me),_),retractall(prov_int1(Me)),true).
 
+% Block number internal event
 block_number_internal_event:-if(clause(prov_int1(_),_),block_number1,true).
 block_number1:-findall(M,clause(prov_int1(M),_),L),
                 if(L=[],true,block_number2(L)).
@@ -809,6 +858,7 @@ change_fact(M,Ti):-clause(isa(M,_,Tf),_),
 change_past(M,Ti):-clause(past(M,Tp,_),_),
           if(Tp>Ti,true,false).
 
+% Block frequency
 block_frequency:-if(clause(prov_int2(_),_),block_frequency1,true).
 block_frequency1:-findall(M,clause(prov_int2(M),_),L),
         if(L=[],true,block_frequency2(L)).
@@ -821,6 +871,7 @@ block_frequency2(L):-last(L,U),
 
 assert_tempI(Me):-if(clause(tempI(Me),_),true,assert(tempI(Me))).
 
+% Internal event processing
 internal_event2:-if(clause(tempI(_),_),internal_eventp,true).
 
 internal_eventp:-findall(Y,tempI(Y),Ls),
@@ -854,6 +905,7 @@ ass_ev_pre_i(Me,Tc):-setof(T,clause(link_int_time(Me,T),_),L1),
          (retractall(ev_pre_time(Me,_,_)),assert(ev_pre_time(Me,Tc,L1))),
         assert(ev_pre_time(Me,Tc,L1))).
 
+% Check frequency attempts
 check_freq_tent:-clause(agent_x(_,_,S,_),_),statistics(walltime,[T,_]),
                   read_line(S,2),clause(evintI(L),_),
         if(L\=[],check_freq_tent0(L,T),true).
@@ -873,6 +925,7 @@ check_freq_tent2(X,T,Tp,Tc):-Tp1 is Tp*1000,
 
 cancel_tried(X,Tc):-retractall(tried_event(X,Tc)).
 
+% Check frequency internal events
 check_freq_iv:-clause(agent_x(_,_,S,_),_),statistics(walltime,[T,_]),
                   read_line(S,2),clause(evintI(L),_),
         if(L\=[],check_freq_iv0(L,T),true).
@@ -892,6 +945,7 @@ check_freq_int2(X,T,Tp,Tc):-Tp1 is Tp*1000,
 
 cancel_reacted(X,Tc):-retractall(reacted(X,Tc)).
 
+% Process external events
 process_external_events:-clause(agent_x(_,_,S,_),_),read_line(S,1),clause(eventE(Es),_),
 if(Es=[],true,(process_high_events,process_normal_events)).
 
@@ -925,22 +979,23 @@ process_event4(E,T,Ls):-if(Ls=[],true,process_event6(E,T,Ls)).
 process_event5(E,T,Ls):-if(Ls=[],true,process_event7(E,T,Ls)).
 
 process_event6(E,T,Ls):-last(Ls,U),
-repeat,
+                          repeat,
 member(I,Ls),
 if(clause(ev_pre_time(I,T),_),true,assert(ev_pre_time(I,T,[]))),
 I==U,!.
 
 process_event7(E,T,Ls):-last(Ls,U),
-repeat,
+                repeat,
 member(I,Ls),
 assert(ev_pre_time(I,T,[])),
 I==U,!.
 
+% Goal management
 manage_goals:-if(clause(goal(_),_),manage_goals1,true).
 
 manage_goals1:-findall(goal(G),clause(goal(G),_),L),
          last(L,U),
-         repeat,
+                  repeat,
            member(Me,L),
              if(clause(goal_completed(Me),_),true,manage_goals2(Me)),
          Me==U,!.
@@ -963,14 +1018,15 @@ cancel_goal(Me):-retractall(goal(Me)),retractall(goal_precondition(Me,_)),
                  retractall(goal_do(Me,_)),retractall(goal_postcondition(Me,_)),
                  retractall(goal_completed(Me)).
 
+% Time management
 manage_time:-if(clause(time(_),_),manage_time1,true).
 
 manage_time1:-findall(time(T),clause(time(T),_),L),
-         last(L,U),
-         repeat,
-           member(Me,L),
+          last(L,U),
+                        repeat,
+                           member(Me,L),
              if(clause(time_completed(Me),_),true,manage_time2(Me)),
-         Me==U,!.
+          Me==U,!.
 
 manage_time2(Me):-if(clause(time_precondition(Me,Pre),_),manage_time3(Me,Pre),manage_time4(Me)).
 
@@ -990,14 +1046,15 @@ cancel_time(Me):-retractall(time(Me)),retractall(time_precondition(Me,_)),
                  retractall(time_do(Me,_)),retractall(time_postcondition(Me,_)),
                  retractall(time_completed(Me)).
 
+% Condition checking
 check_conditions:-if(clause(condition(_),_),check_conditions1,true).
 
 check_conditions1:-findall(condition(C),clause(condition(C),_),L),
-         last(L,U),
+          last(L,U),
          repeat,
            member(Me,L),
              if(clause(condition_completed(Me),_),true,check_conditions2(Me)),
-         Me==U,!.
+                     Me==U,!.
 
 check_conditions2(Me):-if(clause(condition_precondition(Me,Pre),_),check_conditions3(Me,Pre),check_conditions4(Me)).
 
