@@ -137,12 +137,39 @@ load_ontology_file(Ontolog, Agent) :-
     name(Host, HostC),
     assert(ontology(Prefixes, [Repository, Host], Agent)).
 
-% Gestione degli eventi interni
-internal_event :- 
-    clause(agent_x(_,_,S,_), _),
-    read_line_from_file(S,2),
-    clause(evintI(L), _),
-    (L \= [] -> check_internal_event1(L,S) ; true).
+% Gestione dei messaggi
+receive_message :-
+    clause(agent_x(Ag,Ind,_,_), _),
+    (rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)) ->
+        receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) ; 
+        true).
+
+receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) :-
+    assert_this(ext_agent_x(AgM,IndM,Ontology,Language)),
+    in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
+    (clause(receive(Con), _) ->
+        call_con(AgM,IndM,Language,Ontology,Con) ;
+        not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
+
+% Gestione degli eventi
+process_events :-
+    findall(Event, clause(event(Event), _), Events),
+    process_event_list(Events).
+
+process_event_list([]).
+process_event_list([Event|Rest]) :-
+    process_single_event(Event),
+    process_event_list(Rest).
+
+process_single_event(Event) :-
+    (clause(event_condition(Event, Condition), _) ->
+        (call(Condition) -> process_event_action(Event) ; true) ;
+        process_event_action(Event)).
+
+process_event_action(Event) :-
+    (clause(event_action(Event, Action), _) ->
+        call(Action) ;
+        true).
 
 % Gestione degli eventi esterni
 process_external_events :-
@@ -173,19 +200,12 @@ process_normal_events1 :-
         process_normal_event(AgM,E,T) ; 
         no_process_normal_event(AgM,E,T)).
 
-% Gestione dei messaggi
-receive_message :-
-    clause(agent_x(Ag,Ind,_,_), _),
-    (rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)) ->
-        receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) ; 
-        true).
-
-receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) :-
-    assert_this(ext_agent_x(AgM,IndM,Ontology,Language)),
-    in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
-    (clause(receive(Con), _) ->
-        call_con(AgM,IndM,Language,Ontology,Con) ;
-        not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
+% Gestione degli eventi interni
+internal_event :- 
+    clause(agent_x(_,_,S,_), _),
+    read_line_from_file(S,2),
+    clause(evintI(L), _),
+    (L \= [] -> check_internal_event1(L,S) ; true).
 
 % Gestione degli obiettivi
 manage_goals :-
@@ -283,26 +303,6 @@ cancel_condition(Me) :-
     retractall(condition_do(Me,_)),
     retractall(condition_postcondition(Me,_)),
     retractall(condition_completed(Me)).
-
-% Gestione degli eventi
-process_events :-
-    findall(Event, clause(event(Event), _), Events),
-    process_event_list(Events).
-
-process_event_list([]).
-process_event_list([Event|Rest]) :-
-    process_single_event(Event),
-    process_event_list(Rest).
-
-process_single_event(Event) :-
-    (clause(event_condition(Event, Condition), _) ->
-        (call(Condition) -> process_event_action(Event) ; true) ;
-        process_event_action(Event)).
-
-process_event_action(Event) :-
-    (clause(event_action(Event, Action), _) ->
-        call(Action) ;
-        true).
 
 % Gestione degli stream
 safe_open_file(File, Mode, Stream) :-
