@@ -36,7 +36,7 @@ UTILS_DIR="$DALI_HOME/src"
 
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
-WAIT="ping -c 3 127.0.0.1"
+WAIT="ping -c 1 127.0.0.1"
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
@@ -92,7 +92,7 @@ for agent_filename in $BUILD_HOME/*; do
 done
 
 # Start user agent in another vertical split
-tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/user_console.pl --goal 'initialize_client,client_loop.'"
+% tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/user_console.pl --goal 'initialize_client,client_loop.'"
 
 echo "MAS started."
 
@@ -106,4 +106,5 @@ echo "Press Enter to shutdown the MAS"
 read
 
 # Clean up processes
-killall sicstus
+killall -9 sicstus
+

@@ -1,18 +1,21 @@
-:- module(active_dali_wi, [initialize_agent/1]).
-
-:- use_module(library(lists)).
-:- use_module(library(system)).
-:- use_module(library(file_systems)).
-:- use_module(library(random)).
-:- use_module(library('linda/client')).
-:- use_module(library(clpq)).
-:- use_module(library(fdbg)).
-
 % Licensed with Apache Public License
 % by AAAI Research Group
 % Department of Information Engineering and Computer Science and Mathematics
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
+
+
+:- module(active_dali_wi, [initialize_agent/1]).
+
+:- use_module(library(file_systems), [file_exists/1,delete_file/1]).
+:- use_module(library(lists)).
+:- use_module(library(random)).
+:- use_module(library('linda/client')).
+:- use_module(library(clpq)).
+:- use_module(library(fdbg)).
+:- use_module(remove_var, [remove_var_fil/1]).
+:- use_module(utils, [delete_agent_files/1]).
+:- use_module(tokefun, [leggiFile/2, token_fil/1]).
 
 %%DEBUG
 %%:-leash([exception]).
@@ -23,20 +26,20 @@
    set_prolog_flag(single_var_warnings,off).
 
 %%
-:-['communication_onto.pl'].
-:-['substitute.pl'].
+:- use_module('communication_onto').
+:- use_module('substitute').
 :-dynamic prefixes/1.
 :-dynamic repositories/1.
 :-dynamic ontology/3.
 %%
 
-:-['tokefun.pl'].
+:- use_module('tokefun').
 
-:-['meta1.pl'].
-:-['remove_var.pl'].  % translated from 'togli_var.pl'
-:-['memory.pl'].
+:- use_module('meta1').
+:- use_module('remove_var').  % translated from 'togli_var.pl'
+:- use_module('memory').
 
-:-['examine_past_constraints.pl'].
+:- use_module('examine_past_constraints').
 
 :-dynamic tesg/1.
 :-dynamic ontology/2.
@@ -63,7 +66,7 @@
 :-op(1200,xfx,[:-,</]).
 :-op(1200,xfx,[:-,?/]).
 
-:-['read_mul.pl'].  % translated from 'leggi_mul.pl'
+:- use_module('read_mul').  % translated from 'leggi_mul.pl'
 
 % Predicati di trace
 trace_message(Message) :-
@@ -100,14 +103,14 @@ initialize_agent(FI) :-
         open(FI, read, Stream)
     ),
     read(Stream, Term),
-        close(Stream),
+    close(Stream),
     assertz(agent_config(Term)),
     write('my config: '), write(Term), nl,
     initialize_agent_parameters(Term).
 
 initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization)) :-
     trace_message('Inizializzazione parametri agente'),
-    % Inizializza le configurazioni dell'agente
+     % Inizializza le configurazioni dell'agente
     (UP = no -> true ; assert(user_profile_location(UP))),
     (DO = no -> true ; assert(dali_onto_location(DO))),
     assert(server_obj('localhost':3010)),
@@ -143,23 +146,44 @@ initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, 
     trace_linda('Messaggio di attivazione inviato con successo'),
     
     % Inizializzazione dei file dell'agente
-    delete_agent_x_files(File),
+    delete_agent_files(File),
     token(File),
     start1(File, AgentName, Lib, Fil).
+
+% Wrapper per token_fil che usa call/1
+token_fil_wrapper(File) :-
+    trace_message(['Chiamata token_fil_wrapper su file: ', File]),
+    catch(
+        call(token_fil(File)),
+        Error,
+        (trace_message(['Errore in token_fil_wrapper: ', Error]), fail)
+    ).
 
 % Filtra i file di configurazione
 filter_fil(Fil) :-
     trace_message('Inizio filter_fil'),
+    trace_message(['File da processare: ', Fil]),
     (is_list(Fil) ->
         trace_message('Processamento lista di file'),
         process_fil_list(Fil)
     ;
         trace_message('Processamento singolo file'),
-        arg(1, Fil, File),
-        trace_message(['File da processare: ', File]),
-        token_fil(File),
+        trace_message(['File da processare: ', Fil]),
+        trace_message('Chiamata token_fil'),
+        catch(
+            token_fil_wrapper(Fil),
+            Error,
+            (trace_message(['Errore in token_fil: ', Error]), fail)
+        ),
+        trace_message('Fine token_fil'),
         retractall(parentheses(_)),
-        remove_var_fil(File)
+        trace_message('Chiamata remove_var_fil'),
+        catch(
+            remove_var_fil(Fil),
+            Error,
+            (trace_message(['Errore in remove_var_fil: ', Error]), fail)
+        ),
+        trace_message('Fine remove_var_fil')
     ),
     trace_message('Fine filter_fil').
 
@@ -168,9 +192,21 @@ process_fil_list([]) :-
     trace_message('Lista file vuota').
 process_fil_list([File|Rest]) :-
     trace_message(['Processamento file: ', File]),
-    token_fil(File),
+    trace_message('Chiamata token_fil'),
+    catch(
+        token_fil_wrapper(File),
+        Error,
+        (trace_message(['Errore in token_fil: ', Error]), fail)
+    ),
+    trace_message('Fine token_fil'),
     retractall(parentheses(_)),
-    remove_var_fil(File),
+    trace_message('Chiamata remove_var_fil'),
+    catch(
+        remove_var_fil(File),
+        Error,
+        (trace_message(['Errore in remove_var_fil: ', Error]), fail)
+    ),
+    trace_message('Fine remove_var_fil'),
     process_fil_list(Rest).
 
 % Carica il file di ontologia

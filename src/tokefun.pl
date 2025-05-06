@@ -31,9 +31,27 @@ user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[]
 
 
 %%EDITED
+readFile(Infile, Txt) :-			%apertura file,lettura righe
+    write('DEBUG [readFile]: Tentativo di apertura file '), write(Infile), nl,
+    atom_concat(Infile,'.pl',File),
+    write('DEBUG [readFile]: Nome file completo: '), write(File), nl,
+    catch(
+        (see(File),   
+         leggiChars(Txt), !,
+         seen),
+        Error,
+        (write('DEBUG [readFile]: Errore nella lettura del file: '), write(Error), nl, fail)
+    ).
+
 token(F):-readFile(F,Fi),tokenize(Fi,L),take_meta(L,F).
 token(F):-leggiFile(F,Fi),tokenize(Fi,L),take_meta(L,F).
-token_fil(F):-leggiFile_fil(F,Fi),tokenize(Fi,L),take_meta_fil(L,F).
+token_fil(F):-
+    write('DEBUG [token_fil]: Inizio processamento file '), write(F), nl,
+    leggiFile_fil(F,Fi),
+    write('DEBUG [token_fil]: File letto, lunghezza: '), length(Fi, Len), write(Len), nl,
+    tokenize(Fi,L),
+    write('DEBUG [token_fil]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
+    take_meta_fil(L,F).
 token_clause(C,F,F1):-crea_rand(F,F1),name(C,L),tokenize(L,S),append(Lb,['EOL'],S),append(Lb,['.'],Lb1),append(Lb1,['EOL'],Lb2),take_meta_update(Lb2,F,F1).
 
 crea_rand(F,T):-random(97,122,A4),random(97,122,A5),random(97,122,A6),name(F,Lf),append(Lf,[A4],F1),append(F1,[A5],F2),append(F2,[A6],Fi),name(T,Fi).
@@ -56,10 +74,16 @@ leggiFile(Infile,Txt) :-			%apertura file,lettura righe
 	seen.
 
 leggiFile_fil(Infile,Txt) :-			%apertura file,lettura righe
-	atom_concat(Infile,'.con',File),
-	see(File), 
-	leggiChars(Txt), !,
-	seen.
+    write('DEBUG [leggiFile_fil]: Tentativo di apertura file '), write(Infile), nl,
+    atom_concat(Infile,'.con',File),
+    write('DEBUG [leggiFile_fil]: Nome file completo: '), write(File), nl,
+    catch(
+        (see(File), 
+         leggiChars(Txt), !,
+         seen),
+        Error,
+        (write('DEBUG [leggiFile_fil]: Errore nella lettura del file: '), write(Error), nl, fail)
+    ).
 
 charBlank(32).
 
@@ -91,7 +115,6 @@ skipBlanks(Ch,NextCh) :-
 %=================================================================================
 
 
-%%EDITED MESSO UN TRACE'
 tokenize(Input,Output) :- % trasforma una lista di codici ascii in una di lessemi
 	tokenize(Output,Input,Residue), !, 
 	(Residue=[] -> true; assert(residue(Residue))).
@@ -169,17 +192,38 @@ Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1)),true),
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
 	), (write('Errore take_meta'),nl)),re_file(Nf).
 
-take_meta_fil(L,F):-assert(parentesi(0)),assert(buffer([])),name(F,Lf),append(Lf,[46,112,108],Lft),
-                        name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),
-                        last(L,U),
-repeat,
-member(Me,L),
-examine_all(Me),
-Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1,Nf)),true), 
-if(clause(buffer(ParsedC),_), 
-	( retractall(buffer(_)), name(Parsed,ParsedC), 
-	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-	), (write('Errore take_meta_fil'),nl)).
+take_meta_fil(L,F):-
+    write('DEBUG [take_meta_fil]: Inizio elaborazione'), nl,
+    assert(parentesi(0)),
+    assert(buffer([])),
+    name(F,Lf),
+    append(Lf,[46,112,108],Lft),
+    name(Nf,Lft),
+    write('DEBUG [take_meta_fil]: File di output: '), write(Nf), nl,
+    if(file_exists(Nf),delete_file(Nf),true),
+    last(L,U),
+    write('DEBUG [take_meta_fil]: Ultimo token: '), write(U), nl,
+    repeat,
+    member(Me,L),
+    examine_all(Me),
+    Me==U,!,
+    write('DEBUG [take_meta_fil]: Fine processamento token'), nl,
+    if(clause(residue(R),_),
+        (write('DEBUG [take_meta_fil]: Residuo trovato: '), write(R), nl,
+         name(R1,R),
+         examine_all(R1,Nf)),
+        true), 
+    if(clause(buffer(ParsedC),_), 
+        (write('DEBUG [take_meta_fil]: Buffer trovato, lunghezza: '), length(ParsedC, Len), write(Len), nl,
+         retractall(buffer(_)), 
+         name(Parsed,ParsedC), 
+         open(Nf, append, Stream, []), 
+         write(Stream, Parsed), 
+         close(Stream),
+         write('DEBUG [take_meta_fil]: File scritto con successo'), nl
+        ), 
+        (write('DEBUG [take_meta_fil]: Errore - buffer vuoto'), nl)
+    ).
 
 examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
 
