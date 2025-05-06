@@ -68,9 +68,11 @@ ls $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 
 # Start the LINDA server in a new console
-srvcmd="$PROLOG --noinfo -l $COMMUNICATION_DIR/linda_server.pl --goal 'initialize_server(3010),server_loop.'"
+srvcmd="$PROLOG --noinfo -l $COMMUNICATION_DIR/linda_server.pl --goal 'start_linda_server.'"
 echo "server: $srvcmd"
+
 tmux new-session -d -s DALI_session "$srvcmd"
+
 sleep 1
 
 echo "Server ready. Starting the MAS..."
@@ -90,7 +92,7 @@ for agent_filename in $BUILD_HOME/*; do
 done
 
 # Start user agent in another vertical split
-tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/user_console.pl --goal 'initialize_client(\"localhost\", 3010),client_loop.'"
+tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/user_console.pl --goal 'initialize_client,client_loop.'"
 
 echo "MAS started."
 

@@ -1,30 +1,23 @@
-% Licensed with Apache Public License
-% by AAAI Research Group
-% Department of Information Engineering and Computer Science and Mathematics
-% University of L'Aquila, ITALY
-% http://www.disim.univaq.it
+:- module(linda_server, [start_linda_server/0, server_loop/0]).
 
-% Load the package required from Linda-server
-:-use_module(library('linda/server')).
+:- use_module(library('linda/server')).
+:- use_module(library(system)).
 
-% Starts a Linda-server listener in this SICStus Prolog instance. Example: linda((Host:Port)-Goal)
-% When connection is made, Host and Port are bound to  
-% the server  host and port respectively and Goal is called.
-go:-go(3010,'server.txt').
-go(Port,Path):- linda((Host:Port)-(user:on_open(Host,Port,Path))). 
+% Predicati di trace
+trace_linda_server(Message) :-
+    write('DEBUG [Linda Server]: '), write(Message), nl.
 
-% Is called for store the connection information in a file at the path Path
-% so that the clients can find the server to connect to.
-on_open(Host,Port,Path):-open(Path,write,Stream,[]),
-                         format(Stream,'\'~s\':~d.\n', [Host, Port]),
-                         close(Stream).
+% Inizializzazione del server
+start_linda_server :-
+    trace_linda_server('Avvio del server Linda'),
+    catch(
+        (trace_linda_server('Tentativo di avvio server sulla porta 3010'),
+         linda(('localhost':3010)-true),
+         trace_linda_server('Server Linda avviato sulla porta 3010')),
+        Error,
+        (trace_linda_server('Errore nell\'avvio del server'), 
+         write('Errore dettagliato: '), write(Error), nl, fail)
+    ),
+    trace_linda_server('In attesa di connessioni...'),
+    trace_linda_server('Server pronto per il loop').
 
-% Initialize the server with the given port
-initialize_server(Port) :-
-    go(Port, 'server.txt').
-
-% Server loop that keeps the server running
-server_loop :-
-    repeat,
-    sleep(1),
-    fail.

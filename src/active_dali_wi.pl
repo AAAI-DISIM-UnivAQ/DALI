@@ -65,6 +65,22 @@
 
 :-['read_mul.pl'].  % translated from 'leggi_mul.pl'
 
+% Predicati di trace
+trace_message(Message) :-
+    write('DEBUG [Message]: '), write(Message), nl.
+
+trace_event(Event) :-
+    write('DEBUG [Event]: '), write(Event), nl.
+
+trace_condition(Condition) :-
+    write('DEBUG [Condition]: '), write(Condition), nl.
+
+trace_action(Action) :-
+    write('DEBUG [Action]: '), write(Action), nl.
+
+trace_linda(Message) :-
+    write('DEBUG [Linda]: '), write(Message), nl.
+
 % Lettura di un carattere dall'input corrente
 get0(Char) :-
     current_input(Stream),
@@ -76,6 +92,7 @@ get0(Char) :-
 
 % Inizializzazione dell'agente
 initialize_agent(FI) :-
+    trace_message('Inizializzazione agente'),
     (is_list(FI) -> 
         atom_codes(Atom, FI),
         open(Atom, read, Stream)
@@ -88,6 +105,7 @@ initialize_agent(FI) :-
     initialize_agent_parameters(Term).
 
 initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization)) :-
+    trace_message('Inizializzazione parametri agente'),
     % Inizializza le configurazioni dell'agente
     (UP = no -> true ; assert(user_profile_location(UP))),
     (DO = no -> true ; assert(dali_onto_location(DO))),
@@ -98,8 +116,21 @@ initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, 
     assert(own_language(Lang)),
     
     % Connessione al server LINDA
-    linda_client('localhost':3010),
-    out(activating_agent_x(AgentName)),
+    trace_linda('Tentativo di connessione al server Linda'),
+    catch(
+        linda_client('localhost':3010),
+        Error,
+        (trace_linda('Errore di connessione al server Linda'), write(Error), nl, fail)
+    ),
+    trace_linda('Connessione al server Linda stabilita'),
+    
+    trace_linda('Invio messaggio di attivazione agente'),
+    catch(
+        out(activating_agent_x(AgentName)),
+        Error,
+        (trace_linda('Errore nell\'invio del messaggio di attivazione'), write(Error), nl, fail)
+    ),
+    trace_linda('Messaggio di attivazione inviato con successo'),
     
     % Inizializzazione dei file dell'agente
     delete_agent_x_files(File),
@@ -139,73 +170,114 @@ load_ontology_file(Ontolog, Agent) :-
 
 % Gestione dei messaggi
 receive_message :-
+    trace_message('Controllo nuovi messaggi'),
     clause(agent_x(Ag,Ind,_,_), _),
-    (rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)) ->
-        receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) ; 
-        true).
+    trace_linda('Tentativo di lettura messaggio dal server Linda'),
+    catch(
+        (rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)) ->
+            trace_message('Messaggio ricevuto'),
+            receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) ; 
+            trace_message('Nessun messaggio disponibile')),
+        Error,
+        (trace_linda('Errore nella lettura del messaggio'), write(Error), nl, fail)
+    ).
 
 receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) :-
+    trace_message('Elaborazione messaggio'),
     assert_this(ext_agent_x(AgM,IndM,Ontology,Language)),
-    in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
+    trace_linda('Rimozione messaggio dalla tupla space'),
+    catch(
+        in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
+        Error,
+        (trace_linda('Errore nella rimozione del messaggio'), write(Error), nl, fail)
+    ),
     (clause(receive(Con), _) ->
+        trace_message('Messaggio ricevibile'),
         call_con(AgM,IndM,Language,Ontology,Con) ;
+        trace_message('Messaggio non ricevibile'),
         not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
 
 % Gestione degli eventi
 process_events :-
+    trace_event('Processamento eventi'),
     findall(Event, clause(event(Event), _), Events),
     process_event_list(Events).
 
 process_event_list([]).
 process_event_list([Event|Rest]) :-
+    trace_event('Elaborazione evento'),
     process_single_event(Event),
     process_event_list(Rest).
 
 process_single_event(Event) :-
+    trace_event('Controllo condizioni evento'),
     (clause(event_condition(Event, Condition), _) ->
-        (call(Condition) -> process_event_action(Event) ; true) ;
+        (call(Condition) -> 
+            trace_condition('Condizione soddisfatta'),
+            process_event_action(Event) ; 
+            trace_condition('Condizione non soddisfatta')) ;
         process_event_action(Event)).
 
 process_event_action(Event) :-
+    trace_action('Esecuzione azione evento'),
     (clause(event_action(Event, Action), _) ->
         call(Action) ;
-        true).
+        trace_action('Nessuna azione definita')).
 
 % Gestione degli eventi esterni
 process_external_events :-
+    trace_event('Processamento eventi esterni'),
     clause(agent_x(_,_,S,_), _),
     read_line_from_file(S,1),
     clause(eventE(Es), _),
-    (Es = [] -> true ; (process_high_events, process_normal_events)).
+    (Es = [] -> 
+        trace_event('Nessun evento esterno') ; 
+        (process_high_events, process_normal_events)).
 
 % Gestione degli eventi ad alta priorità
 process_high_events :-
-    (clause(ev_high(_,_,_), _) -> process_high_events1 ; true).
+    trace_event('Controllo eventi alta priorita'),
+    (clause(ev_high(_,_,_), _) -> 
+        trace_event('Eventi alta priorita trovati'),
+        process_high_events1 ; 
+        trace_event('Nessun evento alta priorita')).
 
 process_high_events1 :-
     findall(ev_high(AgM,E,T), clause(ev_high(AgM,E,T), _), L),
     last(L, ev_high(Ag,E,T)),
     (once(eve_cond(E)) -> 
+        trace_event('Condizione evento alta priorita soddisfatta'),
         process_high_event(Ag,E,T) ; 
+        trace_event('Condizione evento alta priorita non soddisfatta'),
         no_process_high_event(Ag,E,T)),
     Ag = Ag, E = E, T = T.
 
 % Gestione degli eventi normali
 process_normal_events :-
-    (clause(ev_normal(_,_,_), _) -> process_normal_events1 ; true).
+    trace_event('Controllo eventi normali'),
+    (clause(ev_normal(_,_,_), _) -> 
+        trace_event('Eventi normali trovati'),
+        process_normal_events1 ; 
+        trace_event('Nessun evento normale')).
 
 process_normal_events1 :-
     clause(ev_normal(AgM,E,T), _),
     (once(eve_cond(E)) -> 
+        trace_event('Condizione evento normale soddisfatta'),
         process_normal_event(AgM,E,T) ; 
+        trace_event('Condizione evento normale non soddisfatta'),
         no_process_normal_event(AgM,E,T)).
 
 % Gestione degli eventi interni
 internal_event :- 
+    trace_event('Controllo eventi interni'),
     clause(agent_x(_,_,S,_), _),
     read_line_from_file(S,2),
     clause(evintI(L), _),
-    (L \= [] -> check_internal_event1(L,S) ; true).
+    (L \= [] -> 
+        trace_event('Eventi interni trovati'),
+        check_internal_event1(L,S) ; 
+        trace_event('Nessun evento interno')).
 
 % Gestione degli obiettivi
 manage_goals :-
