@@ -100,8 +100,9 @@ initialize_agent(FI) :-
         open(FI, read, Stream)
     ),
     read(Stream, Term),
-    close(Stream),
+        close(Stream),
     assertz(agent_config(Term)),
+    write('my config: '), write(Term), nl,
     initialize_agent_parameters(Term).
 
 initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization)) :-
@@ -110,7 +111,16 @@ initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, 
     (UP = no -> true ; assert(user_profile_location(UP))),
     (DO = no -> true ; assert(dali_onto_location(DO))),
     assert(server_obj('localhost':3010)),
-    filter_fil(Fil),
+    
+    % Aggiungo tracciamento per filter_fil
+    trace_message('Inizio processamento file di configurazione'),
+    catch(
+        filter_fil(Fil),
+        Error,
+        (trace_message('Errore nel processamento dei file di configurazione'), write(Error), nl, fail)
+    ),
+    trace_message('Fine processamento file di configurazione'),
+    
     assert(specialization(Specialization)),
     (Ontolog = no -> true ; load_ontology_file(Ontolog, AgentName)),
     assert(own_language(Lang)),
@@ -139,18 +149,25 @@ initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, 
 
 % Filtra i file di configurazione
 filter_fil(Fil) :-
+    trace_message('Inizio filter_fil'),
     (is_list(Fil) ->
+        trace_message('Processamento lista di file'),
         process_fil_list(Fil)
     ;
+        trace_message('Processamento singolo file'),
         arg(1, Fil, File),
+        trace_message(['File da processare: ', File]),
         token_fil(File),
         retractall(parentheses(_)),
         remove_var_fil(File)
-    ).
+    ),
+    trace_message('Fine filter_fil').
 
 % Processa una lista di file
-process_fil_list([]).
+process_fil_list([]) :-
+    trace_message('Lista file vuota').
 process_fil_list([File|Rest]) :-
+    trace_message(['Processamento file: ', File]),
     token_fil(File),
     retractall(parentheses(_)),
     remove_var_fil(File),
@@ -159,10 +176,14 @@ process_fil_list([File|Rest]) :-
 % Carica il file di ontologia
 load_ontology_file(Ontolog, Agent) :-
     open(Ontolog, read, Stream, []),
+    write('Ontologia: '), write(Ontolog), nl,
     read(Stream, PrefixesC),
+    write('Prefixes: '), write(PrefixesC), nl,
     read(Stream, RepositoryC),
+    write('Repository: '), write(RepositoryC), nl,
     read(Stream, HostC),
-    close(Stream),
+    write('Host: '), write(HostC), nl,
+                 close(Stream),
     name(Repository, RepositoryC),
     name(Prefixes, PrefixesC),
     name(Host, HostC),
@@ -187,7 +208,7 @@ receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) :-
     assert_this(ext_agent_x(AgM,IndM,Ontology,Language)),
     trace_linda('Rimozione messaggio dalla tupla space'),
     catch(
-        in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
+          in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
         Error,
         (trace_linda('Errore nella rimozione del messaggio'), write(Error), nl, fail)
     ),
