@@ -4,10 +4,9 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
+:- module(active_dali_wi, [initialize_agent/1,initialize_agent_parameters/1]).
 
-:- module(active_dali_wi, [initialize_agent/1]).
-
-:- use_module(library(file_systems), [file_exists/1,delete_file/1]).
+:- use_module(library(file_systems), [file_exists/1,delete_file/1, make_directory/1]).
 :- use_module(library(lists)).
 :- use_module(library(random)).
 :- use_module(library('linda/client')).
@@ -93,24 +92,25 @@ get0(Char) :-
         get_char(Stream, Char)
     ).
 
-% Inizializzazione dell'agente
-initialize_agent(FI) :-
-    trace_message('Inizializzazione agente'),
-    (is_list(FI) -> 
-        atom_codes(Atom, FI),
-        open(Atom, read, Stream)
-    ; 
-        open(FI, read, Stream)
-    ),
-    read(Stream, Term),
-    close(Stream),
-    assertz(agent_config(Term)),
-    write('my config: '), write(Term), nl,
-    initialize_agent_parameters(Term).
-
+% Predicato privato per l'inizializzazione dei parametri dell'agente
 initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization)) :-
     trace_message('Inizializzazione parametri agente'),
-     % Inizializza le configurazioni dell'agente
+    trace_message(['File agente: ', File]),
+    trace_message(['Nome agente: ', AgentName]),
+    
+    % Assicurati che la directory work esista
+    (file_exists('work') -> 
+        trace_message('Directory work esistente')
+    ; 
+        trace_message('Creazione directory work'),
+        catch(
+            make_directory('work'),
+            error(SPIO_E_FILE_EXISTS, _),
+            trace_message('Directory work esistente')
+        )
+    ),
+    
+    % Inizializza le configurazioni dell'agente
     (UP = no -> true ; assert(user_profile_location(UP))),
     (DO = no -> true ; assert(dali_onto_location(DO))),
     assert(server_obj('localhost':3010)),
@@ -146,9 +146,29 @@ initialize_agent_parameters(agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, 
     trace_linda('Messaggio di attivazione inviato con successo'),
     
     % Inizializzazione dei file dell'agente
+    trace_message('Inizio inizializzazione file agente'),
     delete_agent_files(File),
+    trace_message('File agente eliminati'),
     token(File),
-    start1(File, AgentName, Lib, Fil).
+    trace_message('Tokenizzazione completata'),
+    start1(File, AgentName, Lib, Fil),
+    trace_message('Inizializzazione completata').
+
+% Inizializzazione dell'agente
+initialize_agent(FI) :-
+    trace_message('Inizio inizializzazione agente'),
+    % Leggi il file di configurazione
+    (is_list(FI) -> 
+        atom_codes(Atom, FI),
+        open(Atom, read, Stream)
+    ; 
+        open(FI, read, Stream)
+    ),
+    read(Stream, Term),
+    close(Stream),
+    write('my config: '), write(Term), nl,
+    initialize_agent_parameters(Term).
+
 
 % Wrapper per token_fil che usa call/1
 token_fil_wrapper(File) :-
