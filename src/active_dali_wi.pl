@@ -13,7 +13,53 @@
     process_normal_events/0,
     manage_goals/0,
     manage_time/0,
-    check_conditions/0
+    check_conditions/0,
+    start1/4,
+    write_libraries/2,
+    token_fil_wrapper/1,
+    filter_fil/1,
+    process_fil_list/1,
+    load_ontology_file/2,
+    receive_message/0,
+    receive_message0/7,
+    process_events/0,
+    process_event_list/1,
+    process_single_event/1,
+    process_event_action/1,
+    process_external_events/0,
+    process_high_events1/0,
+    process_normal_events1/0,
+    check_internal_event1/2,
+    process_internal_event/2,
+    manage_goals1/0,
+    process_goals/2,
+    manage_goals2/1,
+    manage_goals3/1,
+    manage_goals4/1,
+    manage_goals5/1,
+    manage_time1/0,
+    process_times/2,
+    check_conditions1/0,
+    process_conditions/2,
+    read_line_from_file/2,
+    read_lines_from_stream/3,
+    check_conditions2/1,
+    check_conditions3/2,
+    check_conditions4/1,
+    check_conditions5/2,
+    check_conditions6/1,
+    check_conditions7/2,
+    check_conditions8/1,
+    cancel_condition/1,
+    safe_open_file/3,
+    safe_close_stream/1,
+    process_file/1,
+    process_stream/1,
+    process_term/1,
+    process_loop/1,
+    process_loop_until/2,
+    process_list/2,
+    trace_message/1
 ]).
 
 :- use_module(library(file_systems), [file_exists/1,delete_file/1, make_directory/1]).
@@ -22,7 +68,18 @@
 :- use_module(library('linda/client')).
 :- use_module(library(clpq)).
 :- use_module(library(fdbg)).
-:- use_module(remove_var, [remove_var_fil/1]).
+
+% Caricamento esplicito dei moduli con debug
+:- trace_message('Caricamento modulo remove_var...'),
+   use_module(remove_var, [remove_var_fil/1]),
+   trace_message('Modulo remove_var caricato'),
+   trace_message('Verifica predicati remove_var...'),
+   (predicate_property(remove_var:remove_var_fil(_), defined) ->
+       trace_message('Predicato remove_var_fil/1 trovato nel modulo remove_var')
+   ;
+       trace_message('ERROR: Predicato remove_var_fil/1 non trovato nel modulo remove_var')
+   ).
+
 :- use_module(utils, [delete_agent_files/1]).
 :- use_module(tokefun, [leggiFile/2, token_fil/1]).
 
@@ -84,52 +141,108 @@ get0(Char) :-
 
 % Predicato privato per l'inizializzazione dei parametri dell'agente
 initialize_agent_parameters(agent(File,AgentName,Ontolog,Lang,Fil,Lib,UP,DO,Specialization)) :-
+    write('DEBUG: Inizializzazione parametri:'), nl,
+    write('DEBUG:   - File: '), write(File), nl,
+    write('DEBUG:   - Nome agente: '), write(AgentName), nl,
+    write('DEBUG:   - Ontologia: '), write(Ontolog), nl,
+    write('DEBUG:   - Lingua: '), write(Lang), nl,
+    write('DEBUG:   - File configurazione: '), write(Fil), nl,
+    write('DEBUG:   - Librerie: '), write(Lib), nl,
+    
     % Gestione directory work con controlli robusti
+    write('DEBUG: Controllo directory work...'), nl,
     catch(
         (file_exists('work') -> 
-            true 
+            (write('DEBUG: Directory work esistente'), nl,
+             true) 
         ; 
-            make_directory('work')
+            (write('DEBUG: Creazione directory work...'), nl,
+             make_directory('work'),
+             write('DEBUG: Directory work creata'), nl)
         ),
         error(SPIO_E_FILE_EXISTS, _),
-        true  % Se la directory esiste già, continuiamo
+        (write('DEBUG: Directory work gia esistente (gestito)'), nl,
+         true)
     ),
+    
     % Controllo che la directory sia accessibile
+    write('DEBUG: Verifica accessibilita directory work...'), nl,
     catch(
         (open('work/.test', write, TestStream),
          close(TestStream),
-         delete_file('work/.test')),
+         delete_file('work/.test'),
+         write('DEBUG: Directory work accessibile'), nl),
         Error,
         (write('ERROR: Directory work non accessibile: '), write(Error), nl, fail)
     ),
+    
     % Resto del codice
-    (UP = no -> true ; assertz(user_profile_location(UP))),
-    (DO = no -> true ; assertz(dali_onto_location(DO))),
+    write('DEBUG: Configurazione parametri aggiuntivi...'), nl,
+    (UP = no -> 
+        write('DEBUG: Nessun user profile specificato'), nl
+    ; 
+        (write('DEBUG: Impostazione user profile: '), write(UP), nl,
+         assertz(user_profile_location(UP)))
+    ),
+    
+    (DO = no -> 
+        write('DEBUG: Nessuna ontologia DALI specificata'), nl
+    ; 
+        (write('DEBUG: Impostazione ontologia DALI: '), write(DO), nl,
+         assertz(dali_onto_location(DO)))
+    ),
+    
+    write('DEBUG: Impostazione server locale...'), nl,
     assertz(server_obj('localhost':3010)),
+    
+    write('DEBUG: Filtro file di configurazione...'), nl,
     catch(
         filter_fil(Fil),
         Error,
-        fail
+        (write('ERROR: Errore nel filtraggio file: '), write(Error), nl, fail)
     ),
+    
+    write('DEBUG: Impostazione specializzazione...'), nl,
     assertz(specialization(Specialization)),
-    (Ontolog = no -> true ; load_ontology_file(Ontolog, AgentName)),
+    
+    (Ontolog = no -> 
+        write('DEBUG: Nessuna ontologia da caricare'), nl
+    ; 
+        (write('DEBUG: Caricamento ontologia: '), write(Ontolog), nl,
+         load_ontology_file(Ontolog, AgentName))
+    ),
+    
+    write('DEBUG: Impostazione lingua...'), nl,
     assertz(own_language(Lang)),
+    
+    write('DEBUG: Connessione a Linda...'), nl,
     catch(
         linda_client('localhost':3010),
         Error,
-        fail
+        (write('ERROR: Errore connessione Linda: '), write(Error), nl, fail)
     ),
+    
+    write('DEBUG: Attivazione agente...'), nl,
     catch(
         out(activating_agent(AgentName)),
         Error,
-        fail
+        (write('ERROR: Errore attivazione agente: '), write(Error), nl, fail)
     ),
+    
+    write('DEBUG: Pulizia file agente...'), nl,
     delete_agent_files(File),
+    
+    write('DEBUG: Tokenizzazione file...'), nl,
     token(File),
+    
+    write('DEBUG: Inizializzazione agente...'), nl,
     start1(File, AgentName, Lib, Fil),
+    
     % Controllo che la directory work sia ancora accessibile prima di creare il file dell'agente
+    write('DEBUG: Creazione file agente...'), nl,
     catch(
         (atom_concat('work/', AgentName, AgentFile),
+         write('DEBUG: File agente: '), write(AgentFile), nl,
          open(AgentFile, write, Stream),
          close(Stream),
          open(AgentFile, read, Stream),
@@ -137,25 +250,42 @@ initialize_agent_parameters(agent(File,AgentName,Ontolog,Lang,Fil,Lib,UP,DO,Spec
         Error,
         (write('ERROR: Impossibile creare/accedere al file agente in work/: '), write(Error), nl, fail)
     ),
+    
+    write('DEBUG: Avvio agente...'), nl,
     catch(
         run_agent,
         Error,
-        fail
+        (write('ERROR: Errore avvio agente: '), write(Error), nl, fail)
     ).
 
 % Inizializzazione dell'agente
 initialize_agent(FI) :-
+    write('DEBUG: =========================================='), nl,
+    write('DEBUG: INIZIO INIZIALIZZAZIONE AGENTE'), nl,
+    write('DEBUG: =========================================='), nl,
+    
     % Leggi il file di configurazione
+    write('DEBUG: Lettura file di configurazione...'), nl,
     (is_list(FI) -> 
-        atom_codes(Atom, FI),
-        open(Atom, read, Stream)
+        (write('DEBUG: Input come lista di codici, conversione...'), nl,
+         atom_codes(Atom, FI),
+         write('DEBUG: File da aprire: '), write(Atom), nl,
+         open(Atom, read, Stream))
     ; 
-        open(FI, read, Stream)
+        (write('DEBUG: Input come atomo, file da aprire: '), write(FI), nl,
+         open(FI, read, Stream))
     ),
+    write('DEBUG: Lettura termine di configurazione...'), nl,
     read(Stream, Term),
     close(Stream),
+    write('DEBUG: Configurazione letta: '), write(Term), nl,
     write('my config: '), write(Term), nl,
-    initialize_agent_parameters(Term).
+    
+    write('DEBUG: Inizializzazione parametri agente...'), nl,
+    initialize_agent_parameters(Term),
+    write('DEBUG: =========================================='), nl,
+    write('DEBUG: FINE INIZIALIZZAZIONE AGENTE'), nl,
+    write('DEBUG: =========================================='), nl.
 
 % Predicato per l'inizializzazione dei file dell'agente
 start1(File, AgentName, Lib, Fil) :-
@@ -179,11 +309,23 @@ write_libraries(Stream, [Lib|Rest]) :-
 
 % Wrapper per token_fil che usa call/1
 token_fil_wrapper(File) :-
+    trace_message(['Chiamata token_fil_wrapper per file: ', File]),
     catch(
-        call(token_fil(File)),
+        (call(token_fil(File)),
+         trace_message('token_fil_wrapper completato con successo')),
         Error,
-        fail
+        (trace_message(['ERROR in token_fil_wrapper: ', Error]),
+         fail)
     ).
+
+% Predicato per il tracciamento dei messaggi
+trace_message(Message) :-
+    (is_list(Message) ->
+        maplist(write, Message)
+    ;
+        write(Message)
+    ),
+    nl.
 
 % Filtra i file di configurazione
 filter_fil(Fil) :-
@@ -194,21 +336,47 @@ filter_fil(Fil) :-
         trace_message(['File da processare: ', Fil]),
         trace_message('Chiamata token_fil'),
         catch(
-            token_fil_wrapper(Fil),
+            (token_fil_wrapper(Fil),
+             trace_message('token_fil completato con successo')),
             Error,
-            fail
+            (trace_message(['ERROR in token_fil: ', Error]),
+             fail)
         ),
         trace_message('Fine token_fil'),
         retractall(parentheses(_)),
         trace_message('Chiamata remove_var_fil'),
         catch(
-            remove_var_fil(Fil),
+            (trace_message('Verifica modulo remove_var...'),
+             current_module(remove_var) -> 
+                (trace_message('Modulo remove_var trovato'),
+                 trace_message(['Verifica predicato remove_var_fil/1...']),
+                 (predicate_property(remove_var:remove_var_fil(_), defined) ->
+                    (trace_message('Predicato remove_var_fil/1 trovato'),
+                     trace_message(['Chiamata remove_var_fil con file: ', Fil]),
+                     remove_var_fil(Fil),
+                     trace_message('remove_var_fil completato con successo'))
+                 ;
+                    (trace_message('ERROR: Predicato remove_var_fil/1 non trovato nel modulo remove_var'),
+                     trace_message('Lista dei predicati disponibili nel modulo remove_var:'),
+                     findall(P, (predicate_property(remove_var:P, defined), functor(P, F, A)), Preds),
+                     maplist(write_predicate, Preds),
+                     fail)))
+             ;
+                (trace_message('ERROR: Modulo remove_var non trovato'),
+                 fail)),
             Error,
-            fail
+            (trace_message(['ERROR in remove_var_fil: ', Error]),
+             trace_message(['Tipo di errore: ', Error]),
+             fail)
         ),
         trace_message('Fine remove_var_fil')
     ),
     trace_message('Fine filter_fil').
+
+% Predicato helper per scrivere i predicati in modo leggibile
+write_predicate(P) :-
+    functor(P, F, A),
+    format('  - ~w/~w~n', [F, A]).
 
 % Processa una lista di file
 process_fil_list([]) :-
@@ -217,17 +385,35 @@ process_fil_list([File|Rest]) :-
     trace_message(['Processamento file: ', File]),
     trace_message('Chiamata token_fil'),
     catch(
-        token_fil_wrapper(File),
+        (token_fil_wrapper(File),
+         trace_message('token_fil completato con successo')),
         Error,
-        fail
+        (trace_message(['ERROR in token_fil: ', Error]),
+         fail)
     ),
     trace_message('Fine token_fil'),
     retractall(parentheses(_)),
     trace_message('Chiamata remove_var_fil'),
     catch(
-        remove_var_fil(File),
+        (trace_message('Verifica modulo remove_var...'),
+         current_module(remove_var) -> 
+            (trace_message('Modulo remove_var trovato'),
+             trace_message(['Verifica predicato remove_var_fil/1...']),
+             (predicate_property(remove_var:remove_var_fil(_), defined) ->
+                (trace_message('Predicato remove_var_fil/1 trovato'),
+                 trace_message(['Chiamata remove_var_fil con file: ', File]),
+                 remove_var_fil(File),
+                 trace_message('remove_var_fil completato con successo'))
+             ;
+                (trace_message('ERROR: Predicato remove_var_fil/1 non trovato nel modulo remove_var'),
+                 fail)))
+         ;
+            (trace_message('ERROR: Modulo remove_var non trovato'),
+             fail)),
         Error,
-        fail
+        (trace_message(['ERROR in remove_var_fil: ', Error]),
+         trace_message(['Tipo di errore: ', Error]),
+         fail)
     ),
     trace_message('Fine remove_var_fil'),
     process_fil_list(Rest).
@@ -303,49 +489,49 @@ process_external_events :-
 
 % Gestione degli eventi ad alta priorita'
 process_high_events :-
-    write('DEBUG: Controllo eventi alta priorita...'), nl,
+    write('DEBUG:   - Controllo eventi alta priorita...'), nl,
     (clause(ev_high(_,_,_), _) -> 
-        (write('DEBUG: Eventi alta priorita trovati, elaborazione...'), nl,
+        (write('DEBUG:   - Eventi alta priorita trovati, elaborazione...'), nl,
          process_high_events1) ; 
-        write('DEBUG: Nessun evento alta priorita trovato'), nl).
+        write('DEBUG:   - Nessun evento alta priorita trovato'), nl).
 
 process_high_events1 :-
     findall(ev_high(AgM,E,T), clause(ev_high(AgM,E,T), _), L),
     last(L, ev_high(Ag,E,T)),
-    write('DEBUG: Elaborazione evento alta priorita: '), write(ev_high(Ag,E,T)), nl,
+    write('DEBUG:   - Elaborazione evento alta priorita: '), write(ev_high(Ag,E,T)), nl,
     (once(eve_cond(E)) -> 
-        (write('DEBUG: Condizione evento verificata, elaborazione...'), nl,
+        (write('DEBUG:   - Condizione evento verificata, elaborazione...'), nl,
          process_high_event(Ag,E,T)) ; 
-        (write('DEBUG: Condizione evento non verificata'), nl,
+        (write('DEBUG:   - Condizione evento non verificata'), nl,
          no_process_high_event(Ag,E,T))).
 
 % Gestione degli eventi normali
 process_normal_events :-
-    write('DEBUG: Controllo eventi normali...'), nl,
+    write('DEBUG:   - Controllo eventi normali...'), nl,
     (clause(ev_normal(_,_,_), _) -> 
-        (write('DEBUG: Eventi normali trovati, elaborazione...'), nl,
+        (write('DEBUG:   - Eventi normali trovati, elaborazione...'), nl,
          process_normal_events1) ; 
-        write('DEBUG: Nessun evento normale trovato'), nl).
+        write('DEBUG:   - Nessun evento normale trovato'), nl).
 
 process_normal_events1 :-
     clause(ev_normal(AgM,E,T), _),
-    write('DEBUG: Elaborazione evento normale: '), write(ev_normal(AgM,E,T)), nl,
+    write('DEBUG:   - Elaborazione evento normale: '), write(ev_normal(AgM,E,T)), nl,
     (once(eve_cond(E)) -> 
-        (write('DEBUG: Condizione evento verificata, elaborazione...'), nl,
+        (write('DEBUG:   - Condizione evento verificata, elaborazione...'), nl,
          process_normal_event(AgM,E,T)) ; 
-        (write('DEBUG: Condizione evento non verificata'), nl,
+        (write('DEBUG:   - Condizione evento non verificata'), nl,
          no_process_normal_event(AgM,E,T))).
 
 % Gestione degli eventi interni
 internal_event :-
-    write('DEBUG: Controllo eventi interni...'), nl,
+    write('DEBUG:   - Controllo eventi interni...'), nl,
     clause(dali_agent_(_,_,S,_), _),
     read_line_from_file(S, 2),
     clause(evintI(L), _),
     (L \= [] -> 
-        (write('DEBUG: Eventi interni trovati: '), write(L), nl,
+        (write('DEBUG:   - Eventi interni trovati: '), write(L), nl,
          check_internal_event1(L, S)) ; 
-        write('DEBUG: Nessun evento interno trovato'), nl).
+        write('DEBUG:   - Nessun evento interno trovato'), nl).
 
 % Gestione degli eventi interni
 check_internal_event1([], _).
@@ -543,37 +729,41 @@ process_list([H|T], Pred) :-
 
 % Ciclo principale dell'agente
 run_agent :-
-    write('DEBUG: Inizio ciclo agente'), nl,
+    write('DEBUG: =========================================='), nl,
+    write('DEBUG: INIZIO NUOVO CICLO AGENTE'), nl,
+    write('DEBUG: =========================================='), nl,
     
     % 1. Gestione eventi esterni (alta priorita')
-    write('DEBUG: Gestione eventi esterni alta priorita...'), nl,
+    write('DEBUG: [1/5] Gestione eventi esterni alta priorita...'), nl,
     process_high_events,
-    write('DEBUG: Fine gestione eventi esterni alta priorita'), nl,
+    write('DEBUG: [1/5] Fine gestione eventi esterni alta priorita'), nl,
     
     % 2. Gestione eventi interni
-    write('DEBUG: Gestione eventi interni...'), nl,
+    write('DEBUG: [2/5] Gestione eventi interni...'), nl,
     internal_event,
-    write('DEBUG: Fine gestione eventi interni'), nl,
+    write('DEBUG: [2/5] Fine gestione eventi interni'), nl,
     
     % 3. Gestione obiettivi
-    write('DEBUG: Gestione obiettivi...'), nl,
+    write('DEBUG: [3/5] Gestione obiettivi...'), nl,
     manage_goals,
-    write('DEBUG: Fine gestione obiettivi'), nl,
+    write('DEBUG: [3/5] Fine gestione obiettivi'), nl,
     
     % 4. Gestione tempo
-    write('DEBUG: Gestione tempo...'), nl,
+    write('DEBUG: [4/5] Gestione tempo...'), nl,
     manage_time,
-    write('DEBUG: Fine gestione tempo'), nl,
+    write('DEBUG: [4/5] Fine gestione tempo'), nl,
     
     % 5. Gestione condizioni
-    write('DEBUG: Gestione condizioni...'), nl,
+    write('DEBUG: [5/5] Gestione condizioni...'), nl,
     check_conditions,
-    write('DEBUG: Fine gestione condizioni'), nl,
+    write('DEBUG: [5/5] Fine gestione condizioni'), nl,
     
     % Attendi un breve periodo prima del prossimo ciclo
     write('DEBUG: Attesa 1 secondo...'), nl,
     sleep(1),
     
     % Continua il ciclo
-    write('DEBUG: Fine ciclo agente, riavvio...'), nl, nl,
+    write('DEBUG: =========================================='), nl,
+    write('DEBUG: FINE CICLO AGENTE - RIAVVIO'), nl,
+    write('DEBUG: =========================================='), nl, nl,
     run_agent.

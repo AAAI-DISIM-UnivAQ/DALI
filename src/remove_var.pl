@@ -9,14 +9,13 @@
 :- use_module(library(file_systems)).
 :- use_module(tokefun, [leggiChars/1]).
 
-:- ['tokefun.pl'].
-
-
 remove_var(F):-readFile_var(F,Fi),tokenize(Fi,L),take_meta_var(L,F).
+
 remove_var_fil(F):-
     readFile_var_fil(F,Fi),
     tokenize(Fi,L),
     take_meta_var_fil(L,F).
+
 remove_var_clause(F,F1):-expand_le(F1,Te),if(file_exists(F1),delete_file(F1),true),rewrite_le(Te,F1),readFile_var_clause(F1,Li),tokenize(Li,L),if(file_exists(F1),delete_file(F1),true),take_meta_var_clause(L,F).
 
 readFile_var(Infile,Txt) :-			%open file, read lines
