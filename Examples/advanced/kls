@@ -1,0 +1,21 @@
+#!/usr/bin/env zsh
+# kill_linda_server.zsh
+# Termina con SIGKILL (-9) tutti i processi che includono "linda_server" nella riga di comando.
+
+set -eu  # -e: termina se un comando fallisce; -u: errore su variabili non inizializzate
+
+# Ricava gli eventuali PID (può essercene più di uno)
+pids=($(pgrep -f -- "linda_server"))   # -f: cerca sull’intera command line
+
+if (( ${#pids} == 0 )); then
+  print -u2 "Nessun processo contenente 'linda_server' trovato."
+  exit 1
+fi
+
+print "Processi trovati: ${pids[*]}"
+print "Invio SIGKILL (-9)…"
+for pid in $pids; do
+  kill -9 $pid
+done
+
+print "Operazione completata."

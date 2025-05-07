@@ -38,7 +38,7 @@ variables(A0,A,T,L0,L):-A0<A, A1 is A0+1, arg(A1,T,X), variables(X,L0,L1), varia
 % similar as the following, but it is called within by the goal 'utente.'.
 initialize_client:-% open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
         linda_client('localhost':3010),
-        out(agent_x_active(user,'localhost':3010)),
+        out(agent_active(user,'localhost':3010)),
         procedure_message('localhost':3010).
 
 % Opens the file with the linda server information, connects to this,
@@ -46,7 +46,7 @@ initialize_client:-% open('server.txt',read,Stream,[]), read(Stream,I), close(St
 % loop procedure for processing the messages.
 :- %open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
   linda_client('localhost':3010),
-  out(agent_x_active(user,'localhost':3010)),
+  out(agent_active(user,'localhost':3010)),
   assert(ind('localhost':3010)),
   procedure_message('localhost':3010).
 

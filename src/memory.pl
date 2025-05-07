@@ -1,3 +1,5 @@
+:- module(memory, []).
+
 % Licensed with Apache Public License
 % by AAAI Research Group
 % Department of Information Engineering and Computer Science and Mathematics

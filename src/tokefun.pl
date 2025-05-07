@@ -4,8 +4,28 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
+
+:- module(tokefun, [
+    leggiFile/2,
+    token_fil/1
+]).
+
 :- multifile user:term_expansion/6, scrittura/1.
-:-dynamic rewrite_clause_le/1, parentesi_le/1,rewrite_clause/1,re_write/2, evento_aperto_le/0, examine_all/2, parentesi/1, buffer/1, cifre/1, cifre/2, cifre/4, residue/1, evento_aperto/0, eventi_esterni/1, deltaT/1.
+:-dynamic rewrite_clause_le/1, 
+          parentesi_le/1,
+          rewrite_clause/1,
+          re_write/2, 
+          evento_aperto_le/0, 
+          examine_all/2, 
+          parentesi/1, 
+          buffer/1, 
+          cifre/1, 
+          cifre/2, 
+          cifre/4, 
+          residue/1, 
+          evento_aperto/0, 
+          eventi_esterni/1, 
+          deltaT/1.
 
 :-op(500,xfy,:>).
 :-op(500,xfy,:<).
@@ -31,20 +51,35 @@ user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[]
 
 
 %%EDITED
-readFile(Infile, Txt) :-			%apertura file,lettura righe
-    write('DEBUG [readFile]: Tentativo di apertura file '), write(Infile), nl,
-    atom_concat(Infile,'.pl',File),
-    write('DEBUG [readFile]: Nome file completo: '), write(File), nl,
+readFile(File, Content) :-
+    write('DEBUG [readFile]: Tentativo di apertura file '), write(File), nl,
+    atom_concat(File, '.pl', FullFile),
+    write('DEBUG [readFile]: Nome file completo: '), write(FullFile), nl,
     catch(
-        (see(File),   
-         leggiChars(Txt), !,
-         seen),
+        (open(FullFile, read, Stream),
+         read(Stream, Content),
+         close(Stream)),
         Error,
-        (write('DEBUG [readFile]: Errore nella lettura del file: '), write(Error), nl, fail)
+        (write('DEBUG [readFile]: Errore nella lettura del file: '), write(Error), nl,
+         Content = [])
     ).
 
-token(F):-readFile(F,Fi),tokenize(Fi,L),take_meta(L,F).
-token(F):-leggiFile(F,Fi),tokenize(Fi,L),take_meta(L,F).
+token(F):-
+    write('DEBUG [token]: Inizio tokenizzazione file '), write(F), nl,
+    readFile(F,Fi),
+    write('DEBUG [token]: File letto, lunghezza: '), length(Fi, Len), write(Len), nl,
+    tokenize(Fi,L),
+    write('DEBUG [token]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
+    take_meta(L,F).
+
+token(F):-
+    write('DEBUG [token]: Tentativo alternativo di tokenizzazione file '), write(F), nl,
+    leggiFile(F,Fi),
+    write('DEBUG [token]: File letto, lunghezza: '), length(Fi, Len), write(Len), nl,
+    tokenize(Fi,L),
+    write('DEBUG [token]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
+    take_meta(L,F).
+
 token_fil(F):-
     write('DEBUG [token_fil]: Inizio processamento file '), write(F), nl,
     leggiFile_fil(F,Fi),
@@ -52,7 +87,20 @@ token_fil(F):-
     tokenize(Fi,L),
     write('DEBUG [token_fil]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
     take_meta_fil(L,F).
-token_clause(C,F,F1):-crea_rand(F,F1),name(C,L),tokenize(L,S),append(Lb,['EOL'],S),append(Lb,['.'],Lb1),append(Lb1,['EOL'],Lb2),take_meta_update(Lb2,F,F1).
+
+token_clause(C,F,F1):-
+    write('DEBUG [token_clause]: Inizio tokenizzazione clausola '), write(C), nl,
+    crea_rand(F,F1),
+    write('DEBUG [token_clause]: File random creato: '), write(F1), nl,
+    name(C,L),
+    write('DEBUG [token_clause]: Nome convertito in lista, lunghezza: '), length(L, Len), write(Len), nl,
+    tokenize(L,S),
+    write('DEBUG [token_clause]: Tokenizzazione completata, lunghezza: '), length(S, Len2), write(Len2), nl,
+    append(Lb,['EOL'],S),
+    append(Lb,['.'],Lb1),
+    append(Lb1,['EOL'],Lb2),
+    write('DEBUG [token_clause]: Lista finale creata, lunghezza: '), length(Lb2, Len3), write(Len3), nl,
+    take_meta_update(Lb2,F,F1).
 
 crea_rand(F,T):-random(97,122,A4),random(97,122,A5),random(97,122,A6),name(F,Lf),append(Lf,[A4],F1),append(F1,[A5],F2),append(F2,[A6],Fi),name(T,Fi).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -149,9 +197,9 @@ tillquote([Q],[Q]) --> [Q].
 tillquote(D,[Ch|T]) --> [Ch], tillquote(D,T).
 
 identific(Id) --> lettera(L), lettere_cifre(Chars), {name(Id,[L|Chars])}
-			| "_", lettere_cifre(Chars), {[L]="_", name(Id,[L|Chars])}
-                                          |numero(N),".",numero(N1),{[L]=".",name(Id,[N|[L,N1]])}
-			| lettera(D), cifre(Chars,L), {L \== -2, name(Id,[D|Chars])}.
+            | "_", lettere_cifre(Chars), {[L]="_", name(Id,[L|Chars])}
+            | numero(N), ".", numero(N1), {[L]=".", name(Id,[N|[L,N1]])}
+            | lettera(D), cifre(Chars,L), {L \== -2, name(Id,[D|Chars])}.
 
 assegnamento(Token) --> ass(Ch), ass1(Ch1), {name(Token,[Ch,Ch1])}.
 ass(Ch)--> [Ch], {[Ch]=":";[Ch]="~";[Ch]="<";[Ch] = "?"}.
@@ -180,17 +228,42 @@ sep(Ch) --> [Ch],
                  [Ch] = "/"; [Ch] = "~";
                  [Ch] = "<"; [Ch] = "/";[Ch] = "?"}. 
 
-take_meta(L,F):-assert(eventi_esterni(0)),assert(deltaT(0)),assert(parentesi(0)), assert(buffer([])), name(F,Lf),append(Lf,[46,112,108],Lft),
-                        name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),
-                        last(L,U),
-repeat,
-member(Me,L),
-examine_all(Me),
-Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1)),true),
-	if(clause(buffer(ParsedC),_), 
-	( retractall(buffer(_)), name(Parsed,ParsedC), 
-	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-	), (write('Errore take_meta'),nl)),re_file(Nf).
+take_meta(L,F):-
+    write('DEBUG [take_meta]: Inizio elaborazione'), nl,
+    assert(eventi_esterni(0)),
+    assert(deltaT(0)),
+    assert(parentesi(0)), 
+    assert(buffer([])), 
+    name(F,Lf),
+    append(Lf,[46,112,108],Lft),
+    name(Nf,Lft),
+    write('DEBUG [take_meta]: File di output: '), write(Nf), nl,
+    if(file_exists(Nf),delete_file(Nf),true),
+    last(L,U),
+    write('DEBUG [take_meta]: Ultimo token: '), write(U), nl,
+    repeat,
+    member(Me,L),
+    write('DEBUG [take_meta]: Processamento token: '), write(Me), nl,
+    examine_all(Me),
+    Me==U,!,
+    write('DEBUG [take_meta]: Fine processamento token'), nl,
+    if(clause(residue(R),_),
+        (write('DEBUG [take_meta]: Residuo trovato: '), write(R), nl,
+         name(R1,R),
+         examine_all(R1)),
+        true),
+    if(clause(buffer(ParsedC),_), 
+        (write('DEBUG [take_meta]: Buffer trovato, lunghezza: '), length(ParsedC, Len), write(Len), nl,
+         retractall(buffer(_)), 
+         name(Parsed,ParsedC), 
+         open(Nf, append, Stream, []), 
+         write(Stream, Parsed), 
+         close(Stream),
+         write('DEBUG [take_meta]: File scritto con successo'), nl
+        ), 
+        (write('DEBUG [take_meta]: Errore - buffer vuoto'), nl)
+    ),
+    re_file(Nf).
 
 take_meta_fil(L,F):-
     write('DEBUG [take_meta_fil]: Inizio elaborazione'), nl,
@@ -225,15 +298,34 @@ take_meta_fil(L,F):-
         (write('DEBUG [take_meta_fil]: Errore - buffer vuoto'), nl)
     ).
 
-examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
+examine_all(Me):-
+    write('DEBUG [examine_all]: Inizio esame token: '), write(Me), nl,
+    if(Me='EOL',
+        write('DEBUG [examine_all]: Token EOL trovato'), nl,
+        examine_all1(Me)
+    ).
 
 
-examine_all1(Me):-if(member(Me,['(',')']), count_parentheses(Me),true),
-                  if(tempo(Me), scrittura(Me),                 % check if temporal delta has been inserted, if yes write to pl file and assert time_add
-                    (if(variabile(Me),examine_variable(Me),
-                        if(label(Me),examine_label(Me),write_NovarNolabel(Me)))
-
-                 )).
+examine_all1(Me):-
+    write('DEBUG [examine_all1]: Inizio esame dettagliato token: '), write(Me), nl,
+    if(member(Me,['(',')']), 
+        (write('DEBUG [examine_all1]: Parentesi trovata: '), write(Me), nl,
+         count_parentheses(Me)),
+        true),
+    if(tempo(Me), 
+        (write('DEBUG [examine_all1]: Token temporale trovato: '), write(Me), nl,
+         scrittura(Me)),
+        (if(variabile(Me),
+            (write('DEBUG [examine_all1]: Variabile trovata: '), write(Me), nl,
+             examine_variable(Me)),
+            if(label(Me),
+                (write('DEBUG [examine_all1]: Label trovata: '), write(Me), nl,
+                 examine_label(Me)),
+                (write('DEBUG [examine_all1]: Token normale: '), write(Me), nl,
+                 write_NovarNolabel(Me))
+            )
+        ))
+    ).
 
 
 variabile(Me):-name(Me,L),
@@ -425,5 +517,8 @@ rewrite_program_clause_le(Nf):-name(Nf,Lnf),append(Lnf,[46,112,108],Lnff),
                             Me==U,!,retractall(rewrite_clause_le(_)),                            close(Stream).
                              
 write_prog_cl_le(Stream,Me):-write(Stream,Me),write(Stream,'.'),nl(Stream),retractall(parentesi_le(0)).  
+
+
+
 
 

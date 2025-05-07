@@ -1,9 +1,13 @@
+
 % Licensed with Apache Public License
 % by AAAI Research Group
 % Department of Information Engineering and Computer Science and Mathematics
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
+:- module(utils, [
+    delete_agent_files/1
+]).
 
 pl_from_name(Name, NameExt):- name(Name,L), append(L,[46,112,108],L1), name(NameExt,L1).
 plv_from_name(Name, NameExt):- name(Name,L), append(L,[46,112,108,118],L1), name(NameExt,L1).

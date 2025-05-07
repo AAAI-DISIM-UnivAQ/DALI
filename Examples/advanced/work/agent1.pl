@@ -1,1 +1,0 @@
-:- write('''''''Hello world!'''''''). :> write('''''''which event?'''''''). :> write('''''''received.'''''''), a(message(agent2),),send_message(go, var_Me)).

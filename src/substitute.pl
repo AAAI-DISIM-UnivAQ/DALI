@@ -1,8 +1,11 @@
+
 % Licensed with Apache Public License
 % by AAAI Research Group
 % Department of Information Engineering and Computer Science and Mathematics
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
+
+:- module(substitute, []).
 
 %% Nella libreria "lists" di sicstus manca la funzione "substitute"
 

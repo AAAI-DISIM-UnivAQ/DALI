@@ -1,3 +1,4 @@
+:- module(communication_onto, []).
 :-['communication_onto_utils.pl'].
 
 %%If you want to use only your OWN ONTOLOGY
