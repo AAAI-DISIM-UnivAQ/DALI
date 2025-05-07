@@ -86,6 +86,7 @@ for agent_filename in $BUILD_HOME/*; do
     # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
     # Start the agent in the new pane
+    echo split-window -v -t DALI_session "$PROLOG --noinfo -l $CORE_DIR/active_dali_wi.pl --goal 'initialize_agent(\"$current_dir/conf/mas/$agent_base\").'"
     tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $CORE_DIR/active_dali_wi.pl --goal 'initialize_agent(\"$current_dir/conf/mas/$agent_base\").'"
     sleep 1
     $WAIT > /dev/null  # Wait a bit before launching the next agent

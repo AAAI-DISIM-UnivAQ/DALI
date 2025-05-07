@@ -1,0 +1,18 @@
+[H[2J[3JThe current directory is: /Users/giodegas/ai/DALI/Examples/advanced
+tmux is installed.
+tmux 3.5a
+SICStus Prolog found at /usr/local/sicstus4.6.0/bin/sicstus
+Instance:  mas/instances/agent1.txt  of type:  mas/types/agentType1.txt
+Instance:  mas/instances/agent2.txt  of type:  mas/types/agentType2.txt
+agent1.txt
+agent2.txt
+server: /usr/local/sicstus4.6.0/bin/sicstus --noinfo -l ../..//src/linda_server.pl --goal 'start_linda_server.'
+Server ready. Starting the MAS...
+Launching agents instances...
+Agent: agent1.txt
+split-window -v -t DALI_session /usr/local/sicstus4.6.0/bin/sicstus --noinfo -l ../..//src/active_dali_wi.pl --goal 'initialize_agent("/Users/giodegas/ai/DALI/Examples/advanced/conf/mas/agent1.txt").'
+Agent: agent2.txt
+split-window -v -t DALI_session /usr/local/sicstus4.6.0/bin/sicstus --noinfo -l ../..//src/active_dali_wi.pl --goal 'initialize_agent("/Users/giodegas/ai/DALI/Examples/advanced/conf/mas/agent2.txt").'
+MAS started.
+[exited]
+Press Enter to shutdown the MAS

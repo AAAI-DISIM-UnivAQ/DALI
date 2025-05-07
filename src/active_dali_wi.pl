@@ -333,33 +333,7 @@ filter_fil(Fil) :-
         trace_message('Fine token_fil'),
         retractall(parentheses(_)),
         trace_message('Chiamata remove_file_var'),
-        catch(
-            (trace_message('Verifica modulo remove_var...'),
-             current_module(remove_var) -> 
-                (trace_message('Modulo remove_var trovato'),
-                 trace_message(['Verifica predicato remove_file_var/1...']),
-                 (predicate_property(remove_var:remove_file_var(_), defined) ->
-                    (trace_message('Predicato remove_file_var/1 trovato'),
-                     trace_message(['Chiamata remove_file_var con file: ', Fil]),
-                     remove_file_var(Fil),
-                     trace_message('remove_file_var completato con successo'))
-                 ;
-                    (trace_message('ERROR: Predicato remove_file_var/1 non trovato nel modulo remove_var'),
-                     trace_message('Lista dei predicati disponibili nel modulo remove_var:'),
-                     findall(P, (predicate_property(remove_var:P, defined), functor(P, F, A)), Preds),
-                     maplist(write_predicate, Preds),
-                     trace_message('Predicati esportati dal modulo remove_var:'),
-                     module_property(remove_var, exports(Exports)),
-                     maplist(write_predicate, Exports),
-                     fail)))
-             ;
-                (trace_message('ERROR: Modulo remove_var non trovato'),
-                 fail)),
-            Error,
-            (trace_message(['ERROR in remove_file_var: ', Error]),
-             trace_message(['Tipo di errore: ', Error]),
-             fail)
-        ),
+        remove_file_var(Fil),
         trace_message('Fine remove_file_var')
     ),
     trace_message('Fine filter_fil').
@@ -385,27 +359,7 @@ process_fil_list([File|Rest]) :-
     trace_message('Fine token_fil'),
     retractall(parentheses(_)),
     trace_message('Chiamata remove_file_var'),
-    catch(
-        (trace_message('Verifica modulo remove_var...'),
-         current_module(remove_var) -> 
-            (trace_message('Modulo remove_var trovato'),
-             trace_message(['Verifica predicato remove_file_var/1...']),
-             (predicate_property(remove_var:remove_file_var(_), defined) ->
-                (trace_message('Predicato remove_file_var/1 trovato'),
-                 trace_message(['Chiamata remove_file_var con file: ', File]),
-                 remove_file_var(File),
-                 trace_message('remove_file_var completato con successo'))
-             ;
-                (trace_message('ERROR: Predicato remove_file_var/1 non trovato nel modulo remove_var'),
-                 fail)))
-         ;
-            (trace_message('ERROR: Modulo remove_var non trovato'),
-             fail)),
-        Error,
-        (trace_message(['ERROR in remove_file_var: ', Error]),
-         trace_message(['Tipo di errore: ', Error]),
-         fail)
-    ),
+    remove_file_var(File),
     trace_message('Fine remove_file_var'),
     process_fil_list(Rest).
 

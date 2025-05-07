@@ -11,6 +11,7 @@
                        examine0_var/1]).
 
 :- use_module(library(file_systems)).
+:- use_module(library(lists)).
 :- use_module(tokefun, [leggiChars/1, tokenize/2]).
 
 remove_variable(F):-readFile_var(F,Fi),tokenize(Fi,L),take_meta_var(L,F).
@@ -22,9 +23,7 @@ remove_file_var(F):-
 
 remove_var_clause(F,F1):-expand_le(F1,Te),if(file_exists(F1),delete_file(F1),true),rewrite_le(Te,F1),readFile_var_clause(F1,Li),tokenize(Li,L),if(file_exists(F1),delete_file(F1),true),take_meta_var_clause(L,F).
 
-readFile_var(Infile,Txt) :-			%open file, read lines
-					%e chiusura file
-	
+readFile_var(Infile,Txt) :-			
 	atom_concat(Infile,'.pl',File),
 	see(File),   
 	readChars_var(Txt), !,
@@ -42,9 +41,7 @@ readFile_var_fil(Infile,Txt) :-
 
 remove_var_ple(F):-readFile_var_ple(F,Fi),tokenize(Fi,L),take_meta_var_ple(L,F).
 
-readFile_var_ple(Infile,Txt) :-			%apertura file,lettura righe
-					%e chiusura file
-	
+readFile_var_ple(Infile,Txt) :-			
 	atom_concat(Infile,'.ple',File),
 	see(File),   
 	readChars_var(Txt), !,
@@ -68,7 +65,6 @@ readChars1_var(Prev, Temp, Final):-
     ).
 
 
-%%''Il CODICE ASCII è .plv !!!
 take_meta_var(L,F):- 
     name(F,Lf),
     append(Lf,[46,112,108,118],Lft),
@@ -199,8 +195,7 @@ rewrite_le(Te,F1):-open(F1,write,Stream,[]),
 
                      
                      
-readFile_var_clause(Infile,Txt) :-			%apertura file,lettura righe
-                                            %e chiusura file
+readFile_var_clause(Infile,Txt) :-			
 	see(Infile), 
 	readChars_var(Txt), !,
 	seen.
@@ -216,7 +211,7 @@ take_meta_var_clause(L,F):- name(F,Lf),append(Lf,[46,112,108,118],Lft),
 								), azioni(Nf),compile(Nf).
 
 
-% Funzione di utilità per scrivere su file in modo sicuro
+
 safe_write_to_file(File, Content) :-
     catch(
         (open(File, append, Stream, []),
@@ -225,8 +220,3 @@ safe_write_to_file(File, Content) :-
         Error,
         (write('ERROR: Impossibile scrivere su file: '), write(File), write(' - '), write(Error), nl, fail)
     ).
-
-
-
-
-
