@@ -151,11 +151,11 @@ initialize_agent_parameters(agent(File,AgentName,Ontolog,Lang,Fil,Lib,UP,DO,Spec
     trace_message('Tokenizzazione completata'),
     start1(File, AgentName, Lib, Fil),
     trace_message('Inizializzazione completata'),
-    trace_message('Creazione clausola _dali_agent/4'),
+    trace_message('Creazione clausola dali_agent_/4'),
     atom_concat('work/', AgentName, AgentFile),
     open(AgentFile, read, Stream),
-    assertz(_dali_agent(AgentName,1,Stream,[])),
-    trace_message(['Clausola _dali_agent/4 creata: ', _dali_agent(AgentName,1,Stream,[])]),
+    assertz(dali_agent_(AgentName,1,Stream,[])),
+    trace_message(['Clausola dali_agent_/4 creata: ', dali_agent_(AgentName,1,Stream,[])]),
     trace_message('Avvio ciclo agente'),
     catch(
         run_agent,
@@ -376,7 +376,7 @@ process_normal_events1 :-
 % Gestione degli eventi interni
 internal_event :-
     trace_message('Inizio controllo eventi interni'),
-    clause(_dali_agent(_,_,S,_), _),
+    clause(dali_agent_(_,_,S,_), _),
     trace_message(['Stream per eventi interni: ', S]),
     trace_message('Lettura linea dal file'),
     read_line_from_file(S, 2),
