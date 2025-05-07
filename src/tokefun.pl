@@ -8,17 +8,14 @@
 :- module(tokefun, [
     leggiFile/2,
     token_fil/1,
-    leggiChars/1
+    leggiChars/1,
+    leggiFile_fil/2
 ]).
 
 :- use_module(library(file_systems), [file_exists/1, delete_file/1]).
 :- use_module(library(lists)).
 
 :- multifile user:term_expansion/6, scrittura/1.
-
-% Definizione del predicato if/4
-if(Cond, Then, Else, _) :-
-    (Cond -> Then ; Else).
 
 :-dynamic rewrite_clause_le/1, 
           parentesi_le/1,
@@ -60,54 +57,37 @@ user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[]
 
 %%EDITED
 readFile(File, Content) :-
-    write('DEBUG [readFile]: Tentativo di apertura file '), write(File), nl,
     atom_concat(File, '.pl', FullFile),
-    write('DEBUG [readFile]: Nome file completo: '), write(FullFile), nl,
     catch(
         (open(FullFile, read, Stream),
          read(Stream, Content),
          close(Stream)),
         Error,
-        (write('DEBUG [readFile]: Errore nella lettura del file: '), write(Error), nl,
-         Content = [])
+        Content = []
     ).
 
 token(F):-
-    write('DEBUG [token]: Inizio tokenizzazione file '), write(F), nl,
     readFile(F,Fi),
-    write('DEBUG [token]: File letto, lunghezza: '), length(Fi, Len), write(Len), nl,
     tokenize(Fi,L),
-    write('DEBUG [token]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
     take_meta(L,F).
 
 token(F):-
-    write('DEBUG [token]: Tentativo alternativo di tokenizzazione file '), write(F), nl,
     leggiFile(F,Fi),
-    write('DEBUG [token]: File letto, lunghezza: '), length(Fi, Len), write(Len), nl,
     tokenize(Fi,L),
-    write('DEBUG [token]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
     take_meta(L,F).
 
 token_fil(F):-
-    write('DEBUG [token_fil]: Inizio processamento file '), write(F), nl,
     leggiFile_fil(F,Fi),
-    write('DEBUG [token_fil]: File letto, lunghezza: '), length(Fi, Len), write(Len), nl,
     tokenize(Fi,L),
-    write('DEBUG [token_fil]: Tokenizzazione completata, lunghezza: '), length(L, Len2), write(Len2), nl,
     take_meta_fil(L,F).
 
 token_clause(C,F,F1):-
-    write('DEBUG [token_clause]: Inizio tokenizzazione clausola '), write(C), nl,
     crea_rand(F,F1),
-    write('DEBUG [token_clause]: File random creato: '), write(F1), nl,
     name(C,L),
-    write('DEBUG [token_clause]: Nome convertito in lista, lunghezza: '), length(L, Len), write(Len), nl,
     tokenize(L,S),
-    write('DEBUG [token_clause]: Tokenizzazione completata, lunghezza: '), length(S, Len2), write(Len2), nl,
     append(Lb,['EOL'],S),
     append(Lb,['.'],Lb1),
     append(Lb1,['EOL'],Lb2),
-    write('DEBUG [token_clause]: Lista finale creata, lunghezza: '), length(Lb2, Len3), write(Len3), nl,
     take_meta_update(Lb2,F,F1).
 
 crea_rand(F,T):-random(97,122,A4),random(97,122,A5),random(97,122,A6),name(F,Lf),append(Lf,[A4],F1),append(F1,[A5],F2),append(F2,[A6],Fi),name(T,Fi).
@@ -129,16 +109,14 @@ leggiFile(Infile,Txt) :-			%apertura file,lettura righe
 	leggiChars(Txt), !,
 	seen.
 
-leggiFile_fil(Infile,Txt) :-			%apertura file,lettura righe
-    write('DEBUG [leggiFile_fil]: Tentativo di apertura file '), write(Infile), nl,
-    atom_concat(Infile,'.con',File),
-    write('DEBUG [leggiFile_fil]: Nome file completo: '), write(File), nl,
+leggiFile_fil(Infile, Txt) :-
+    atom_concat(Infile, '.con', File),
     catch(
-        (see(File), 
-         leggiChars(Txt), !,
+        (see(File),
+         leggiChars(Txt),
          seen),
-        Error,
-        (write('DEBUG [leggiFile_fil]: Errore nella lettura del file: '), write(Error), nl, fail)
+        _,
+        fail
     ).
 
 charBlank(32).
@@ -237,7 +215,6 @@ sep(Ch) --> [Ch],
                  [Ch] = "<"; [Ch] = "/";[Ch] = "?"}. 
 
 take_meta(L,F):-
-    write('DEBUG [take_meta]: Inizio elaborazione'), nl,
     assert(eventi_esterni(0)),
     assert(deltaT(0)),
     assert(parentesi(0)), 
@@ -245,90 +222,71 @@ take_meta(L,F):-
     name(F,Lf),
     append(Lf,[46,112,108],Lft),
     name(Nf,Lft),
-    write('DEBUG [take_meta]: File di output: '), write(Nf), nl,
     (file_exists(Nf) -> delete_file(Nf) ; true),
     last(L,U),
-    write('DEBUG [take_meta]: Ultimo token: '), write(U), nl,
     repeat,
     member(Me,L),
     examine_all(Me),
     Me==U,!,
-    write('DEBUG [take_meta]: Fine processamento token'), nl,
     (clause(residue(R),_) ->
-        (write('DEBUG [take_meta]: Residuo trovato: '), write(R), nl,
-         name(R1,R),
+        (name(R1,R),
          examine_all(R1))
     ; true),
     (clause(buffer(ParsedC),_) -> 
-        (write('DEBUG [take_meta]: Buffer trovato, lunghezza: '), length(ParsedC, Len), write(Len), nl,
-         retractall(buffer(_)), 
+        (retractall(buffer(_)), 
          name(Parsed,ParsedC), 
          open(Nf, append, Stream, []), 
          write(Stream, Parsed), 
-         close(Stream),
-         write('DEBUG [take_meta]: File scritto con successo'), nl
+         close(Stream)
         )
-    ; (write('DEBUG [take_meta]: Errore - buffer vuoto'), nl)
+    ; true
     ),
     re_file(Nf).
 
 take_meta_fil(L,F):-
-    write('DEBUG [take_meta_fil]: Inizio elaborazione'), nl,
     assert(parentesi(0)),
     assert(buffer([])),
     name(F,Lf),
     append(Lf,[46,112,108],Lft),
     name(Nf,Lft),
-    write('DEBUG [take_meta_fil]: File di output: '), write(Nf), nl,
     if(file_exists(Nf),delete_file(Nf),true),
     last(L,U),
-    write('DEBUG [take_meta_fil]: Ultimo token: '), write(U), nl,
     repeat,
     member(Me,L),
     examine_all(Me),
     Me==U,!,
-    write('DEBUG [take_meta_fil]: Fine processamento token'), nl,
     if(clause(residue(R),_),
-        (write('DEBUG [take_meta_fil]: Residuo trovato: '), write(R), nl,
-         name(R1,R),
+        (name(R1,R),
          examine_all(R1,Nf)),
         true), 
     if(clause(buffer(ParsedC),_), 
-        (write('DEBUG [take_meta_fil]: Buffer trovato, lunghezza: '), length(ParsedC, Len), write(Len), nl,
-         retractall(buffer(_)), 
+        (retractall(buffer(_)), 
          name(Parsed,ParsedC), 
          open(Nf, append, Stream, []), 
          write(Stream, Parsed), 
-         close(Stream),
-         write('DEBUG [take_meta_fil]: File scritto con successo'), nl
+         close(Stream)
         ), 
-        (write('DEBUG [take_meta_fil]: Errore - buffer vuoto'), nl)
+        true
     ).
 
 examine_all(Me):-
     (Me = 'EOL' ->
         true
-        % write('DEBUG [examine_all]: Token EOL trovato'), nl
     ;
         examine_all1(Me)
     ).
 
 
 examine_all1(Me):-
-    write('DEBUG [examine_all1]: Inizio esame dettagliato token: '), write(Me), nl,
     (member(Me,['(',')']) -> 
-        (write('DEBUG [examine_all1]: Parentesi trovata: '), write(Me), nl,
-         count_parentheses(Me))
+        count_parentheses(Me)
     ; true),
     (tempo(Me) -> 
-        (write('DEBUG [examine_all1]: Token temporale trovato: '), write(Me), nl,
-         scrittura(Me))
+        scrittura(Me)
     ; (variabile(Me) ->
-        (write('DEBUG [examine_all1]: Variabile trovata: '), write(Me), nl,
-         examine_variable(Me))
+        examine_variable(Me)
     ; (label(Me) ->
-        (write('DEBUG [examine_all1]: Label trovata: '), write(Me), nl,
-         examine_label(Me))
+        examine_label(Me)
     ; (
        write_NovarNolabel(Me))
     ))).

@@ -31,10 +31,10 @@ readFile_var_fil(Infile,Txt) :-
     atom_concat(Infile,'.con',File),
     catch(
         (see(File), 
-         leggiChars(Txt), !,
+         leggiChars(Txt),
          seen),
-        Error,
-        (write('DEBUG [readFile_var_fil]: Errore: '), write(Error), nl, fail)
+        _,
+        fail
     ).
 
 remove_var_ple(F):-readFile_var_ple(F,Fi),tokenize(Fi,L),take_meta_var_ple(L,F).
@@ -66,20 +66,33 @@ readChars1_var(Prev, Temp, Final):-
 
 
 %%''Il CODICE ASCII è .plv !!!
-take_meta_var(L,F):- name(F,Lf),append(Lf,[46,112,108,118],Lft),
-                        name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true),assert(buffer([])),
-                        last(L,U),repeat,member(Me,L),examine0_var(Me),Me==U,!,app_residue_var,
-							  if(clause(buffer(ParsedC),_), 
-									(  retractall(buffer(_)), name(Parsed,ParsedC), 
-	  									open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-									), (write('Errore take_meta_var'),nl)
-							  ), open_file_head_mul(Nf). %% NF Sarebbe il plv
+take_meta_var(L,F):- 
+    name(F,Lf),
+    append(Lf,[46,112,108,118],Lft),
+    name(Nf,Lft),
+    (file_exists(Nf) -> delete_file(Nf) ; true),
+    assert(buffer([])),
+    last(L,U),
+    repeat,
+    member(Me,L),
+    examine0_var(Me),
+    Me==U,!,
+    app_residue_var,
+    (clause(buffer(ParsedC),_) -> 
+        (retractall(buffer(_)), 
+         name(Parsed,ParsedC),
+         safe_write_to_file(Nf, Parsed))
+    ; 
+        (write('Errore take_meta_var'),nl)
+    ),
+    open_file_head_mul(Nf).
 
 
 take_meta_var_fil(L,F):- 
-    name(F,Lf),append(Lf,[46,116,120,116],Lft),
+    name(F,Lf),
+    append(Lf,[46,116,120,116],Lft),
     name(Nf,Lft),
-    if(file_exists(Nf),delete_file(Nf),true),
+    (file_exists(Nf) -> delete_file(Nf) ; true),
     assert(buffer([])),
     last(L,U),
     repeat,
@@ -90,47 +103,51 @@ take_meta_var_fil(L,F):-
     (buffer(ParsedC) ->
         (is_list(ParsedC) ->
             (retractall(buffer(_)), 
-             name(Parsed,ParsedC), 
-             open(Nf, append, Stream, []), 
-             write(Stream, Parsed), 
-             close(Stream))
+             name(Parsed,ParsedC),
+             safe_write_to_file(Nf, Parsed))
         ;
             fail)
-        ;
+    ;
         fail).
 
 
 
-take_meta_var_ple(L,F):- name(F,Lf),append(Lf,[46,112,108,101],Lft),
-                        name(Nf,Lft),if(file_exists(Nf),delete_file(Nf),true), assert(buffer([])),
-                        last(L,U),repeat,member(Me,L),examine0_var(Me),Me==U,!,app_residue_var,
-								if(clause(buffer(ParsedC),_), 
-									( retractall(buffer(_)), name(Parsed,ParsedC), 
-	 								 open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
-									), (write('Errore take_meta_var_ple'),nl)
-								).
+take_meta_var_ple(L,F):- 
+    name(F,Lf),
+    append(Lf,[46,112,108,101],Lft),
+    name(Nf,Lft),
+    (file_exists(Nf) -> delete_file(Nf) ; true),
+    assert(buffer([])),
+    last(L,U),
+    repeat,
+    member(Me,L),
+    examine0_var(Me),
+    Me==U,!,
+    app_residue_var,
+    (clause(buffer(ParsedC),_) -> 
+        (retractall(buffer(_)), 
+         name(Parsed,ParsedC),
+         safe_write_to_file(Nf, Parsed))
+    ; 
+        (write('Errore take_meta_var_ple'),nl)
+    ).
 
 examine0_var(Me):-
-    write('DEBUG [examine0_var]: Processando token: '), write(Me), nl,
     if(Me='EOL',
-        (write('DEBUG [examine0_var]: Token EOL'), nl, true),
+        true,
         if(Me='. ',
-            (write('DEBUG [examine0_var]: Token punto'), nl, point_write_var,nl_write_var),
-            (write('DEBUG [examine0_var]: Chiamata examine_var'), nl, examine_var(Me))
-        )
+            (point_write_var,nl_write_var),
+            examine_var(Me))
     ).
 
 examine_var(Me):-
-    write('DEBUG [examine_var]: Processando token: '), write(Me), nl,
     name(Me,L),
-    write('DEBUG [examine_var]: Codice ASCII: '), write(L), nl,
     re_isa_cod_var(L).
 
 re_isa_cod_var(L):-
-    write('DEBUG [re_isa_cod_var]: Verifica codice: '), write(L), nl,
     if(isa_code_var(L),
-        (write('DEBUG [re_isa_cod_var]: Codice valido'), nl, disapp_variable_var(L)),
-        (write('DEBUG [re_isa_cod_var]: Codice non valido'), nl, re_write_var(L))
+        disapp_variable_var(L),
+        re_write_var(L)
     ).
 
 isa_code_var(L):-nth0(0,L,El0),nth0(1,L,El1),nth0(2,L,El2),nth0(3,L,El3),El0=118,El1=97,El2=114,El3=95.
@@ -138,7 +155,6 @@ isa_code_var(L):-nth0(0,L,El0),nth0(1,L,El1),nth0(2,L,El2),nth0(3,L,El3),El0=118
 
 disapp_variable_var(L):-append([118,97,114,95],Lt,L),re_write_var(Lt).
 re_write_var(L):-
-    write('DEBUG [re_write_var]: Chiamata non_aggiungi_var con: '), write(L), nl,
     non_aggiungi_var(L).
 
 %%Scritture
@@ -147,13 +163,9 @@ aggiungi_39_var(L):-append([39,39],L,Lf),append(Lf,[39,39],Lf1),
 							  append(Parsed,Lf1, Parola), assert(buffer(Parola)).
 
 non_aggiungi_var(L):-
-    write('DEBUG [non_aggiungi_var]: Verifica buffer'), nl,
     clause(buffer(Parsed), _),
-    write('DEBUG [non_aggiungi_var]: Buffer trovato, lunghezza: '), length(Parsed,Len), write(Len), nl,
     retractall(buffer(_)),
-    write('DEBUG [non_aggiungi_var]: Aggiunta al buffer'), nl,
     append(Parsed,L, Parola),
-    write('DEBUG [non_aggiungi_var]: Nuovo buffer, lunghezza: '), length(Parola,Len2), write(Len2), nl,
     assert(buffer(Parola)).
 
 nl_write_var:-clause(buffer(Parsed),_), retractall(buffer(_)),
@@ -163,13 +175,10 @@ point_write_var:-clause(buffer(Parsed),_), retractall(buffer(_)),
 %%
 
 app_residue_var:-
-    write('DEBUG [app_residue_var]: Inizio verifica residue'), nl,
     if(clause(residue(R), _),
-        (write('DEBUG [app_residue_var]: Residue trovato: '), write(R), nl,
-         re_isa_cod_var(R),
-         write('DEBUG [app_residue_var]: Retract residue'), nl,
+        (re_isa_cod_var(R),
          retractall(residue(R))),
-        (write('DEBUG [app_residue_var]: Nessun residue trovato'), nl)
+        true
     ).
 res_write_var(R):-if(R=46,(point_write_var,nl_write_var),(re_write_var(R),nl_write_var)).
 
@@ -202,6 +211,17 @@ take_meta_var_clause(L,F):- name(F,Lf),append(Lf,[46,112,108,118],Lft),
 	 								 open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
 									), (write('Errore take_meta_var_ple'),nl)
 								), azioni(Nf),compile(Nf).
+
+
+% Funzione di utilità per scrivere su file in modo sicuro
+safe_write_to_file(File, Content) :-
+    catch(
+        (open(File, append, Stream, []),
+         write(Stream, Content),
+         close(Stream)),
+        Error,
+        (write('ERROR: Impossibile scrivere su file: '), write(File), write(' - '), write(Error), nl, fail)
+    ).
 
 
 

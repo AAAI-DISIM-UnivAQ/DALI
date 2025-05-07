@@ -73,8 +73,17 @@ create_head_g1(Head,R1,F,A1):-arg(1,R1,A2),nth1(1,R1,A2,R2),
                    retractall(base(K)),
                    assert(base(Sri)),
                 Me==Ul,!,write_base(Head,F).
-write_base_true(Head,F):- open(F,append,Stream,[]),write(Stream,'gl('),write(Stream,Head),
-                        write(Stream,'):-true'),write(Stream,'.'),nl(Stream),close(Stream).
+write_base_true(Head,F):- 
+    catch(
+        (open(F,append,Stream,[]),
+         write(Stream,'gl('),
+         write(Stream,Head),
+         write(Stream,').'),
+         nl(Stream),
+         close(Stream)),
+        Error,
+        (write('ERROR: Impossibile scrivere su file: '), write(F), write(' - '), write(Error), nl, fail)
+    ).
 
 write_base(Head,F):-clause(base(B),_),retractall(base(B)),reverse(B,B1),
                append([':-',gl(Head)],B1,Lf),Cf=..Lf,
@@ -84,6 +93,17 @@ call_head(Head):-call(Head),arg(1,Head,Te),functor(Te,F,_),
                    if((F=evi;F=eve),call_head1(Te),true).
 
 call_head1(Te):-arg(1,Te,E),statistics(walltime,[T,_]),divP(E,T).
+
+write_base_false(Cf,F):-
+    catch(
+        (open(F,append,Stream,[]),
+         write(Stream,Cf),
+         write(Stream,'.'),
+         nl(Stream),
+         close(Stream)),
+        Error,
+        (write('ERROR: Impossibile scrivere su file: '), write(F), write(' - '), write(Error), nl, fail)
+    ).
 
 
 

@@ -26,10 +26,6 @@
 :- use_module(utils, [delete_agent_files/1]).
 :- use_module(tokefun, [leggiFile/2, token_fil/1]).
 
-%%DEBUG
-%%:-leash([exception]).
-%%
-
 :- multifile user:term_expansion/6.
 :- set_prolog_flag(discontiguous_warnings,off),
    set_prolog_flag(single_var_warnings,off).
@@ -77,22 +73,6 @@
 
 :- use_module('read_mul').  % translated from 'leggi_mul.pl'
 
-% Predicati di trace
-trace_message(Message) :-
-    write('DEBUG [Message]: '), write(Message), nl.
-
-trace_event(Event) :-
-    write('DEBUG [Event]: '), write(Event), nl.
-
-trace_condition(Condition) :-
-    write('DEBUG [Condition]: '), write(Condition), nl.
-
-trace_action(Action) :-
-    write('DEBUG [Action]: '), write(Action), nl.
-
-trace_linda(Message) :-
-    write('DEBUG [Linda]: '), write(Message), nl.
-
 % Lettura di un carattere dall'input corrente
 get0(Char) :-
     current_input(Stream),
@@ -104,68 +84,67 @@ get0(Char) :-
 
 % Predicato privato per l'inizializzazione dei parametri dell'agente
 initialize_agent_parameters(agent(File,AgentName,Ontolog,Lang,Fil,Lib,UP,DO,Specialization)) :-
-    trace_message('Inizializzazione parametri agente'),
-    trace_message(['File agente: ', File]),
-    trace_message(['Nome agente: ', AgentName]),
-    (file_exists('work') -> 
-        trace_message('Directory work esistente')
-    ; 
-        trace_message('Creazione directory work'),
-        catch(
-            make_directory('work'),
-            error(SPIO_E_FILE_EXISTS, _),
-            trace_message('Directory work esistente')
-        )
+    % Gestione directory work con controlli robusti
+    catch(
+        (file_exists('work') -> 
+            true 
+        ; 
+            make_directory('work')
+        ),
+        error(SPIO_E_FILE_EXISTS, _),
+        true  % Se la directory esiste già, continuiamo
     ),
+    % Controllo che la directory sia accessibile
+    catch(
+        (open('work/.test', write, TestStream),
+         close(TestStream),
+         delete_file('work/.test')),
+        Error,
+        (write('ERROR: Directory work non accessibile: '), write(Error), nl, fail)
+    ),
+    % Resto del codice
     (UP = no -> true ; assertz(user_profile_location(UP))),
     (DO = no -> true ; assertz(dali_onto_location(DO))),
     assertz(server_obj('localhost':3010)),
-    trace_message('Inizio processamento file di configurazione'),
     catch(
         filter_fil(Fil),
         Error,
-        (trace_message('Errore nel processamento dei file di configurazione'), write(Error), nl, fail)
+        fail
     ),
-    trace_message('Fine processamento file di configurazione'),
     assertz(specialization(Specialization)),
     (Ontolog = no -> true ; load_ontology_file(Ontolog, AgentName)),
     assertz(own_language(Lang)),
-    trace_linda('Tentativo di connessione al server Linda'),
     catch(
         linda_client('localhost':3010),
         Error,
-        (trace_linda('Errore di connessione al server Linda'), write(Error), nl, fail)
+        fail
     ),
-    trace_linda('Connessione al server Linda stabilita'),
-    trace_linda('Invio messaggio di attivazione agente'),
     catch(
         out(activating_agent(AgentName)),
         Error,
-        (trace_linda('Errore nell\'invio del messaggio di attivazione'), write(Error), nl, fail)
+        fail
     ),
-    trace_linda('Messaggio di attivazione inviato con successo'),
-    trace_message('Inizio inizializzazione file agente'),
     delete_agent_files(File),
-    trace_message('File agente eliminati'),
     token(File),
-    trace_message('Tokenizzazione completata'),
     start1(File, AgentName, Lib, Fil),
-    trace_message('Inizializzazione completata'),
-    trace_message('Creazione clausola dali_agent_/4'),
-    atom_concat('work/', AgentName, AgentFile),
-    open(AgentFile, read, Stream),
-    assertz(dali_agent_(AgentName,1,Stream,[])),
-    trace_message(['Clausola dali_agent_/4 creata: ', dali_agent_(AgentName,1,Stream,[])]),
-    trace_message('Avvio ciclo agente'),
+    % Controllo che la directory work sia ancora accessibile prima di creare il file dell'agente
+    catch(
+        (atom_concat('work/', AgentName, AgentFile),
+         open(AgentFile, write, Stream),
+         close(Stream),
+         open(AgentFile, read, Stream),
+         assertz(dali_agent_(AgentName,1,Stream,[]))),
+        Error,
+        (write('ERROR: Impossibile creare/accedere al file agente in work/: '), write(Error), nl, fail)
+    ),
     catch(
         run_agent,
         Error,
-        (trace_message(['Errore nell\'avvio del ciclo agente: ', Error]), fail)
+        fail
     ).
 
 % Inizializzazione dell'agente
 initialize_agent(FI) :-
-    trace_message('Inizio inizializzazione agente'),
     % Leggi il file di configurazione
     (is_list(FI) -> 
         atom_codes(Atom, FI),
@@ -180,10 +159,8 @@ initialize_agent(FI) :-
 
 % Predicato per l'inizializzazione dei file dell'agente
 start1(File, AgentName, Lib, Fil) :-
-    trace_message(['Inizio start1 per agente: ', AgentName]),
     % Assicurati che la directory work esista nella posizione corretta
     atom_concat('./', File, FullPath),
-    trace_message(['Percorso completo: ', FullPath]),
     % Crea il file dell'agente
     open(FullPath, write, Stream),
     write(Stream, ':- module('), write(Stream, AgentName), write(Stream, ', []).'), nl(Stream),
@@ -191,7 +168,8 @@ start1(File, AgentName, Lib, Fil) :-
     % Aggiungi le librerie
     write_libraries(Stream, Lib),
     close(Stream),
-    trace_message('File agente creato con successo').
+    token(File),
+    start1(File, AgentName, Lib, Fil).
 
 % Predicato per scrivere le librerie nel file
 write_libraries(_, []).
@@ -201,19 +179,15 @@ write_libraries(Stream, [Lib|Rest]) :-
 
 % Wrapper per token_fil che usa call/1
 token_fil_wrapper(File) :-
-    trace_message(['Chiamata token_fil_wrapper su file: ', File]),
     catch(
         call(token_fil(File)),
         Error,
-        (trace_message(['Errore in token_fil_wrapper: ', Error]), fail)
+        fail
     ).
 
 % Filtra i file di configurazione
 filter_fil(Fil) :-
-    trace_message('Inizio filter_fil'),
-    trace_message(['File da processare: ', Fil]),
     (is_list(Fil) ->
-        trace_message('Processamento lista di file'),
         process_fil_list(Fil)
     ;
         trace_message('Processamento singolo file'),
@@ -222,7 +196,7 @@ filter_fil(Fil) :-
         catch(
             token_fil_wrapper(Fil),
             Error,
-            (trace_message(['Errore in token_fil: ', Error]), fail)
+            fail
         ),
         trace_message('Fine token_fil'),
         retractall(parentheses(_)),
@@ -230,7 +204,7 @@ filter_fil(Fil) :-
         catch(
             remove_var_fil(Fil),
             Error,
-            (trace_message(['Errore in remove_var_fil: ', Error]), fail)
+            fail
         ),
         trace_message('Fine remove_var_fil')
     ),
@@ -245,7 +219,7 @@ process_fil_list([File|Rest]) :-
     catch(
         token_fil_wrapper(File),
         Error,
-        (trace_message(['Errore in token_fil: ', Error]), fail)
+        fail
     ),
     trace_message('Fine token_fil'),
     retractall(parentheses(_)),
@@ -253,7 +227,7 @@ process_fil_list([File|Rest]) :-
     catch(
         remove_var_fil(File),
         Error,
-        (trace_message(['Errore in remove_var_fil: ', Error]), fail)
+        fail
     ),
     trace_message('Fine remove_var_fil'),
     process_fil_list(Rest).
@@ -276,216 +250,168 @@ load_ontology_file(Ontolog, Agent) :-
 
 % Gestione dei messaggi
 receive_message :-
-    trace_message('Controllo nuovi messaggi'),
     clause(agent_x(Ag,Ind,_,_), _),
-    trace_linda('Tentativo di lettura messaggio dal server Linda'),
     catch(
         (rd_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)) ->
-            trace_message('Messaggio ricevuto'),
             receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) ; 
             trace_message('Nessun messaggio disponibile')),
         Error,
-        (trace_linda('Errore nella lettura del messaggio'), write(Error), nl, fail)
+        fail
     ).
 
 receive_message0(Ag,Ind,AgM,IndM,Language,Ontology,Con) :-
-    trace_message('Elaborazione messaggio'),
     assert_this(ext_agent(AgM,IndM,Ontology,Language)),
-    trace_linda('Rimozione messaggio dalla tupla space'),
     catch(
           in_noblock(message(Ind,Ag,IndM,AgM,Language,Ontology,Con)),
         Error,
-        (trace_linda('Errore nella rimozione del messaggio'), write(Error), nl, fail)
+        fail
     ),
     (clause(receive(Con), _) ->
-        trace_message('Messaggio ricevibile'),
         call_con(AgM,IndM,Language,Ontology,Con) ;
-        trace_message('Messaggio non ricevibile'),
         not_receivable_meta(AgM,IndM,Language,Ontology,Con)).
 
 % Gestione degli eventi
 process_events :-
-    trace_event('Processamento eventi'),
     findall(Event, clause(event(Event), _), Events),
     process_event_list(Events).
 
 process_event_list([]).
 process_event_list([Event|Rest]) :-
-    trace_event('Elaborazione evento'),
     process_single_event(Event),
     process_event_list(Rest).
 
 process_single_event(Event) :-
-    trace_event('Controllo condizioni evento'),
     (clause(event_condition(Event, Condition), _) ->
         (call(Condition) -> 
-            trace_condition('Condizione soddisfatta'),
             process_event_action(Event) ; 
-            trace_condition('Condizione non soddisfatta')) ;
+            true) ;
         process_event_action(Event)).
 
 process_event_action(Event) :-
-    trace_action('Esecuzione azione evento'),
     (clause(event_action(Event, Action), _) ->
         call(Action) ;
-        trace_action('Nessuna azione definita')).
+        true).
 
 % Gestione degli eventi esterni
 process_external_events :-
-    trace_event('Processamento eventi esterni'),
     clause(agent_x(_,_,S,_), _),
     read_line_from_file(S,1),
     clause(eventE(Es), _),
     (Es = [] -> 
-        trace_event('Nessun evento esterno') ; 
+        true ; 
         (process_high_events, process_normal_events)).
 
 % Gestione degli eventi ad alta priorita'
 process_high_events :-
-    trace_event('Controllo eventi alta priorita'),
+    write('DEBUG: Controllo eventi alta priorita...'), nl,
     (clause(ev_high(_,_,_), _) -> 
-        trace_event('Eventi alta priorita trovati'),
-        process_high_events1 ; 
-        trace_event('Nessun evento alta priorita')).
+        (write('DEBUG: Eventi alta priorita trovati, elaborazione...'), nl,
+         process_high_events1) ; 
+        write('DEBUG: Nessun evento alta priorita trovato'), nl).
 
 process_high_events1 :-
     findall(ev_high(AgM,E,T), clause(ev_high(AgM,E,T), _), L),
     last(L, ev_high(Ag,E,T)),
+    write('DEBUG: Elaborazione evento alta priorita: '), write(ev_high(Ag,E,T)), nl,
     (once(eve_cond(E)) -> 
-        trace_event('Condizione evento alta priorita soddisfatta'),
-        process_high_event(Ag,E,T) ; 
-        trace_event('Condizione evento alta priorita non soddisfatta'),
-        no_process_high_event(Ag,E,T)).
+        (write('DEBUG: Condizione evento verificata, elaborazione...'), nl,
+         process_high_event(Ag,E,T)) ; 
+        (write('DEBUG: Condizione evento non verificata'), nl,
+         no_process_high_event(Ag,E,T))).
 
 % Gestione degli eventi normali
 process_normal_events :-
-    trace_event('Controllo eventi normali'),
+    write('DEBUG: Controllo eventi normali...'), nl,
     (clause(ev_normal(_,_,_), _) -> 
-        trace_event('Eventi normali trovati'),
-        process_normal_events1 ; 
-        trace_event('Nessun evento normale')).
+        (write('DEBUG: Eventi normali trovati, elaborazione...'), nl,
+         process_normal_events1) ; 
+        write('DEBUG: Nessun evento normale trovato'), nl).
 
 process_normal_events1 :-
     clause(ev_normal(AgM,E,T), _),
+    write('DEBUG: Elaborazione evento normale: '), write(ev_normal(AgM,E,T)), nl,
     (once(eve_cond(E)) -> 
-        trace_event('Condizione evento normale soddisfatta'),
-        process_normal_event(AgM,E,T) ; 
-        trace_event('Condizione evento normale non soddisfatta'),
-        no_process_normal_event(AgM,E,T)).
+        (write('DEBUG: Condizione evento verificata, elaborazione...'), nl,
+         process_normal_event(AgM,E,T)) ; 
+        (write('DEBUG: Condizione evento non verificata'), nl,
+         no_process_normal_event(AgM,E,T))).
 
 % Gestione degli eventi interni
 internal_event :-
-    trace_message('Inizio controllo eventi interni'),
+    write('DEBUG: Controllo eventi interni...'), nl,
     clause(dali_agent_(_,_,S,_), _),
-    trace_message(['Stream per eventi interni: ', S]),
-    trace_message('Lettura linea dal file'),
     read_line_from_file(S, 2),
-    trace_message('Linea letta'),
     clause(evintI(L), _),
-    trace_message(['Eventi interni trovati: ', L]),
     (L \= [] -> 
-        trace_message('Processamento eventi interni'),
-        check_internal_event1(L, S)
-    ; 
-        trace_message('Nessun evento interno trovato')
-    ).
+        (write('DEBUG: Eventi interni trovati: '), write(L), nl,
+         check_internal_event1(L, S)) ; 
+        write('DEBUG: Nessun evento interno trovato'), nl).
 
 % Gestione degli eventi interni
 check_internal_event1([], _).
 check_internal_event1([Event|Rest], S) :-
-    trace_event(['Processamento evento interno: ', Event]),
     process_internal_event(Event, S),
     check_internal_event1(Rest, S).
 
 % Processa un singolo evento interno
 process_internal_event(Event, S) :-
-    trace_event(['Elaborazione evento: ', Event]),
     (clause(event_condition(Event, Condition), _) ->
         (call(Condition) -> 
-            trace_event('Condizione evento soddisfatta'),
             process_event_action(Event) ; 
-            trace_event('Condizione evento non soddisfatta')) ;
+            true) ;
         process_event_action(Event)).
-
-% Processa l'azione di un evento
-process_event_action(Event) :-
-    trace_event(['Esecuzione azione per evento: ', Event]),
-    (clause(event_action(Event, Action), _) ->
-        call(Action) ;
-        trace_event('Nessuna azione definita per l\'evento')).
 
 % Gestione degli obiettivi
 manage_goals :-
-    trace_message('Inizio gestione obiettivi'),
     (clause(goal(_), _) -> 
-        trace_message('Obiettivi trovati'),
         manage_goals1 ; 
-        trace_message('Nessun obiettivo')),
+        true),
     trace_message('Fine gestione obiettivi').
 
 manage_goals1 :-
-    trace_message('Ricerca obiettivi'),
     findall(goal(G), clause(goal(G), _), L),
-    trace_message(['Lista obiettivi trovati: ', L]),
     last(L, U),
-    trace_message(['Ultimo obiettivo: ', U]),
     process_goals(L, U).
 
 process_goals([], _) :-
     trace_message('Nessun obiettivo da processare').
 process_goals([Me|Rest], U) :-
-    trace_message(['Processamento obiettivo: ', Me]),
     (clause(goal_completed(Me), _) -> 
-        trace_message('Obiettivo gia completato') ; 
+        true ; 
         (trace_message('Obiettivo non completato, gestione...'),
          manage_goals2(Me))),
     (Me = U -> 
-        trace_message('Ultimo obiettivo raggiunto') ; 
+        true ; 
         (trace_message('Passaggio al prossimo obiettivo'),
          process_goals(Rest, U))).
 
 manage_goals2(Me) :-
-    trace_message(['Gestione obiettivo: ', Me]),
     (clause(goal_precondition(Me,Pre), _) ->
-        (trace_message('Verifica precondizioni'),
-         (Pre -> 
-             trace_message('Precondizioni soddisfatte'),
-             manage_goals3(Me) ; 
-             trace_message('Precondizioni non soddisfatte'))) ;
+        (Pre -> manage_goals3(Me) ; true)
+    ;
         manage_goals3(Me)).
 
 manage_goals3(Me) :-
-    trace_message(['Esecuzione azioni obiettivo: ', Me]),
     (clause(goal_do(Me,Do), _) ->
-        (trace_message('Esecuzione azioni'),
-         (Do -> 
-             trace_message('Azioni completate'),
-             manage_goals4(Me) ; 
-             trace_message('Azioni non completate'))) ;
+        (Do -> manage_goals4(Me) ; true)
+    ;
         manage_goals4(Me)).
 
 manage_goals4(Me) :-
-    trace_message(['Verifica postcondizioni obiettivo: ', Me]),
     (clause(goal_postcondition(Me,Post), _) ->
-        (trace_message('Verifica postcondizioni'),
-         (Post -> 
-             trace_message('Postcondizioni soddisfatte'),
-             manage_goals5(Me) ; 
-             trace_message('Postcondizioni non soddisfatte'))) ;
+        (Post -> manage_goals5(Me) ; true)
+    ;
         manage_goals5(Me)).
 
 manage_goals5(Me) :-
-    trace_message(['Completamento obiettivo: ', Me]),
     assert_this(goal_completed(Me)),
     trace_message('Obiettivo completato').
 
 % Gestione del tempo
 manage_time :-
-    trace_event('Controllo tempo'),
     (clause(time(_), _) -> 
-        trace_event('Eventi temporali trovati'),
         manage_time1 ; 
-        trace_event('Nessun evento temporale')),
+        true),
     trace_event('Fine controllo tempo').
 
 manage_time1 :-
@@ -500,11 +426,9 @@ process_times([Me|Rest], U) :-
 
 % Gestione delle condizioni
 check_conditions :-
-    trace_event('Controllo condizioni'),
     (clause(condition(_), _) -> 
-        trace_event('Condizioni trovate'),
         check_conditions1 ; 
-        trace_event('Nessuna condizione')),
+        true),
     trace_event('Fine controllo condizioni').
 
 check_conditions1 :-
@@ -519,19 +443,13 @@ process_conditions([Me|Rest], U) :-
 
 % Funzioni di supporto per la lettura dei file
 read_line_from_file(File, Line) :-
-    trace_message(['Apertura file: ', File, ' per leggere linea: ', Line]),
     safe_open_file(File, read, Stream),
-    trace_message('File aperto con successo'),
     read_lines_from_stream(Stream, Line, 1),
-    trace_message('Linee lette con successo'),
-    safe_close_stream(Stream),
-    trace_message('File chiuso').
+    safe_close_stream(Stream).
 
 read_lines_from_stream(Stream, Line, Current) :-
-    trace_message(['Lettura linea corrente: ', Current, ' di ', Line]),
     (Current = Line ->
         read(Stream, Term),
-        trace_message(['Termine letto: ', Term]),
         assert(Term) ;
         read(Stream, _),
         Next is Current + 1,
@@ -580,17 +498,15 @@ cancel_condition(Me) :-
 
 % Gestione degli stream
 safe_open_file(File, Mode, Stream) :-
-    trace_message(['Tentativo apertura file: ', File, ' in modalita: ', Mode]),
     catch(open(File, Mode, Stream),
           error(Error, _),
-          (trace_message(['Errore apertura file: ', Error]), fail)),
+          fail),
     trace_message('File aperto con successo').
 
 safe_close_stream(Stream) :-
-    trace_message('Tentativo chiusura stream'),
     catch(close(Stream),
           error(Error, _),
-          (trace_message(['Errore chiusura stream: ', Error]))),
+          fail),
     trace_message('Stream chiuso con successo').
 
 % Gestione dei file
@@ -627,37 +543,37 @@ process_list([H|T], Pred) :-
 
 % Ciclo principale dell'agente
 run_agent :-
-    trace_message('Inizio ciclo agente'),
+    write('DEBUG: Inizio ciclo agente'), nl,
+    
     % 1. Gestione eventi esterni (alta priorita')
-    trace_message('Fase 1: Gestione eventi alta priorita'),
+    write('DEBUG: Gestione eventi esterni alta priorita...'), nl,
     process_high_events,
-    trace_message('Fine fase 1'),
+    write('DEBUG: Fine gestione eventi esterni alta priorita'), nl,
     
     % 2. Gestione eventi interni
-    trace_message('Fase 2: Gestione eventi interni'),
+    write('DEBUG: Gestione eventi interni...'), nl,
     internal_event,
-    trace_message('Fine fase 2'),
+    write('DEBUG: Fine gestione eventi interni'), nl,
     
     % 3. Gestione obiettivi
-    trace_message('Fase 3: Gestione obiettivi'),
+    write('DEBUG: Gestione obiettivi...'), nl,
     manage_goals,
-    trace_message('Fine fase 3'),
+    write('DEBUG: Fine gestione obiettivi'), nl,
     
     % 4. Gestione tempo
-    trace_message('Fase 4: Gestione tempo'),
+    write('DEBUG: Gestione tempo...'), nl,
     manage_time,
-    trace_message('Fine fase 4'),
+    write('DEBUG: Fine gestione tempo'), nl,
     
     % 5. Gestione condizioni
-    trace_message('Fase 5: Gestione condizioni'),
+    write('DEBUG: Gestione condizioni...'), nl,
     check_conditions,
-    trace_message('Fine fase 5'),
+    write('DEBUG: Fine gestione condizioni'), nl,
     
     % Attendi un breve periodo prima del prossimo ciclo
-    trace_message('Attesa prima del prossimo ciclo'),
+    write('DEBUG: Attesa 1 secondo...'), nl,
     sleep(1),
+    
     % Continua il ciclo
-    trace_message('Riavvio ciclo'),
+    write('DEBUG: Fine ciclo agente, riavvio...'), nl, nl,
     run_agent.
-
-% ... existing code ...
