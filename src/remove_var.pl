@@ -7,13 +7,13 @@
 :- module(remove_var, [remove_var/1, remove_var_fil/1, remove_var_clause/2, remove_var_ple/1, examine0_var/1]).
 
 :- use_module(library(file_systems)).
+:- use_module(tokefun, [leggiChars/1]).
 
 :- ['tokefun.pl'].
 
 
 remove_var(F):-readFile_var(F,Fi),tokenize(Fi,L),take_meta_var(L,F).
 remove_var_fil(F):-
-    write('DEBUG [remove_var_fil]: Processamento '), write(F), nl,
     readFile_var_fil(F,Fi),
     tokenize(Fi,L),
     take_meta_var_fil(L,F).
@@ -28,7 +28,6 @@ readFile_var(Infile,Txt) :-			%open file, read lines
 	seen.
 
 readFile_var_fil(Infile,Txt) :-
-    write('DEBUG [readFile_var_fil]: Apertura file '), write(Infile), nl,
     atom_concat(Infile,'.con',File),
     catch(
         (see(File), 

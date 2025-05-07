@@ -7,10 +7,19 @@
 
 :- module(tokefun, [
     leggiFile/2,
-    token_fil/1
+    token_fil/1,
+    leggiChars/1
 ]).
 
+:- use_module(library(file_systems), [file_exists/1, delete_file/1]).
+:- use_module(library(lists)).
+
 :- multifile user:term_expansion/6, scrittura/1.
+
+% Definizione del predicato if/4
+if(Cond, Then, Else, _) :-
+    (Cond -> Then ; Else).
+
 :-dynamic rewrite_clause_le/1, 
           parentesi_le/1,
           rewrite_clause/1,
@@ -40,7 +49,6 @@
 :-op(1200,xfx,[:-,~/]).
 :-op(1200,xfx,[:-,</]).
 :-op(1200,xfx,[:-,?/]).
-:-use_module(library(lists)).
 
 user:term_expansion((H:>B),[],[],(H:-B),[],[]).
 user:term_expansion((H:<B),[],[],(cd(H):-B),[],[]).
@@ -238,21 +246,20 @@ take_meta(L,F):-
     append(Lf,[46,112,108],Lft),
     name(Nf,Lft),
     write('DEBUG [take_meta]: File di output: '), write(Nf), nl,
-    if(file_exists(Nf),delete_file(Nf),true),
+    (file_exists(Nf) -> delete_file(Nf) ; true),
     last(L,U),
     write('DEBUG [take_meta]: Ultimo token: '), write(U), nl,
     repeat,
     member(Me,L),
-    write('DEBUG [take_meta]: Processamento token: '), write(Me), nl,
     examine_all(Me),
     Me==U,!,
     write('DEBUG [take_meta]: Fine processamento token'), nl,
-    if(clause(residue(R),_),
+    (clause(residue(R),_) ->
         (write('DEBUG [take_meta]: Residuo trovato: '), write(R), nl,
          name(R1,R),
-         examine_all(R1)),
-        true),
-    if(clause(buffer(ParsedC),_), 
+         examine_all(R1))
+    ; true),
+    (clause(buffer(ParsedC),_) -> 
         (write('DEBUG [take_meta]: Buffer trovato, lunghezza: '), length(ParsedC, Len), write(Len), nl,
          retractall(buffer(_)), 
          name(Parsed,ParsedC), 
@@ -260,8 +267,8 @@ take_meta(L,F):-
          write(Stream, Parsed), 
          close(Stream),
          write('DEBUG [take_meta]: File scritto con successo'), nl
-        ), 
-        (write('DEBUG [take_meta]: Errore - buffer vuoto'), nl)
+        )
+    ; (write('DEBUG [take_meta]: Errore - buffer vuoto'), nl)
     ),
     re_file(Nf).
 
@@ -299,33 +306,32 @@ take_meta_fil(L,F):-
     ).
 
 examine_all(Me):-
-    write('DEBUG [examine_all]: Inizio esame token: '), write(Me), nl,
-    if(Me='EOL',
-        write('DEBUG [examine_all]: Token EOL trovato'), nl,
+    (Me = 'EOL' ->
+        true
+        % write('DEBUG [examine_all]: Token EOL trovato'), nl
+    ;
         examine_all1(Me)
     ).
 
 
 examine_all1(Me):-
     write('DEBUG [examine_all1]: Inizio esame dettagliato token: '), write(Me), nl,
-    if(member(Me,['(',')']), 
+    (member(Me,['(',')']) -> 
         (write('DEBUG [examine_all1]: Parentesi trovata: '), write(Me), nl,
-         count_parentheses(Me)),
-        true),
-    if(tempo(Me), 
+         count_parentheses(Me))
+    ; true),
+    (tempo(Me) -> 
         (write('DEBUG [examine_all1]: Token temporale trovato: '), write(Me), nl,
-         scrittura(Me)),
-        (if(variabile(Me),
-            (write('DEBUG [examine_all1]: Variabile trovata: '), write(Me), nl,
-             examine_variable(Me)),
-            if(label(Me),
-                (write('DEBUG [examine_all1]: Label trovata: '), write(Me), nl,
-                 examine_label(Me)),
-                (write('DEBUG [examine_all1]: Token normale: '), write(Me), nl,
-                 write_NovarNolabel(Me))
-            )
-        ))
-    ).
+         scrittura(Me))
+    ; (variabile(Me) ->
+        (write('DEBUG [examine_all1]: Variabile trovata: '), write(Me), nl,
+         examine_variable(Me))
+    ; (label(Me) ->
+        (write('DEBUG [examine_all1]: Label trovata: '), write(Me), nl,
+         examine_label(Me))
+    ; (
+       write_NovarNolabel(Me))
+    ))).
 
 
 variabile(Me):-name(Me,L),
