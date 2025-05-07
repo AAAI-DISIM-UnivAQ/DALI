@@ -15,6 +15,7 @@
 
 :- use_module(library(file_systems), [file_exists/1, delete_file/1]).
 :- use_module(library(lists)).
+:- use_module(remove_var).
 
 :- multifile user:term_expansion/6, scrittura/1.
 

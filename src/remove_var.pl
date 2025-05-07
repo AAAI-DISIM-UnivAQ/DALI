@@ -4,8 +4,8 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-:- module(remove_var, [remove_variable/1, 
-                       remove_file_var/1, 
+:- module(remove_var, [remove_file_var/1,
+                       remove_variable/1,  
                        remove_var_clause/2, 
                        remove_var_ple/1, 
                        examine0_var/1]).

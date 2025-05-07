@@ -62,14 +62,6 @@
     trace_message/1
 ]).
 
-% Predicato per il tracciamento dei messaggi
-trace_message(Message) :-
-    (is_list(Message) ->
-        maplist(write, Message)
-    ;
-        write(Message)
-    ),
-    nl.
 
 :- use_module(library(file_systems), [file_exists/1,delete_file/1, make_directory/1]).
 :- use_module(library(lists)).
@@ -78,20 +70,6 @@ trace_message(Message) :-
 :- use_module(library(clpq)).
 :- use_module(library(fdbg)).
 
-% Caricamento esplicito dei moduli con debug
-:- trace_message('Caricamento modulo tokefun...'),
-   use_module(tokefun),
-   trace_message('Modulo tokefun caricato').
-
-:- trace_message('Caricamento modulo remove_var...'),
-   use_module(remove_var),
-   trace_message('Modulo remove_var caricato'),
-   trace_message('Verifica predicati remove_var...'),
-   (predicate_property(remove_var:remove_file_var(_), defined) ->
-       trace_message('Predicato remove_file_var/1 trovato nel modulo remove_var')
-   ;
-       trace_message('ERROR: Predicato remove_file_var/1 non trovato nel modulo remove_var')
-   ).
 
 :- use_module(utils, [delete_agent_files/1]).
 
@@ -107,13 +85,12 @@ trace_message(Message) :-
 :-dynamic ontology/3.
 %%
 
-:- use_module('tokefun').
-
-:- use_module('meta1').
-:- use_module('remove_var').  % translated from 'togli_var.pl'
-:- use_module('memory').
-
-:- use_module('examine_past_constraints').
+:- use_module(read_mul).  
+:- use_module(remove_var).  
+:- use_module(tokefun).
+:- use_module(meta1).
+:- use_module(memory).
+:- use_module(examine_past_constraints).
 
 :-dynamic tesg/1.
 :-dynamic ontology/2.
@@ -140,7 +117,15 @@ trace_message(Message) :-
 :-op(1200,xfx,[:-,</]).
 :-op(1200,xfx,[:-,?/]).
 
-:- use_module('read_mul').  % translated from 'leggi_mul.pl'
+
+% Predicato per il tracciamento dei messaggi
+trace_message(Message) :-
+    (is_list(Message) ->
+        maplist(write, Message)
+    ;
+        write(Message)
+    ),
+    nl.
 
 % Lettura di un carattere dall'input corrente
 get0(Char) :-
