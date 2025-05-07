@@ -9,7 +9,8 @@
     leggiFile/2,
     token_fil/1,
     leggiChars/1,
-    leggiFile_fil/2
+    leggiFile_fil/2,
+    tokenize/2
 ]).
 
 :- use_module(library(file_systems), [file_exists/1, delete_file/1]).
