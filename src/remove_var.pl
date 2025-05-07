@@ -4,7 +4,7 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-:- module(remove_var, [remove_var/1, 
+:- module(remove_var, [remove_variable/1, 
                        remove_file_var/1, 
                        remove_var_clause/2, 
                        remove_var_ple/1, 
@@ -13,7 +13,7 @@
 :- use_module(library(file_systems)).
 :- use_module(tokefun, [leggiChars/1, tokenize/2]).
 
-remove_var(F):-readFile_var(F,Fi),tokenize(Fi,L),take_meta_var(L,F).
+remove_variable(F):-readFile_var(F,Fi),tokenize(Fi,L),take_meta_var(L,F).
 
 remove_file_var(F):-
     readFile_var_fil(F,Fi),
