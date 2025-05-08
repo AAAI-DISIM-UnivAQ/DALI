@@ -86,7 +86,7 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-['utils.pl'].
 
 :- dynamic debug_on/0.
-:- assertz(debug_on).
+% :- assertz(debug_on).
 
 trace_point(Message) :-
     if(debug_on,
