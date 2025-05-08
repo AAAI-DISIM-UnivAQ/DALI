@@ -1,20 +1,38 @@
-% Licensed with Apache Public License
-% by AAAI Research Group
-% Department of Information Engineering and Computer Science and Mathematics
-% University of L'Aquila, ITALY
-% http://www.disim.univaq.it
+% user defined intra-MAS Communication Model
 
-told(_,send_message(_)):-true.
-tell(_,_,send_message(_)):-true.
+told(From,send_message(M)):-true.
+told(Ag,execute_proc(_)):-true.
+told(Ag,query_ref(_,_)):-true.
+told(Ag,agree(_)):-true.
+told(Ag,confirm(_),200):-true.
+told(Ag,disconfirm(_)):-true.
+told(Ag,request(_,_)):-true.
+told(Ag,propose(_,_)):-true.
+told(Ag,accept_proposal(_,_),20):-true.
+told(Ag,reject_proposal(_,_),20):-true.
+told(_,failure(_,_),200):-true.
+told(_,cancel(_)):-true.
+told(Ag,inform(_,_),70):-true.
+told(Ag,inform(_),70):-true.
+told(Ag,reply(_)):-true.
+told(_,refuse(_,Xp)):-functor(Xp,Fp,_),Fp=agree.
 
-told(_,confirm(_),200):-true. 
-told(_,disconfirm(_)):-true. 
-told(_,inform(_,_),70):-true. 
-told(_,inform(_),70):-true. 
-tell(_,_,confirm(_)):-true. 
-tell(_,_,disconfirm(_)):-true. 
-tell(_,_,inform(_,_)):-true.
-tell(_,_,inform(_)):-true. 
+tell(To,From,send_message(M)):-true.
+tell(To,_,confirm(_)):-true.
+tell(To,_,disconfirm(_)):-true.
+tell(To,_,propose(_,_)):-true.
+tell(To,_,request(_,_)):-true.
+tell(To,_,execute_proc(_)):-true.
+tell(To,_,agree(_)):-true.
+tell(To,_,reject_proposal(_,_)):-true.
+tell(To,_,accept_proposal(_,_)):-true.
+tell(To,_,failure(_,_)):-true.
+tell(To,_,query_ref(_,_)):-true.
+tell(To,_,eve(_)):-true.
+tell(_,_,refuse(X,_)):-functor(X,F,_),(F=send_message;F=query_ref).
+tell(To,_,inform(_,M)):-true;M=motivation(refused_message).
+tell(To,_,inform(_)):-true,To\=user.
+tell(To,_,propose_desire(_,_)):-true.
 
 meta(P,V,AgM):-
         functor(P,F,N),N=0,clause(agent(Ag),_),
