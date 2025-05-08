@@ -13,9 +13,10 @@
     tokenize/2
 ]).
 
-:- use_module(library(file_systems), [file_exists/1, delete_file/1]).
+:- use_module(library(file_systems), [file_exists/1, delete_file/1, make_directory/1]).
 :- use_module(library(lists)).
 :- use_module(remove_var).
+:- use_module(library(atom_to_term)).
 
 :- multifile user:term_expansion/6, scrittura/1.
 
@@ -35,12 +36,12 @@
           eventi_esterni/1, 
           deltaT/1.
 
+% Definizione degli operatori personalizzati
 :-op(500,xfy,:>).
 :-op(500,xfy,:<).
 :-op(1200,fy,:~).
 :-op(1200,xfy,</).
 :-op(500,xfy,?/).
-
 
 :-op(1200,xfx,[:-,:>]).
 :-op(1200,xfx,[:-,:<]).
@@ -49,6 +50,7 @@
 :-op(1200,xfx,[:-,</]).
 :-op(1200,xfx,[:-,?/]).
 
+% Espansione dei termini per gli operatori personalizzati
 user:term_expansion((H:>B),[],[],(H:-B),[],[]).
 user:term_expansion((H:<B),[],[],(cd(H):-B),[],[]).
 user:term_expansion((:~B),[],[],(vincolo:-B),[],[]).
@@ -65,18 +67,26 @@ readFile(File, Content) :-
          read(Stream, Content),
          close(Stream)),
         Error,
-        Content = []
+        (write('ERROR: Impossibile leggere file: '), write(FullFile), write(' - '), write(Error), nl, Content = [])
     ).
 
 token(F):-
     readFile(F,Fi),
-    tokenize(Fi,L),
-    take_meta(L,F).
+    (Fi = [] -> 
+        (write('ERROR: File vuoto o non trovato: '), write(F), nl, fail)
+    ;
+        tokenize(Fi,L),
+        take_meta(L,F)
+    ).
 
 token(F):-
     leggiFile(F,Fi),
-    tokenize(Fi,L),
-    take_meta(L,F).
+    (Fi = [] -> 
+        (write('ERROR: File vuoto o non trovato: '), write(F), nl, fail)
+    ;
+        tokenize(Fi,L),
+        take_meta(L,F)
+    ).
 
 token_fil(F):-
     leggiFile_fil(F,Fi),
@@ -105,11 +115,15 @@ charEof(-1). %codice "ascii" dell'end_of_file
 charEol(10). %codice ascii dell'end_of_line
 
 
-leggiFile(Infile,Txt) :-			%apertura file,lettura righe
-	atom_concat(Infile,'.txt',File),
-	see(File),   
-	leggiChars(Txt), !,
-	seen.
+leggiFile(Infile, Txt) :-
+    atom_concat(Infile, '.txt', File),
+    catch(
+        (see(File),
+         leggiChars(Txt),
+         seen),
+        Error,
+        (write('ERROR: Impossibile leggere file: '), write(File), write(' - '), write(Error), nl, Txt = [])
+    ).
 
 leggiFile_fil(Infile, Txt) :-
     atom_concat(Infile, '.con', File),
@@ -217,6 +231,12 @@ sep(Ch) --> [Ch],
                  [Ch] = "<"; [Ch] = "/";[Ch] = "?"}. 
 
 take_meta(L,F):-
+    % Crea la directory work se non esiste
+    catch(
+        make_directory('work'),
+        _,
+        true
+    ),
     assert(eventi_esterni(0)),
     assert(deltaT(0)),
     assert(parentesi(0)), 
@@ -236,14 +256,44 @@ take_meta(L,F):-
     ; true),
     (clause(buffer(ParsedC),_) -> 
         (retractall(buffer(_)), 
-         name(Parsed,ParsedC), 
+         name(Parsed,ParsedC),
          open(Nf, append, Stream, []), 
          write(Stream, Parsed), 
+         write(Stream, '.'), nl(Stream),
          close(Stream)
         )
     ; true
     ),
     re_file(Nf).
+
+% Predicato per trasformare gli operatori personalizzati
+transform_operators(Term, Transformed) :-
+    (compound(Term) ->
+        (functor(Term, :>, 2) ->
+            arg(1, Term, H),
+            arg(2, Term, B),
+            Transformed = (H:-B)
+        ; functor(Term, :<, 2) ->
+            arg(1, Term, H),
+            arg(2, Term, B),
+            Transformed = (cd(H):-B)
+        ; functor(Term, :~, 1) ->
+            arg(1, Term, B),
+            Transformed = (vincolo:-B)
+        ; functor(Term, ~/, 2) ->
+            arg(1, Term, H),
+            arg(2, Term, B),
+            Transformed = (export_past(H):-decompose(H,B))
+        ; functor(Term, </, 2) ->
+            arg(1, Term, H),
+            arg(2, Term, B),
+            Transformed = (export_past_not_do(H):-decompose_not_do(H,B))
+        ; functor(Term, ?/, 2) ->
+            arg(1, Term, H),
+            arg(2, Term, B),
+            Transformed = (export_past_do(H):-decompose_if_it_is(H,B))
+        ; Term = Transformed)
+    ; Term = Transformed).
 
 take_meta_fil(L,F):-
     assert(parentesi(0)),
@@ -272,26 +322,18 @@ take_meta_fil(L,F):-
     ).
 
 examine_all(Me):-
-    (Me = 'EOL' ->
-        true
-    ;
-        examine_all1(Me)
-    ).
-
-
-examine_all1(Me):-
-    (member(Me,['(',')']) -> 
-        count_parentheses(Me)
-    ; true),
-    (tempo(Me) -> 
-        scrittura(Me)
-    ; (variabile(Me) ->
-        examine_variable(Me)
-    ; (label(Me) ->
-        examine_label(Me)
-    ; (
-       write_NovarNolabel(Me))
-    ))).
+    if(member(Me,['(',')']), count_parentheses(Me),true),
+    if(tempo(Me), scrittura(Me),
+        (if(variabile(Me),examine_variable(Me),
+            if(label(Me),examine_label(Me),
+                if(Me = ':-', re_write([58,45]),  % ':-' in ASCII
+                    if(Me = ':>', re_write([58,45]),  % ':-' in ASCII
+                        if(Me = ':<', re_write([99,100,40]),  % 'cd(' in ASCII
+                            if(Me = ':~', re_write([118,105,110,99,111,108,111,58,45]),  % 'vincolo:-' in ASCII
+                                if(Me = '~/', re_write([101,120,112,111,114,116,95,112,97,115,116,40]),  % 'export_past(' in ASCII
+                                    if(Me = '</', re_write([101,120,112,111,114,116,95,112,97,115,116,95,110,111,116,95,100,111,40]),  % 'export_past_not_do(' in ASCII
+                                        if(Me = '?/', re_write([101,120,112,111,114,116,95,112,97,115,116,95,100,111,40]),  % 'export_past_do(' in ASCII
+                                            write_NovarNolabel(Me))))))))))))).
 
 
 variabile(Me):-name(Me,L),
@@ -315,17 +357,33 @@ scrittura(Me):- name(Me,L),nth0(0,L,R,L3), append([100,101,108,116,97,116,40],L3
 
 
 
-re_write(L):-arg(1,L,N1),if(N1=39,add_39(L),do_not_add(L)).%%EDITED RIGA SOTTO
-add_39(L):-append([39,39,39,39,39,39],L,Lf),append(Lf,[39,39,39,39,39,39],Lf1),
-						clause(buffer(Parsed),_), retractall(buffer(_)),
-						append(Parsed,Lf1, Parola), assert(buffer(Parola)).
+/* re_write(L):-
+    arg(1,L,N1),
+    if(N1=39,
+        % Se il primo carattere è un apice, aggiungi solo un apice all'inizio e alla fine
+        (append([39],L,Lf),
+         append(Lf,[39],Lf1),
+         clause(buffer(Parsed),_), 
+         retractall(buffer(_)),
+         append(Parsed,Lf1, Parola), 
+         assert(buffer(Parola))),
+        % Altrimenti scrivi normalmente
+        do_not_add(L)
+    ).
+ */
+
+re_write(L):- do_not_add(L).
 
 do_not_add(L):-clause(buffer(Parsed),_), retractall(buffer(_)),append(Parsed,L,Parola),
 						  assert(buffer(Parola)).
 
-write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/']), check_parentesi), write_parentesi, true),
-                                     
-                                        name(Me,L),re_write(L).
+write_NovarNolabel(Me):-
+    if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/']), check_parentesi), 
+        write_parentesi, 
+        true),
+    name(Me,L),
+    re_write(L).
+
 write_parentesi:-re_write([41]),retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
 check_parentesi:-if((clause(evento_aperto,_),clause(parentesi(0),_)),true,false).
 

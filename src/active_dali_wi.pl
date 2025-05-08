@@ -59,7 +59,8 @@
     process_loop/1,
     process_loop_until/2,
     process_list/2,
-    trace_message/1
+    trace_message/1,
+    process_agent_file/1
 ]).
 
 
@@ -72,6 +73,8 @@
 
 
 :- use_module(utils, [delete_agent_files/1]).
+:- use_module(remove_var, [remove_file_var/1]).
+:- use_module(tokefun, [token/1, token_fil/1]).
 
 :- multifile user:term_expansion/6.
 :- set_prolog_flag(discontiguous_warnings,off),
@@ -86,10 +89,7 @@
 %%
 
 :- use_module(read_mul).  
-:- use_module(remove_var).  
-:- use_module(tokefun).
 :- use_module(meta1).
-:- use_module(memory).
 :- use_module(examine_past_constraints).
 
 :-dynamic tesg/1.
@@ -288,15 +288,40 @@ initialize_agent(FI) :-
 start1(File, AgentName, Lib, Fil) :-
     % Assicurati che la directory work esista nella posizione corretta
     atom_concat('./', File, FullPath),
+    % Crea la directory work se non esiste
+    (file_exists('./work') -> 
+        true 
+    ; 
+        catch(
+            make_directory('./work'),
+            Error,
+            (write('WARNING: Directory work gia\' esistente: '), write(Error), nl)
+        )
+    ),
     % Crea il file dell'agente
-    open(FullPath, write, Stream),
-    write(Stream, ':- module('), write(Stream, AgentName), write(Stream, ', []).'), nl(Stream),
-    write(Stream, ':- use_module(library(lists)).'), nl(Stream),
-    % Aggiungi le librerie
-    write_libraries(Stream, Lib),
-    close(Stream),
-    token(File),
-    start1(File, AgentName, Lib, Fil).
+    catch(
+        (open(FullPath, write, Stream),
+         write(Stream, ':- module('), write(Stream, AgentName), write(Stream, ', []).'), nl(Stream),
+         write(Stream, ':- use_module(library(lists)).'), nl(Stream),
+         % Aggiungi le librerie
+         write_libraries(Stream, Lib),
+                 close(Stream),
+         % Verifica che il file sia stato creato
+         (file_exists(FullPath) -> 
+            (write('DEBUG: File creato con successo: '), write(FullPath), nl)
+         ; 
+            (write('ERROR: File non creato: '), write(FullPath), nl, fail)
+         )),
+        Error,
+        (write('ERROR: Impossibile scrivere su file: '), write(FullPath), write(' - '), write(Error), nl, fail)
+    ),
+    
+    % Tokenizza il file
+    catch(
+        token(File),
+        Error,
+        (write('ERROR: Errore nella tokenizzazione: '), write(Error), nl, fail)
+    ).
 
 % Predicato per scrivere le librerie nel file
 write_libraries(_, []).
@@ -307,8 +332,15 @@ write_libraries(Stream, [Lib|Rest]) :-
 % Wrapper per token_fil che usa call/1
 token_fil_wrapper(File) :-
     trace_message(['Chiamata token_fil_wrapper per file: ', File]),
+    % Aggiungi l'estensione .txt al nome del file
+    atom_concat(File, '.txt', FullFile),
     catch(
-        (call(token_fil(File)),
+        (open(FullFile, read, Stream),
+         % Leggi il file come testo semplice
+         read_line(Stream, Line),
+         close(Stream),
+         % Ora che abbiamo letto il file come testo, possiamo processarlo
+         call(token_fil(File)),
          trace_message('token_fil_wrapper completato con successo')),
         Error,
         (trace_message(['ERROR in token_fil_wrapper: ', Error]),
@@ -328,7 +360,19 @@ filter_fil(Fil) :-
              trace_message('token_fil completato con successo')),
             Error,
             (trace_message(['ERROR in token_fil: ', Error]),
-             fail)
+             % Se c'è un errore di sintassi, prova a leggere il file come testo
+             catch(
+                 (atom_concat(Fil, '.txt', FullFile),
+                  open(FullFile, read, Stream),
+                  read_line(Stream, Line),
+                                close(Stream),
+                  trace_message(['File letto come testo: ', Line]),
+                  token_fil_wrapper(Fil)),
+                 Error2,
+                 (trace_message(['ERROR nella lettura del file: ', Error2]),
+                  fail)
+             )
+            )
         ),
         trace_message('Fine token_fil'),
         retractall(parentheses(_)),
@@ -373,7 +417,7 @@ load_ontology_file(Ontolog, Agent) :-
     write('Repository: '), write(RepositoryC), nl,
     read(Stream, HostC),
     write('Host: '), write(HostC), nl,
-                                close(Stream),
+                         close(Stream),
     name(Repository, RepositoryC),
     name(Prefixes, PrefixesC),
     name(Host, HostC),
@@ -496,7 +540,7 @@ process_internal_event(Event, S) :-
 manage_goals :-
     (clause(goal(_), _) -> 
         manage_goals1 ; 
-        true),
+                true),
     trace_message('Fine gestione obiettivi').
 
 manage_goals1 :-
@@ -542,7 +586,7 @@ manage_goals5(Me) :-
 manage_time :-
     (clause(time(_), _) -> 
         manage_time1 ; 
-        true),
+                              true),
     trace_event('Fine controllo tempo').
 
 manage_time1 :-
@@ -559,7 +603,7 @@ process_times([Me|Rest], U) :-
 check_conditions :-
     (clause(condition(_), _) -> 
         check_conditions1 ; 
-        true),
+                          true),
     trace_event('Fine controllo condizioni').
 
 check_conditions1 :-
@@ -712,3 +756,7 @@ run_agent :-
     write('DEBUG: FINE CICLO AGENTE - RIAVVIO'), nl,
     write('DEBUG: =========================================='), nl, nl,
     run_agent.
+
+process_agent_file(F):-
+    delete_agent_files(F),
+    token(F).
