@@ -27,11 +27,16 @@ fi
 
 # Define paths and variables
 SICSTUS_HOME=/usr/local/sicstus4.6.0
-MAIN_HOME=../..
-DALI_HOME=../../src
+
+DALI_HOME="../../"
+CORE_DIR="$DALI_HOME/src"
+COMMUNICATION_DIR="$DALI_HOME/src"
+EVENT_DIR="$DALI_HOME/src"
+UTILS_DIR="$DALI_HOME/src"
+
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
-WAIT="ping -c 3 127.0.0.1"
+WAIT="ping -c 1 127.0.0.1"
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
@@ -64,17 +69,16 @@ cp $BUILD_HOME/*.txt work
 
 # Start the LINDA server in a new console
 srvcmd="$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
-echo "server: " $srvcmd
-tmux new-session -d -s DALI_session $srvcmd
+echo "server: $srvcmd"
+
+tmux new-session -d -s DALI_session "$srvcmd"
+
+sleep 1
 
 echo "Server ready. Starting the MAS..."
 $WAIT > /dev/null  # Wait for a while
 
-# Start user agent in another vertical split
-tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 echo "Launching agents instances..."
-$WAIT > /dev/null  # Wait for a while
-
 # Launch agents in horizontal splits, one after the other
 for agent_filename in $BUILD_HOME/*; do
     agent_base="${agent_filename##*/}"
@@ -82,9 +86,14 @@ for agent_filename in $BUILD_HOME/*; do
     # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
     # Start the agent in the new pane
+    echo split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
     tmux split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
+    sleep 1
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
+
+# Start user agent in another vertical split
+% tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/user_console.pl --goal 'initialize_client,client_loop.'"
 
 echo "MAS started."
 
@@ -98,4 +107,5 @@ echo "Press Enter to shutdown the MAS"
 read
 
 # Clean up processes
-killall sicstus
+killall -9 sicstus
+
