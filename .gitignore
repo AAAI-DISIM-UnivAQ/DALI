@@ -4,5 +4,7 @@ Examples/advanced/build/*
 Examples/advanced/work/*
 Examples/advanced/conf/*
 Examples/advanced/conf/mas/*.txt
+Examples/advanced/conf/communication.*
+Examples/advanced/server.txt
 **/conf/communication.*
 *.log
