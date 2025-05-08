@@ -26,7 +26,7 @@ fi
 # tmux new-session -d -s DALI_session top
 
 # Define paths and variables
-SICSTUS_HOME=$HOME/sicstus4.4.1
+SICSTUS_HOME=/usr/local/sicstus4.6.0
 MAIN_HOME=../..
 DALI_HOME=../../src
 CONF_DIR=conf
@@ -70,8 +70,6 @@ tmux new-session -d -s DALI_session $srvcmd
 echo "Server ready. Starting the MAS..."
 $WAIT > /dev/null  # Wait for a while
 
-# Start user agent in another vertical split
-tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 echo "Launching agents instances..."
 $WAIT > /dev/null  # Wait for a while
 
@@ -87,6 +85,9 @@ for agent_filename in $BUILD_HOME/*; do
 done
 
 echo "MAS started."
+
+# Start user agent in another vertical split
+tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 
 # Select an even layout to properly display the panes
 tmux select-layout -t DALI_session tiled
