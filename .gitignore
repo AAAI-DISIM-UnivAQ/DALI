@@ -2,6 +2,7 @@
 .idea
 Examples/advanced/build/*
 Examples/advanced/work/*
-Examples/advanced/conf
+Examples/advanced/conf/*
 Examples/advanced/conf/mas/*.txt
+**/conf/communication.*
 *.log
