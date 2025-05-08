@@ -1,7 +1,7 @@
 .DS_Store
 .idea
-src/Examples/advanced/build
-src/Examples/advanced/work
-src/Examples/advanced/conf
-src/*.log
-src/onto
+Examples/advanced/build/*
+Examples/advanced/work/*
+Examples/advanced/conf
+Examples/advanced/conf/mas/*.txt
+*.log
