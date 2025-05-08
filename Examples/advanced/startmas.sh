@@ -110,5 +110,5 @@ echo "Press Enter to shutdown the MAS"
 read
 
 # Clean up processes
-killall -9 sicstus
+pkill -9 sicstus
 
