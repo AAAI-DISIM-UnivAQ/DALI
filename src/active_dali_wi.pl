@@ -95,7 +95,7 @@ trace_point(Message) :-
 
 trace_point(Message, Args) :-
     if(debug_on,
-        (concat_args([Message|Args], FinalMsg), write('DEBUG: '), write(FinalMsg), nl),
+        (write('DEBUG: '), write(Args), nl),
         true).
 
 concat_args([], '').
