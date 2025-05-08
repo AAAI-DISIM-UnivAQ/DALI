@@ -30,3 +30,7 @@ console in which every single agent shows its messages.
 * [TurtleBot2 MAS Project](https://github.com/valent0ne/turtlebot2-mas) 
 * (more to come..)
 
+# Debug
+
+- If the `*.sh` files contain Windows line endings, then run the script `./convert_to_unix.sh` to replace the line endings with Unix-style ones.
+
