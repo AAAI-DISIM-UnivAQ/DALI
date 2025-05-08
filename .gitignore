@@ -1,1 +1,7 @@
-*.pl
+.DS_Store
+.idea
+src/Examples/advanced/build
+src/Examples/advanced/work
+src/Examples/advanced/conf
+src/*.log
+src/onto
