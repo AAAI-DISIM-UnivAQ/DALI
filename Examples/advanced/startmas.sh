@@ -28,7 +28,7 @@ fi
 # Define paths and variables
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 
-DALI_HOME="../../"
+DALI_HOME="../.."
 CORE_DIR="$DALI_HOME/src"
 COMMUNICATION_DIR="$DALI_HOME/src"
 EVENT_DIR="$DALI_HOME/src"
@@ -68,7 +68,7 @@ ls $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 
 # Start the LINDA server in a new console
-srvcmd="$PROLOG --noinfo -l $DALI_HOME/active_server_wi.pl --goal go(3010,'server.txt')."
+srvcmd="$PROLOG --noinfo -l $COMMUNICATION_DIR/active_server_wi.pl --goal go."
 echo "server: $srvcmd"
 
 tmux new-session -d -s DALI_session "$srvcmd"
@@ -86,14 +86,17 @@ for agent_filename in $BUILD_HOME/*; do
     # Create the agent configuration
     $current_dir/conf/makeconf.sh $agent_base $DALI_HOME
     # Start the agent in the new pane
-    echo split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
-    tmux split-window -v -t DALI_session "$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
+    agent_cmd="$PROLOG --noinfo -l $CORE_DIR/active_dali_wi.pl --goal \"start0('$current_dir/conf/mas/$agent_base').\""
+    echo "Agent command: $agent_cmd"
+    tmux split-window -v -t DALI_session "$agent_cmd"
     sleep 1
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
 
 # Start user agent in another vertical split
-% tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $COMMUNICATION_DIR/user_console.pl --goal 'initialize_client,client_loop.'"
+user_cmd="$PROLOG --noinfo -l $DALI_HOME/src/active_user_wi.pl --goal utente."
+echo "User command: $user_cmd"
+tmux split-window -v -t DALI_session "$user_cmd"
 
 echo "MAS started."
 
