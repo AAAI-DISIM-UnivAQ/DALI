@@ -86,7 +86,8 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-['utils.pl'].
 
 :- dynamic debug_on/0.
-% :- assertz(debug_on).
+:- assertz(debug_on).
+
 
 trace_point(Message) :-
     if(debug_on,
@@ -95,31 +96,26 @@ trace_point(Message) :-
 
 trace_point(Message, Args) :-
     if(debug_on,
-        (write('DEBUG: '), write(Args), nl),
+        (write('DEBUG: '), write(Message), nl),
         true).
-
-concat_args([], '').
-concat_args([H|T], Result) :-
-    concat_args(T, Rest),
-    atom_concat(H, Rest, Result).
 
 start0(FI):-set_prolog_flag(redefine_warnings,off),
             set_prolog_flag(discontiguous_warnings,off),
             write('write'),nl,
             trace_point('start0'),
-            trace_point('Opening file', FI),
+            trace_point('Opening file'),
             open(FI,read,Stream,[]), 
             trace_point('Reading agent configuration'),
             read(Stream,Me), 
             close(Stream),
-            trace_point('Agent configuration read', Me),
+            trace_point('Agent configuration read'),
             Me \= end_of_file,
             agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
             trace_point('Opening server.txt'),
             open('server.txt',read,Stream2,[]),
             read(Stream2,T),
             close(Stream2),
-            trace_point('Server configuration read', T),
+            trace_point('Server configuration read'),
             if(UP=no, true, assert(user_profile_location(UP))),
             if(DO=no,true,assert(dali_onto_location(DO))),
             assert(server_obj(T)),
@@ -128,12 +124,15 @@ start0(FI):-set_prolog_flag(redefine_warnings,off),
             assert(specialization(Specialization)),
             if(Ontolog=no,true,load_ontology_file(Ontolog,AgentName)),
             assert(own_language(Lang)),
-            trace_point('Connecting to LINDA server', T),
+            trace_point('Before LINDA connection'),
+            trace_point('Connecting to LINDA server'),
             linda_client(T),
+            trace_point('Activating agent'),
             out(activating_agent(AgentName)),
-            trace_point('Starting agent', AgentName),
             delete_agent_files(File),
+            trace_point('Before token'),
             token(File),
+            trace_point('Before start1'),
             start1(File, AgentName, Lib, Fil).
 
 load_ontology_file(Ontolog,Agent):-
@@ -147,31 +146,53 @@ load_ontology_file(Ontolog,Agent):-
         name(Host,HostC),
         assert(ontology(Prefixes,[Repository,Host],Agent)).
 
-filtra_fil(FI):-arg(1,FI,File),token_fil(File),retractall(parentesi(_)),togli_var_fil(File).
+filtra_fil(FI):-
+  trace_point('Starting filtra_fil'),
+  arg(1,FI,File),
+  trace_point('File argument extracted'),
+  trace_point('Calling token_fil'),
+  token_fil(File),
+  trace_point('After token_fil'),
+  retractall(parentesi(_)),
+  trace_point('After retractall parentesi'),
+  togli_var_fil(File),
+  trace_point('After togli_var_fil').
+
 
 start1(Fe,AgentName,Libr,Fil):-
+  trace_point('Entering start1'),
   set_prolog_flag(discontiguous_warnings,off),
   if(Libr=no,true,libreria(Fe,Libr,Fil)),
+  trace_point('After libreria'),
 
   pl_from_name(Fe, FilePl),
   ple_from_name(Fe, FilePle),
   plv_from_name(Fe, FilePlv),
   plf_from_name(Fe, FilePlf),
   txt_from_name(Fe, FileTxt),
+  trace_point('File names generated'),
 
   aprifile(FilePl),
+  trace_point('After aprifile'),
 
   aprifile_res(FilePl),
+  trace_point('After aprifile_res'),
 
   carica_file(FilePl),
+  trace_point('After carica_file'),
 
   togli_var(Fe),
+  trace_point('After togli_var'),
 
   togli_var_ple(Fe),
+  trace_point('After togli_var_ple'),
 
   if(file_exists(FilePlf),controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
+  trace_point('After file checks'),
 
   load_directives(FilePlf),
+  trace_point('After load_directives'),
+
   server_obj(Tee),
   linda_client(Tee),
   assert(agente(AgentName,Tee,FilePle,FilePl)),
@@ -208,39 +229,90 @@ start1(Fe,AgentName,Libr,Fil):-
   print('..................   Actived Agent '),print(AgentName),print(' ...................'),nl,go.
 
 %L0 it should be communicationf/fipa
-libreria(F,L0,Fil):-name(F,Lf),append(Lf,[46,112,108],Ltf),
-           append(L0,Fil,L),
-           name(F1,Ltf),if(L=[],true,libreria1(F1,L)).
+libreria(F,L0,Fil):-
+  trace_point('Entering libreria'),
+  name(F,Lf),
+  trace_point('After name F'),
+  append(Lf,[46,112,108],Ltf),
+  trace_point('After append pl'),
+  append(L0,Fil,L),
+  trace_point('After append L0 Fil'),
+  name(F1,Ltf),
+  trace_point('After name F1'),
+  if(L=[],true,libreria1(F1,L)).
 
-libreria1(F,L):-last(L,U),
-                   repeat,
-                          member(Me,L),
-                                  appendi_regole0(Me),
-                   Me==U,!,versa(F).
+libreria1(F,L):-
+  trace_point('Entering libreria1'),
+  last(L,U),
+  trace_point('After last'),
+  repeat,
+    member(Me,L),
+    trace_point('Processing member'),
+    appendi_regole0(Me),
+    Me==U,!,
+  trace_point('Before versa'),
+  versa(F).
 
-appendi_regole0(Me):-name(Me,L),append(L,[46,116,120,116],Ltf),
-                           name(T,Ltf),if(file_exists(T),appendi_files(T),true),
-                           append(L,[46,112,108],Ltf1),name(T1,Ltf1),
-                           if(file_exists(T1),appendi_regole(T1),true).
+appendi_regole0(Me):-
+  trace_point('Entering appendi_regole0'),
+  name(Me,L),
+  append(L,[46,116,120,116],Ltf),
+  name(T,Ltf),
+  trace_point('Checking txt file'),
+  if(file_exists(T),
+     (trace_point('Txt file exists, calling appendi_files'),
+      appendi_files(T)),
+     trace_point('Txt file does not exist')),
+  append(L,[46,112,108],Ltf1),
+  name(T1,Ltf1),
+  trace_point('Checking pl file'),
+  if(file_exists(T1),
+     (trace_point('Pl file exists, calling appendi_regole'),
+      appendi_regole(T1)),
+     trace_point('Pl file does not exist')).
 
-appendi_files(T):-set_prolog_flag(redefine_warnings,off),compile(T).
+appendi_files(T):-
+  trace_point('Entering appendi_files'),
+  set_prolog_flag(redefine_warnings,off),
+  compile(T),
+  trace_point('After compile in appendi_files').
 
-appendi_regole(Mef):-open(Mef,read,Stream,[]),
-                           repeat,
-                                         read(Stream,T),if(T=end_of_file,true,
-                                         assert(da_agg(T))),
-                                T==end_of_file,!,
-                close(Stream).
+appendi_regole(Mef):-
+  trace_point('Entering appendi_regole'),
+  open(Mef,read,Stream,[]),
+  trace_point('After open in appendi_regole'),
+  repeat,
+    read(Stream,T),
+    trace_point('Read term'),
+    if(T=end_of_file,true,
+      (trace_point('Asserting da_agg'),
+       assert(da_agg(T)))),
+    T==end_of_file,!,
+  trace_point('Before close in appendi_regole'),
+  close(Stream),
+  trace_point('After appendi_regole').
 
-%%Write communication file
-versa(F):-findall(X,clause(da_agg(X),_),L),
-          last(L,U),
-              open(F,append,Stream,[]),nl(Stream),
-              repeat,
-              member(T,L),
-              write(Stream,T),write(Stream,'.'),nl(Stream),
-              T==U,!,
-              close(Stream),retractall(da_agg(_)).
+versa(F):-
+  trace_point('Entering versa'),
+  findall(X,clause(da_agg(X),_),L),
+  trace_point('After findall'),
+  last(L,U),
+  trace_point('After last'),
+  open(F,append,Stream,[]),
+  trace_point('After open file'),
+  nl(Stream),
+  repeat,
+    member(T,L),
+    trace_point('Writing term'),
+    write(Stream,T),
+    write(Stream,'.'),
+    nl(Stream),
+    T==U,!,
+  trace_point('Before close'),
+  close(Stream),
+  trace_point('Before retractall'),
+  retractall(da_agg(_)),
+  trace_point('After versa').
 
 
 aprifile(F):-see(F),
@@ -1542,7 +1614,11 @@ external:-trace_point('In external'),
           blocco_constr,ricmess,processa_eve,examine_mul,keep_action,svuota_coda_priority,
           prendi_action_normal,blocco_constr,controlla_vita.
 
-side_goal:-obtaining_goals,residue_goal.
+side_goal:-trace_point('In side_goal'),
+           obtaining_goals,
+           trace_point('After obtaining_goals'),
+           residue_goal,
+           trace_point('After residue_goal').
 
 
 go:-trace_point('Starting main loop'),

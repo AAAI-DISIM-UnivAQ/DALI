@@ -32,8 +32,46 @@ user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[]
 
 %%EDITED
 token(F):-leggiFile(F,Fi),tokenize(Fi,L),take_meta(L,F).
-token_fil(F):-leggiFile_fil(F,Fi),tokenize(Fi,L),take_meta_fil(L,F).
-token_clause(C,F,F1):-crea_rand(F,F1),name(C,L),tokenize(L,S),append(Lb,['EOL'],S),append(Lb,['.'],Lb1),append(Lb1,['EOL'],Lb2),take_meta_update(Lb2,F,F1).
+token_fil(File):-
+  trace_point('Entering token_fil in tokefun.pl'),
+  name(File,L),
+  append(L,[46,99,111,110],Ltf),
+  name(T,Ltf),
+  trace_point('Checking communication.con file', T),
+  if(file_exists(T),
+     (trace_point('Communication.con exists, processing'),
+      trace_point('About to read file content'),
+      leggiFile_fil(File,Content),
+      trace_point('File content read', [Content]),
+      token_clause(Content,T,T1),
+      trace_point('After token_clause')),
+     trace_point('Communication.con not found')),
+  name(File,L1),
+  append(L1,[46,112,108],Ltf1),
+  name(T2,Ltf1),
+  trace_point('Checking pl file', T2),
+  if(file_exists(T2),
+     (trace_point('Pl file exists, processing'),
+      token_clause(T2,T2,T3),
+      trace_point('After token_clause for pl')),
+     trace_point('Pl file not found')).
+
+token_clause(C,F,F1):-
+  trace_point('Entering token_clause'),
+  crea_rand(F,F1),
+  trace_point('After crea_rand ', C),
+  name(C,L),
+  trace_point('Path as list before tokenize'),
+  tokenize(L,S),
+  trace_point('After tokenize'),
+  append(Lb,['EOL'],S),
+  trace_point('After first append'),
+  append(Lb,['.'],Lb1),
+  trace_point('After second append'),
+  append(Lb1,['EOL'],Lb2),
+  trace_point('After third append'),
+  take_meta_update(Lb2,F,F1),
+  trace_point('Exiting token_clause').
 
 crea_rand(F,T):-random(97,122,A4),random(97,122,A5),random(97,122,A6),name(F,Lf),append(Lf,[A4],F1),append(F1,[A5],F2),append(F2,[A6],Fi),name(T,Fi).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -92,8 +130,8 @@ skipBlanks(Ch,NextCh) :-
 
 %%EDITED MESSO UN TRACE'
 tokenize(Input,Output) :- % trasforma una lista di codici ascii in una di lessemi
-	tokenize(Output,Input,Residue), !, 
-	(Residue=[] -> true; assert(residue(Residue))).
+  tokenize(Output,Input,Residue), !, 
+  (Residue=[] -> true; assert(residue(Residue))).
 
 tokenize(Lexxs) --> chList( ChList, Sym ), tokenize(Lexs),
 			  { name(Tok,ChList), putBefore(Tok, Sym, Lexs, Lexxs) }.
@@ -180,35 +218,62 @@ if(clause(buffer(ParsedC),_),
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
 	), (write('Errore take_meta_fil'),nl)).
 
-examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
+examine_all(Me):-
+  trace_point('Entering examine_all', [Me]),
+  if(Me='EOL',true,examine_all1(Me)),
+  trace_point('Exiting examine_all').
 
 
-examine_all1(Me):-if(member(Me,['(',')']), conta_parentesi(Me),true),
-                  if(tempo(Me), scrittura(Me),                 % controlla se è stato inserito il deltat, se si scrivo nel file pl e asserisco time_add
-                    (if(variabile(Me),examine_variable(Me),
-                        if(label(Me),examine_label(Me),write_NovarNolabel(Me)))
+examine_all1(Me):-
+  trace_point('Entering examine_all1', [Me]),
+  if(member(Me,['(',')']), conta_parentesi(Me),true),
+  if(tempo(Me), 
+     (trace_point('Found tempo', [Me]), scrittura(Me)),                 
+     (if(variabile(Me),
+         (trace_point('Found variable', [Me]), examine_variable(Me)),
+         if(label(Me),
+            (trace_point('Found label', [Me]), examine_label(Me)),
+            (trace_point('Writing NovarNolabel', [Me]), write_NovarNolabel(Me))
+         )
+     ))
+  ),
+  trace_point('Exiting examine_all1').
 
-                 )).
 
+examine_variable(Me):-
+  name(Me,L),
+  (is_path(L) -> 
+    re_write(L)
+  ; 
+    append([118,97,114,95],L,Lt),
+    re_write(Lt)
+  ).
 
-variabile(Me):-name(Me,L),
-                                    nth0(0,L,El),
-                                         isa_variable(El).
+% Controlla se la lista di caratteri rappresenta un percorso
+is_path(L) :-
+  member(47, L),  % Controlla se contiene '/'
+  \+ is_single_variable(L).
+
+% Controlla se Ã¨ una singola variabile (non un percorso)
+is_single_variable(L) :-
+  length(L, 1),
+  nth0(0, L, El),
+  isa_variable(El).
 
 isa_variable(El):-El>64,El<91.
 isa_variable(El):-El=95.
 
-%Verifica se è stato inserito il delta Temporale dall'agente
+%Verifica se Ã¨ stato inserito il delta Temporale dall'agente
 
-tempo(Me):- name(Me,L), nth0(0,L,El,L1), El==116, numbertime(L1).                       %controlla che il primo carattere è una t
-numbertime(L1):- nth0(0,L1,El,L_rest),check_number(El), scorri(L_rest).                 %controlla se il primo elemento della lista è un numero e scorre la lista
+tempo(Me):- name(Me,L), nth0(0,L,El,L1), El==116, numbertime(L1).                       %controlla che il primo carattere Ã¨ una t
+numbertime(L1):- nth0(0,L1,El,L_rest),check_number(El), scorri(L_rest).                 %controlla se il primo elemento della lista Ã¨ un numero e scorre la lista
 check_number(El):- El>47, El<58.                                                        %range in ASCII per i numeri da 0 a 9
 scorri(L_rest):-if(L_rest=[],true, scorri_list(L_rest)).                                %controlla che tutti gli elementi della lista sono numeri 
 scorri_list(L_rest):- nth0(0,L_rest,X,L2), check_number(X),scorri(L2).
 scrittura(Me):- name(Me,L),nth0(0,L,R,L3), append([100,101,108,116,97,116,40],L3,L1),   %scrittura sul file pl del deltat inserito dall'agente
                 append(L1,[41],L2), clause(buffer(Parsed),_), retractall(buffer(_)),
 		append(Parsed,L2,Parola),assert(buffer(Parola)),
-		clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che è stato inserito
+		clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che Ã¨ stato inserito
 
 
 
@@ -225,16 +290,6 @@ write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/'
                                         name(Me,L),re_write(L).
 write_parentesi:-re_write([41]),retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
 check_parentesi:-if((clause(evento_aperto,_),clause(parentesi(0),_)),true,false).
-
-examine_variable(Me):-name(Me,L),append([118,97,114,95],L,Lt),re_write(Lt).
-
-%ESAMINA LE ETICHETTE DEGLI EVENTI%
-label(Me):-name(Me,L),nth0(0,L,El),piccolo(El),last(L,U),app_label(U).
-
-
-piccolo(El):-El>96,El<123.
-app_label(U):-U=65;U=69;U=73;U=71;U=84;U=80;U=78;U=82.
-
 
 examine_label(Me):-name(Me,L),last(L,U),if(U=65,appA(L,U),if(U=69,appE(L,U),if(U=73,appI(L,U),
                       if(U=71,appG(L,U),if(U=84,appT(L,U),if(U=80,appP(L,U),if(U=78,appN(L,U),if(U=82,appR(L,U),true)))))))).
@@ -380,5 +435,7 @@ rewrite_program_clause_le(Nf):-name(Nf,Lnf),append(Lnf,[46,112,108],Lnff),
                             Me==U,!,retractall(rewrite_clause_le(_)),                            close(Stream).
                              
 write_prog_cl_le(Stream,Me):-write(Stream,Me),write(Stream,'.'),nl(Stream),retractall(parentesi_le(0)).  
+
+variabile(Me):-name(Me,L),nth0(0,L,El),isa_variable(El).
 
 
