@@ -1,2 +1,0 @@
-send_message(send_message(go,_865203))
-send_message(send_message(go,_888983))
