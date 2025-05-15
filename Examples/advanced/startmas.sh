@@ -67,11 +67,7 @@ echo "Port 3010 is now free, proceeding with DALI startup..."
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 
 DALI_HOME="../.."
-CORE_DIR="$DALI_HOME/src"
 COMMUNICATION_DIR="$DALI_HOME/src"
-EVENT_DIR="$DALI_HOME/src"
-UTILS_DIR="$DALI_HOME/src"
-
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 1 127.0.0.1"
@@ -159,6 +155,9 @@ echo "User command: $user_cmd"
 tmux split-window -v -t DALI_session "$user_cmd"
 
 echo "MAS started."
+
+# Start user agent in another vertical split
+tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 
 # Select an even layout to properly display the panes
 tmux select-layout -t DALI_session tiled
