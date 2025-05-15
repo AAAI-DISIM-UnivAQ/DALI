@@ -85,23 +85,53 @@ user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
 :-dynamic eve_cond/1.
 :-['utils.pl'].
 
+:- dynamic debug_on/0.
+% :- assertz(debug_on).
+
+trace_point(Message) :-
+    if(debug_on,
+        (write('DEBUG: '), write(Message), nl),
+        true).
+
+trace_point(Message, Args) :-
+    if(debug_on,
+        (write('DEBUG: '), write(Args), nl),
+        true).
+
+concat_args([], '').
+concat_args([H|T], Result) :-
+    concat_args(T, Rest),
+    atom_concat(H, Rest, Result).
+
 start0(FI):-set_prolog_flag(redefine_warnings,off),
             set_prolog_flag(discontiguous_warnings,off),
-            open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
+            write('write'),nl,
+            trace_point('start0'),
+            trace_point('Opening file', FI),
+            open(FI,read,Stream,[]), 
+            trace_point('Reading agent configuration'),
+            read(Stream,Me), 
+            close(Stream),
+            trace_point('Agent configuration read', Me),
             Me \= end_of_file,
             agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
-            open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
+            trace_point('Opening server.txt'),
+            open('server.txt',read,Stream2,[]),
+            read(Stream2,T),
+            close(Stream2),
+            trace_point('Server configuration read', T),
             if(UP=no, true, assert(user_profile_location(UP))),
             if(DO=no,true,assert(dali_onto_location(DO))),
-            assert(server_obj('localhost':3010)), %% questo si puo togliere se si passa ad una sola funzione
+            assert(server_obj(T)),
+            trace_point('Loading communication files'),
             filtra_fil(Fil),
             assert(specialization(Specialization)),
             if(Ontolog=no,true,load_ontology_file(Ontolog,AgentName)),
             assert(own_language(Lang)),
-
-            linda_client('localhost':3010),
+            trace_point('Connecting to LINDA server', T),
+            linda_client(T),
             out(activating_agent(AgentName)),
-
+            trace_point('Starting agent', AgentName),
             delete_agent_files(File),
             token(File),
             start1(File, AgentName, Lib, Fil).
@@ -142,7 +172,7 @@ start1(Fe,AgentName,Libr,Fil):-
   if(file_exists(FilePlf),controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
 
   load_directives(FilePlf),
-  server_obj(Tee), %% questo si puo togliere se si passa ad una sola funzione
+  server_obj(Tee),
   linda_client(Tee),
   assert(agente(AgentName,Tee,FilePle,FilePl)),
   clause(specialization(Sp),_),
@@ -1497,18 +1527,30 @@ elim_remember_event_mod3(Pm,Tm,Ty):-retractall(remember(Pm,Tm,Ty)).
 
 cond_true_remember_event_mod3(T,T1,T2):-T>=T1,T=<T2.
 
-pari:-sleep(1),random(1,10,R), R1 is R mod 2,
-      if(R1=0,(internal,external),(external,internal)).
+pari:-trace_point('In pari'),
+      sleep(1),random(1,10,R), R1 is R mod 2,
+      trace_point('Random value', R1),
+      if(R1=0,(trace_point('Starting internal'),internal,trace_point('Starting external'),external),
+         (trace_point('Starting external'),external,trace_point('Starting internal'),internal)).
 
-internal:-blocco_constr,ricmess,ev_int, ev_goal,ev_int0,blocco_numero_ev_int,blocco_frequenza,
-ev_int2,controlla_freq_tent,svuota_coda_priority,controlla_freq_iv,scatena,blocco_constr,keep_action,execute_do_action_propose,prendi_action_normal,blocco_constr,controlla_vita.
+internal:-trace_point('In internal'),
+          blocco_constr,ricmess,ev_int, ev_goal,ev_int0,blocco_numero_ev_int,blocco_frequenza,
+          ev_int2,controlla_freq_tent,svuota_coda_priority,controlla_freq_iv,scatena,blocco_constr,
+          keep_action,execute_do_action_propose,prendi_action_normal,blocco_constr,controlla_vita.
 
-external:-blocco_constr,ricmess,processa_eve,examine_mul,keep_action,svuota_coda_priority,prendi_action_normal,blocco_constr,controlla_vita.
+external:-trace_point('In external'),
+          blocco_constr,ricmess,processa_eve,examine_mul,keep_action,svuota_coda_priority,
+          prendi_action_normal,blocco_constr,controlla_vita.
 
 side_goal:-obtaining_goals,residue_goal.
 
 
-go:-repeat,(pari,side_goal),fail,!.
+go:-trace_point('Starting main loop'),
+    repeat,
+    trace_point('Starting pari'),
+    (pari,side_goal),
+    trace_point('After pari and side_goal'),
+    fail,!.
 
 
 blocco_constr:-evaluate_evp_constr,evaluate_evp_do,evaluate_evp_not_do.
