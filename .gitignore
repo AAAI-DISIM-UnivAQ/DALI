@@ -4,6 +4,7 @@ Examples/advanced/.DS_Store
 Examples/advanced/build/*
 Examples/advanced/work/*
 Examples/advanced/conf/*
+Examples/advanced/log/*
 Examples/advanced/conf/mas/*.txt
 Examples/advanced/conf/communication.pl
 Examples/advanced/conf/communication.txt
