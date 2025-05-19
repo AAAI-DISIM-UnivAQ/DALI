@@ -1,10 +1,3 @@
-% Licensed with Apache Public License
-% by AAAI Research Group
-% Department of Information Engineering and Computer Science and Mathematics
-% University of L'Aquila, ITALY
-% http://www.disim.univaq.it
-
-% user defined intra-MAS Communication Model
 
 told(From,send_message(M)):-true.
 told(Ag,execute_proc(_)):-true.
