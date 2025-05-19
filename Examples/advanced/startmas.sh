@@ -66,8 +66,8 @@ echo "Port 3010 is now free, proceeding with DALI startup..."
 # Define paths and variables
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 
-DALI_HOME="../.."
-COMMUNICATION_DIR="$DALI_HOME/src"
+DALI_HOME="../../src"
+COMMUNICATION_DIR=$DALI_HOME
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 1 127.0.0.1"
@@ -150,7 +150,7 @@ for agent_filename in $BUILD_HOME/*; do
 done
 
 # Start user agent in another vertical split
-user_cmd="$PROLOG --noinfo -l $DALI_HOME/src/active_user_wi.pl --goal utente."
+user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 echo "User command: $user_cmd"
 tmux split-window -v -t DALI_session "$user_cmd"
 
