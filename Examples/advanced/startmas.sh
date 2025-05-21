@@ -170,6 +170,22 @@ read
 # Clean up processes
 pkill -9 sicstus
 pkill -9 xterm
-pkill -9 gnome-terminal
-pkill -9 Terminal
+
+case "$os_name" in
+        Darwin)
+            echo 
+            osascript -e 'tell application "Terminal" to quit'
+            ;;
+        Linux)
+            if command -v gnome-terminal &> /dev/null; then
+                pkill -9 gnome-terminal
+            elif command -v xterm &> /dev/null; then
+                pkill xterm
+            else
+                echo "Error: No supported terminal emulator found"
+                exit 1
+            fi
+            ;;
+    esac
+
 
