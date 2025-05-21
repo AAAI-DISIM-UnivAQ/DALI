@@ -11,6 +11,17 @@ current_dir=$(pwd)
 # Print the current directory
 echo "The current directory is: $current_dir"
 
+# Test if tmux is installed
+if command -v tmux &> /dev/null; then
+    echo "tmux is installed."
+    tmux -V  # Display tmux version
+else
+    echo "TMUX is a requirement in Unix-like OS to run DALI"
+    echo "tmux is not installed."
+    echo "Check installation instructions at https://github.com/tmux/tmux/wiki/Installing"
+    exit -1
+fi
+
 # Reduce TIME_WAIT timeout based on OS
 os_name=$(uname -s)
 
@@ -49,10 +60,14 @@ while netstat -an | grep -q "3010"; do
 done
 echo "Port 3010 is now free, proceeding with DALI startup..."
 
+# Create or attach to the tmux session
+tmux new-session -d -s DALI_session top
+
 # Define paths and variables
 SICSTUS_HOME=/usr/local/sicstus4.6.0
+
 DALI_HOME="../../src"
-COMMUNICATION_DIR="$DALI_HOME/src"
+COMMUNICATION_DIR=$DALI_HOME
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 1 127.0.0.1"
@@ -105,48 +120,19 @@ ls -l $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 chmod 755 work/*.txt
 
-# Funzione per aprire un nuovo terminale in base all'OS
-open_terminal() {
-    local cmd="$1"
-    local title="$2"
-    echo cmd: $cmd
-    echo title: $title
-    case "$os_name" in
-        Darwin)
-            osascript <<EOF
-            tell application "Terminal"
-                do script "cd '$current_dir'"
-                do script "$cmd"
-                set current settings of selected tab to settings set "Pro"
-                set custom title of selected tab to "$title"
-            end tell
-EOF
-            ;;
-        Linux)
-            if command -v gnome-terminal &> /dev/null; then
-                gnome-terminal --title="$title" -- bash -c "cd '$current_dir' && $cmd; exec bash"
-            elif command -v xterm &> /dev/null; then
-                xterm -title "$title" -e "cd '$current_dir' && $cmd; exec bash" &
-            else
-                echo "Error: No supported terminal emulator found"
-                exit 1
-            fi
-            ;;
-    esac
-}
-
-# Start the LINDA server
+# Start the LINDA server in a new console
 srvcmd="$PROLOG --noinfo -l $COMMUNICATION_DIR/active_server_wi.pl --goal go."
 echo "Starting server with command: $srvcmd"
-open_terminal "$srvcmd" "DALI Server"
-exit 0
+
+tmux split-window -v -t DALI_session "$srvcmd"
+
 sleep 2  # Increased sleep time
 
 echo "Server ready. Starting the MAS..."
 $WAIT > /dev/null  # Wait for a while
 
 echo "Launching agents instances..."
-# Launch agents in separate terminals
+# Launch agents in horizontal splits, one after the other
 for agent_filename in $BUILD_HOME/*; do
     agent_base="${agent_filename##*/}"
     echo "Agent: $agent_base"
@@ -155,26 +141,33 @@ for agent_filename in $BUILD_HOME/*; do
         echo "Error: Failed to create configuration for agent $agent_base"
         exit -1
     fi
-    # Start the agent in a new terminal
+    # Start the agent in the new pane
     agent_cmd="$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
-    open_terminal "$agent_cmd" "DALI Agent: $agent_base"
+    echo "Agent command: $agent_cmd"
+    tmux split-window -v -t DALI_session "$agent_cmd"
     sleep 2  # Increased sleep time
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
 
-# Start user agent in another terminal
+# Start user agent in another vertical split
 user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
 echo "User command: $user_cmd"
-open_terminal "$user_cmd" "DALI User Interface"
+tmux split-window -v -t DALI_session "$user_cmd"
 
 echo "MAS started."
+
+# Start user agent in another vertical split
+tmux split-window -v -t DALI_session "$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
+
+# Select an even layout to properly display the panes
+tmux select-layout -t DALI_session tiled
+
+# Attach to the session so you can see everything
+tmux attach -t DALI_session
+
 echo "Press Enter to shutdown the MAS"
 read
 
 # Clean up processes
 pkill -9 sicstus
-pkill -9 xterm
-pkill -9 gnome-terminal
-pkill -9 osascript
-pkill -9 terminal
-pkill -9 tmux
+
