@@ -1,4 +1,5 @@
 #!/bin/bash
+# set -x
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 WORK_DIR="$( cd "$SCRIPT_DIR/../work" && pwd )"
 DALI_DIR="$( cd "$2" && pwd )"
