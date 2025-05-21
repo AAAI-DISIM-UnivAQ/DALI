@@ -52,7 +52,7 @@ echo "Port 3010 is now free, proceeding with DALI startup..."
 # Define paths and variables
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 DALI_HOME="../../src"
-COMMUNICATION_DIR="$DALI_HOME/src"
+COMMUNICATION_DIR=$DALI_HOME
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 1 127.0.0.1"
@@ -109,18 +109,15 @@ chmod 755 work/*.txt
 open_terminal() {
     local cmd="$1"
     local title="$2"
-    echo cmd: $cmd
-    echo title: $title
+    echo "#!/bin/bash" > /tmp/runmas.sh
+    echo "echo \"$title\"" >> /tmp/runmas.sh
+    echo "cd \"$current_dir\"" >> /tmp/runmas.sh
+    echo "$cmd" >> /tmp/runmas.sh
+    chmod 755 /tmp/runmas.sh
     case "$os_name" in
         Darwin)
-            osascript <<EOF
-            tell application "Terminal"
-                do script "cd '$current_dir'"
-                do script "$cmd"
-                set current settings of selected tab to settings set "Pro"
-                set custom title of selected tab to "$title"
-            end tell
-EOF
+            echo 
+            open -a Terminal "/tmp/runmas.sh"
             ;;
         Linux)
             if command -v gnome-terminal &> /dev/null; then
@@ -139,7 +136,7 @@ EOF
 srvcmd="$PROLOG --noinfo -l $COMMUNICATION_DIR/active_server_wi.pl --goal go."
 echo "Starting server with command: $srvcmd"
 open_terminal "$srvcmd" "DALI Server"
-exit 0
+
 sleep 2  # Increased sleep time
 
 echo "Server ready. Starting the MAS..."
@@ -164,7 +161,6 @@ done
 
 # Start user agent in another terminal
 user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
-echo "User command: $user_cmd"
 open_terminal "$user_cmd" "DALI User Interface"
 
 echo "MAS started."
@@ -175,6 +171,5 @@ read
 pkill -9 sicstus
 pkill -9 xterm
 pkill -9 gnome-terminal
-pkill -9 osascript
-pkill -9 terminal
-pkill -9 tmux
+pkill -9 Terminal
+
