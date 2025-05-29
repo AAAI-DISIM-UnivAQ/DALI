@@ -42,6 +42,13 @@ t60.
 :- message(agent1, send_message(hello, agent2)).
 EOL
 
+echo "Waiting the 3010 port to be free..."
+while netstat -an | grep -q "3010"; do
+    sleep 1
+done
+
+echo "Port 3010 is free, starting the server..."
+
 # Start the server
 $SICSTUS --noinfo -l active_server_wi.pl --goal go. &
 SERVER_PID=$!
