@@ -1,5 +1,5 @@
 #!/bin/bash
-# src/test/test_prerequisites.sh
+# src/test/scripts/01_check_prerequisites.sh
 
 echo "Checking DALI prerequisites..."
 SICSTUS_HOME=/usr/local/sicstus4.6.0
