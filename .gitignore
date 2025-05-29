@@ -9,5 +9,9 @@ Examples/advanced/conf/mas/*.txt
 Examples/advanced/conf/communication.pl
 Examples/advanced/conf/communication.txt
 Examples/advanced/server.txt
+src/test/scripts/*.txt
+src/test/work/*
+src/test/conf/*
+src/test/conf/mas/*
 **/conf/communication.*
 *.log
