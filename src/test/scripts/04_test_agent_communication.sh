@@ -38,8 +38,9 @@ helloE :> write('Agent1 received: '),write("hello"),nl.
 EOL
 
 cat > test/work/agent2.txt << EOL
+:- dynamic start_agent/0.
 t60.
-:- message(agent1, send_message(hello, agent2)).
+start_agentI:- messageA(agent1, send_message(hello, agent2)).
 EOL
 
 echo "Waiting the 3010 port to be free..."
