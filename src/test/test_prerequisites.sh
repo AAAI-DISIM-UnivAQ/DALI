@@ -1,26 +1,26 @@
 #!/bin/bash
 # src/test/test_prerequisites.sh
 
-echo "Verifica dei prerequisiti per DALI..."
+echo "Checking DALI prerequisites..."
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 SICSTUS=$SICSTUS_HOME/bin/sicstus
 
-# Verifica SICStus Prolog
+# Check SICStus Prolog
 if command -v $SICSTUS &> /dev/null; then
-    echo "✓ SICStus Prolog installato"
+    echo "✓ SICStus Prolog installed"
     $SICSTUS --version
 else
-    echo "✗ SICStus Prolog non trovato"
+    echo "✗ SICStus Prolog not found"
     exit 1
 fi
 
-# Verifica porte necessarie
-echo "Verifica porta 3010..."
+# Check required ports
+echo "Checking port 3010..."
 if netstat -an | grep -q "3010"; then
-    echo "✗ Porta 3010 già in uso"
+    echo "✗ Port 3010 already in use"
     exit 1
 else
-    echo "✓ Porta 3010 disponibile"
+    echo "✓ Port 3010 available"
 fi
 
-echo "Tutti i prerequisiti verificati con successo!"
+echo "All prerequisites verified successfully!"
