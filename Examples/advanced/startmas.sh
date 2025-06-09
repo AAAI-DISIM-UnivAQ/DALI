@@ -160,7 +160,7 @@ for agent_filename in $BUILD_HOME/*; do
 done
 
 # Start user agent in another terminal
-user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal utente."
+user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal user_interface."
 open_terminal "$user_cmd" "DALI User Interface"
 
 echo "MAS started."
