@@ -40,8 +40,6 @@ read_file_var_ple(Infile, Txt) :-
     read_chars_var(Txt), !,
     seen.
 
-%%Mia interpretazione del problema
-%% 32 è il codice ascii del blank.
 
 read_chars_var(Final) :-
     get_code(Kh),
@@ -66,7 +64,6 @@ read_chars1_var(Prev, Temp, Final) :-
     ).
 
 
-%%''Il CODICE ASCII è .plv !!!
 take_meta_var(L, F) :-
     name(F, Lf),
     append(Lf, [46, 112, 108, 118], Lft),
@@ -217,7 +214,7 @@ res_write_var(R) :-
     ).
 
 
-%GESTIONE LEARNING
+% LEARNING
 
 expand_le(F1, Te) :-
     open(F1, read, Stream, []),
