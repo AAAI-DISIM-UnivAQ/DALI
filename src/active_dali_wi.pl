@@ -170,7 +170,7 @@ start1(Fe,AgentName,Libr,Fil):-
   out(agente_attivo(AgentName,Tee)),
   assert(time_charge(5)),
 
-  azioni(FilePlv),
+  actions(FilePlv),
 
   cond_esterni(FilePlv),!,
 
