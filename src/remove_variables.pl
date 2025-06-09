@@ -4,63 +4,63 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-togli_var(F) :-
-    leggiFile_var(F, Fi),
+remove_var(F) :-
+    read_file_var(F, Fi),
     tokenize(Fi, L),
     take_meta_var(L, F).
 
-togli_var_fil(F) :-
-    leggiFile_var(F, Fi),
+remove_var_file(F) :-
+    read_file_var(F, Fi),
     tokenize(Fi, L),
-    take_meta_var_fil(L, F).
+    take_meta_var_file(L, F).
 
-togli_var_clause(F, F1) :-
+remove_var_clause(F, F1) :-
     expand_le(F1, Te),
     if(file_exists(F1), delete_file(F1), true),
-    riwrite_le(Te, F1),
-    leggiFile_var_clause(F1, Li),
+    rewrite_le(Te, F1),
+    read_file_var_clause(F1, Li),
     tokenize(Li, L),
     if(file_exists(F1), delete_file(F1), true),
     take_meta_var_clause(L, F).
 
-leggiFile_var(Infile, Txt) :-
+read_file_var(Infile, Txt) :-
     atom_concat(Infile, '.pl', File),
     see(File),
-    leggiChars_var(Txt), !,
+    read_chars_var(Txt), !,
     seen.
 
-togli_var_ple(F) :-
-    leggiFile_var_ple(F, Fi),
+remove_var_ple(F) :-
+    read_file_var_ple(F, Fi),
     tokenize(Fi, L),
     take_meta_var_ple(L, F).
 
-leggiFile_var_ple(Infile, Txt) :-
+read_file_var_ple(Infile, Txt) :-
     atom_concat(Infile, '.ple', File),
     see(File),
-    leggiChars_var(Txt), !,
+    read_chars_var(Txt), !,
     seen.
 
 %%Mia interpretazione del problema
 %% 32 è il codice ascii del blank.
 
-leggiChars_var(Final) :-
+read_chars_var(Final) :-
     get_code(Kh),
     if(charEof(Kh),
         Final = [],
         (if((charEol(Kh); charBlank(Kh)),
-            leggiChars1_var(32, [], Final),
-            leggiChars1_var(Kh, [Kh], Final)))
+            read_chars1_var(32, [], Final),
+            read_chars1_var(Kh, [Kh], Final)))
     ).
 
-leggiChars1_var(Prev, Temp, Final) :-
+read_chars1_var(Prev, Temp, Final) :-
     get_code(Kh),
     if(charEof(Kh),
         reverse(Temp, Final),
         (if((charBlank(Kh); charEol(Kh)),
-            leggiChars1_var(32, Temp, Final),
+            read_chars1_var(32, Temp, Final),
             (if(charBlank(Prev),
-                (Temp1 = [32|Temp], leggiChars1(Kh, [Kh|Temp1], Final)),
-                leggiChars1_var(Kh, [Kh|Temp], Final)
+                (Temp1 = [32|Temp], read_chars1_var(Kh, [Kh|Temp1], Final)),
+                read_chars1_var(Kh, [Kh|Temp], Final)
             ))
         ))
     ).
@@ -78,7 +78,7 @@ take_meta_var(L, F) :-
     member(Me, L),
     examine0_var(Me),
     Me == U, !,
-    app_residue_var,
+    append_residue_var,
     if(clause(buffer(ParsedC), _),
         (retractall(buffer(_)),
          name(Parsed, ParsedC),
@@ -86,12 +86,12 @@ take_meta_var(L, F) :-
          write(Stream, Parsed),
          close(Stream)
         ),
-        (write('Errore take_meta_var'), nl)
+        (write('Error take_meta_var'), nl)
     ),
-    aprifile_head_mul(Nf). %% NF Sarebbe il plv
+    open_file_head_mul(Nf). %% NF Sarebbe il plv
 
 
-take_meta_var_fil(L, F) :-
+take_meta_var_file(L, F) :-
     name(F, Lf),
     append(Lf, [46, 116, 120, 116], Lft),
     name(Nf, Lft),
@@ -103,7 +103,7 @@ take_meta_var_fil(L, F) :-
     member(Me, L),
     examine0_var(Me),
     Me == U, !,
-    app_residue_var,
+    append_residue_var,
     if(clause(buffer(ParsedC), _),
         (retractall(buffer(_)),
          name(Parsed, ParsedC),
@@ -111,7 +111,7 @@ take_meta_var_fil(L, F) :-
          write(Stream, Parsed),
          close(Stream)
         ),
-        (write('Errore take_meta_var_fil'), nl)
+        (write('Error take_meta_var_file'), nl)
     ).
 
 
@@ -127,7 +127,7 @@ take_meta_var_ple(L, F) :-
     member(Me, L),
     examine0_var(Me),
     Me == U, !,
-    app_residue_var,
+    append_residue_var,
     if(clause(buffer(ParsedC), _),
         (retractall(buffer(_)),
          name(Parsed, ParsedC),
@@ -135,7 +135,7 @@ take_meta_var_ple(L, F) :-
          write(Stream, Parsed),
          close(Stream)
         ),
-        (write('Errore take_meta_var_ple'), nl)
+        (write('Error take_meta_var_ple'), nl)
     ).
 
 examine0_var(Me) :-
@@ -149,15 +149,15 @@ examine0_var(Me) :-
 
 examine_var(Me) :-
     name(Me, L),
-    re_isa_cod_var(L).
+    re_is_code_var(L).
 
-re_isa_cod_var(L) :-
-    if(isa_code_var(L),
-        disapp_variable_var(L),
+re_is_code_var(L) :-
+    if(is_code_var(L),
+        remove_variable_var(L),
         re_write_var(L)
     ).
 
-isa_code_var(L) :-
+is_code_var(L) :-
     nth0(0, L, El0),
     nth0(1, L, El1),
     nth0(2, L, El2),
@@ -168,45 +168,45 @@ isa_code_var(L) :-
     El3 = 95.
 
 
-disapp_variable_var(L) :-
+remove_variable_var(L) :-
     append([118, 97, 114, 95], Lt, L),
     re_write_var(Lt).
 
 re_write_var(L) :-
-    non_aggiungi_var(L).
+    do_not_add_var(L).
 
 %%Scritture
-aggiungi_39_var(L) :-
+add_39_var(L) :-
     append([39, 39], L, Lf),
     append(Lf, [39, 39], Lf1),
     clause(buffer(Parsed), _),
     retractall(buffer(_)),
-    append(Parsed, Lf1, Parola),
-    assert(buffer(Parola)).
+    append(Parsed, Lf1, Word),
+    assert(buffer(Word)).
 
-non_aggiungi_var(L) :-
+do_not_add_var(L) :-
     clause(buffer(Parsed), _),
     retractall(buffer(_)),
-    append(Parsed, L, Parola),
-    assert(buffer(Parola)).
+    append(Parsed, L, Word),
+    assert(buffer(Word)).
 
 nl_write_var :-
     clause(buffer(Parsed), _),
     retractall(buffer(_)),
-    append(Parsed, [10], Parola),
-    assert(buffer(Parola)).
+    append(Parsed, [10], Word),
+    assert(buffer(Word)).
 
 point_write_var :-
     clause(buffer(Parsed), _),
     retractall(buffer(_)),
-    append(Parsed, [46], Parola),
-    assert(buffer(Parola)).
+    append(Parsed, [46], Word),
+    assert(buffer(Word)).
 
 %%
 
-app_residue_var :-
+append_residue_var :-
     if(clause(residue(R), _),
-        (re_isa_cod_var(R), retractall(residue(R))),
+        (re_is_code_var(R), retractall(residue(R))),
         true
     ).
 
@@ -225,7 +225,7 @@ expand_le(F1, Te) :-
     expand_term(T, Te),
     close(Stream).
 
-riwrite_le(Te, F1) :-
+rewrite_le(Te, F1) :-
     open(F1, write, Stream, []),
     write(Stream, Te),
     write(Stream, '.'),
@@ -234,9 +234,9 @@ riwrite_le(Te, F1) :-
 
                      
                      
-leggiFile_var_clause(Infile, Txt) :-
+read_file_var_clause(Infile, Txt) :-
     see(Infile),
-    leggiChars_var(Txt), !,
+    read_chars_var(Txt), !,
     seen.
 
 take_meta_var_clause(L, F) :-
@@ -249,7 +249,7 @@ take_meta_var_clause(L, F) :-
     member(Me, L),
     examine0_var(Me),
     Me == U, !,
-    app_residue_var(Nf),
+    append_residue_var(Nf),
     if(clause(buffer(ParsedC), _),
         (retractall(buffer(_)),
          name(Parsed, ParsedC),
@@ -257,9 +257,9 @@ take_meta_var_clause(L, F) :-
          write(Stream, Parsed),
          close(Stream)
         ),
-        (write('Errore take_meta_var_ple'), nl)
+        (write('Error take_meta_var_ple'), nl)
     ),
-    azioni(Nf),
+    actions(Nf),
     compile(Nf).
 
 

@@ -135,7 +135,7 @@ load_ontology_file(Ontolog,Agent):-
         name(Host,HostC),
         assert(ontology(Prefixes,[Repository,Host],Agent)).
 
-filtra_fil(FI):-arg(1,FI,File),token_fil(File),retractall(parentesi(_)),togli_var_fil(File).
+filtra_fil(FI):-arg(1,FI,File),token_fil(File),retractall(parentesi(_)),remove_var_file(File).
 
 start1(Fe,AgentName,Libr,Fil):-
   set_prolog_flag(discontiguous_warnings,off),
@@ -153,9 +153,9 @@ start1(Fe,AgentName,Libr,Fil):-
 
   load_program_rules(FilePl),
 
-  togli_var(Fe),
+  remove_var(Fe),
 
-  togli_var_ple(Fe),
+  remove_var_ple(Fe),
 
   if(file_exists(FilePlf),controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
 
@@ -640,7 +640,7 @@ scr_msg_mod(X,Plf):-open(Plf,append,Stream,[]),
          write(Stream,'mod('),write(Stream,X),write(Stream,',check).'),
          nl(Stream),close(Stream).
 
-%DETERMINA SE UNA AZIONE (messaggio) VA SOTTOPOSTA(check) O MENO A CONTROLLO
+%DETERMINA SE UNA ACTION (messaggio) VA SOTTOPOSTA(check) O MENO A CONTROLLO
 check_messaggio(Fe,Ff):-leggiriga(Fe,3),
            clause(az(L),_),if(L=[],true,check_mess(L,Ff)).
 
@@ -806,12 +806,12 @@ uccidi_iv(X,Tc):-if(clause(iv(X,Tc),_),retractall(iv(X,Tc)),true).
 
 
 
-%LEGA LE AZIONI ALLE REGOLE AZIONI CORRISPONDENTI%
-azioni(Nf):-clause(agente(_,_,S,_),_),retractall(az(_)),
+%LEGA LE ACTIONS ALLE REGOLE ACTIONS CORRISPONDENTI%
+actions(Nf):-clause(agente(_,_,S,_),_),retractall(az(_)),
         leggiriga(S,3),
         clause(az(X),true),
-        retractall(az(_)),if(X=[],true,azioni1(X,S,Nf)).
-azioni1(X,S,Nf):-leggiriga(S,4),
+        retractall(az(_)),if(X=[],true,actions1(X,S,Nf)).
+actions1(X,S,Nf):-leggiriga(S,4),
         clause(condt(Y),true),
         retractall(condt(_)),
         last(X,La),
@@ -839,7 +839,7 @@ proc_rip(Me,Y,Stream):-
 
 
 
-%LEGA GLI EVENTI ESTERNI ALLE REGOLE AZIONI CORRISPONDENTI%
+%LEGA GLI EVENTI ESTERNI ALLE REGOLE ACTIONS CORRISPONDENTI%
 
 cond_esterni(Nf):-clause(agente(_,_,S,_),_),retractall(even_args(_)),
         leggiriga(S,9),
@@ -921,7 +921,7 @@ asse_goal(Me):-if(clause(Me,_),true,assert(Me)).
 tesg(X):-clause(past(X),_);clause(isa(X,_,_),_);clause(past(X,_,_),_).
 
 
-%% Il do_action è asserivo nel plv quando nelle azioni.
+%% Il do_action è assertivo nel plv quando nelle actions.
 keep_action:-if(clause(do_action(_,_),_),keep_action1,true).
 
 keep_action1:-findall(azione(X,Ag),clause(do_action(X,Ag),_),L),
@@ -940,7 +940,7 @@ keep_action1:-findall(azione(X,Ag),clause(do_action(X,Ag),_),L),
 
                           Me==U,!.
 
-%SVUOTA LA CODA DELLE AZIONI AD ALTA PRIORITA'%
+%SVUOTA LA CODA DELLE ACTIONS AD ALTA PRIORITA'%
 svuota_coda_priority:-if(clause(high_action(_,_,_),_),svuota_coda_priority1,true).
 
 svuota_coda_priority1:-findall(act(X,T,Ag),clause(high_action(X,T,Ag),_),L),
@@ -955,7 +955,7 @@ svuota_coda_priority1:-findall(act(X,T,Ag),clause(high_action(X,T,Ag),_),L),
                           Me==U,!.
 
 
-%PRENDE UNA AZIONE DALLA CODA A  PRIORITA' NORMALE%'
+%PRENDE UNA ACTION DALLA CODA A  PRIORITA' NORMALE%'
 prendi_action_normal:-if(clause(normal_action(_,_,_),_),prendi_action_normal1,true).
 
 prendi_action_normal1:-findall(act_n(X,T,Ag),clause(normal_action(X,T,Ag),_),L),
@@ -1595,9 +1595,9 @@ ass_stringhe_mul1(Nf,L):-open(Nf,append,Stream,[]),
                   close(Stream).
 
 %APRE IL FILE PLV ED ASSERISCE LE REGOLE PER GLI EVENTI SINGOLI DEGLI EVENTI ESTERNI MULTIPLI
-%% e' chiamato dalla "take_meta_var" contenuta in "togli_var.pl"
+%% e' chiamato dalla "take_meta_var" contenuta in "remove_variables.pl"
 %% Il file PLV non è vuoto. Contiene cioè che è scritto nel file PL.
-aprifile_head_mul(F):-see(F),
+open_file_head_mul(F):-see(F),
          repeat,
         read(T),expand_term(T,Te),
                                                 if(T=end_of_file,true,
@@ -1680,9 +1680,9 @@ leggiriga(F,N):-see(F),read(T),if(N=1,chiudi1(T),leggiriga2(N)).
 
 manage_lg(C,F):-update_txt(C,F),token_clause(C,F,F1),name(F,L),append(L,[46,112,108],Lf),name(Tpl,Lf),
 append(L,[46,112,108,101],Lf1),name(Tple,Lf1),
-if(file_exists(Tple),delete_file(Tple),true),elimina_tag,aprifile(Tpl),togli_var_ple(F),append(L,[46,112,108,102],Lf2),name(Tplf,Lf2),if(file_exists(Tplf),controlla_ev_all(Tple),
+if(file_exists(Tple),delete_file(Tple),true),elimina_tag,open_file(Tpl),remove_var_ple(F),append(L,[46,112,108,102],Lf2),name(Tplf,Lf2),if(file_exists(Tplf),controlla_ev_all(Tple),
   (inizializza_plf(Tple),check_messaggio(Tple,Tplf))),
-  load_directives(Tplf),append(L,[46,112,108,118],Lv),name(Tplv,Lv),cond_esterni(Tplv),togli_var_clause(F,F1).
+  load_directives(Tplf),append(L,[46,112,108,118],Lv),name(Tplv,Lv),cond_esterni(Tplv),remove_var_clause(F,F1).
 
 elimina_tag:-retractall(eventE(_)),retractall(evintI(_)),retractall(az(_)),
              retractall(condt(_)),retractall(evN(_)),retractall(obtgoal(_)),
