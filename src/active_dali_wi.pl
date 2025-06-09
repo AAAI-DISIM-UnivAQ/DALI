@@ -1754,43 +1754,92 @@ assegna_nome1(T, Te) :-
     assert(txt_clause(Name, T)).
 
 
-learn_clause(H,Ag):-clause(modified_clause(H,Name),_),
-                  clause(txt_clause(Name,T),_),
-                  open('prova1%13%.txt',write,Stream,[]),
-            format(Stream,"'~p'.",[T]),nl(Stream),
-            close(Stream),leggi_l(Ag).
+learn_clause(H, Ag) :-
+    clause(modified_clause(H, Name), _),
+    clause(txt_clause(Name, T), _),
+    open('prova1%13%.txt', write, Stream, []),
+    format(Stream, "'~p'.", [T]),
+    nl(Stream),
+    close(Stream),
+    leggi_l(Ag).
 
-leggi_l(Ag):-clause(agent(A),_),see('prova1%13%.txt'),
-       read(T),send_msg_learn(T,A,Ag),
-       seen, if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
+leggi_l(Ag) :-
+    clause(agent(A), _),
+    see('prova1%13%.txt'),
+    read(T),
+    send_msg_learn(T, A, Ag),
+    seen,
+    if(file_exists('prova1%13%.txt'),
+        delete_file('prova1%13%.txt'),
+        true
+    ).
 
-learn_all(H,Ag):-findall(Name,clause(modified_clause(H,Name),_),LC),
-         last(LC,U),
-           open('prova1%13%.txt',write,Stream,[]),
-          repeat,
-           member(Me,LC),
-                  clause(txt_clause(Me,T),_),
-                  format(Stream,"'~p'.",[T]),nl(Stream),
-           Me==U,!,
-           close(Stream),leggi_all(Ag).
+learn_all(H, Ag) :-
+    findall(Name, clause(modified_clause(H, Name), _), LC),
+    last(LC, U),
+    open('prova1%13%.txt', write, Stream, []),
+    repeat,
+        member(Me, LC),
+        clause(txt_clause(Me, T), _),
+        format(Stream, "'~p'.", [T]),
+        nl(Stream),
+        Me == U,
+    !,
+    close(Stream),
+    leggi_all(Ag).
 
-leggi_all(Ag):-clause(agent(A),_),
-        open('prova1%13%.txt',read,Stream,[]),
-        repeat,
-          read(Stream,T),
-          if((T= end_of_file),true,send_msg_learn(T,A,Ag)),
-          T==end_of_file,!,
-        close(Stream), if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
+leggi_all(Ag) :-
+    clause(agent(A), _),
+    open('prova1%13%.txt', read, Stream, []),
+    repeat,
+        read(Stream, T),
+        if((T = end_of_file),
+            true,
+            send_msg_learn(T, A, Ag)
+        ),
+        T == end_of_file,
+    !,
+    close(Stream),
+    if(file_exists('prova1%13%.txt'),
+        delete_file('prova1%13%.txt'),
+        true
+    ).
 
 %GESTIONE EVP CONSTRANTS
 
-ct(E,T):-if(var(T),simple_past(E,T),no_var_evp_n(E,T)).
-no_var_evp_n(E,T):-functor(T,_,N),if(N=1,simple_past(E,T),composed_past(E,T)).
-simple_past(E,T):-clause(past(E,T,_),_).
-simple_past(E,T):-clause(remember(E,T,_),_).
-composed_past(E,T):-functor(T,F,_),if(F=at,composed_past_ok(E,T),wrt_error_evp(T)).
-wrt_error_evp(T):-write('Error in writing time in past constraints: '),write(T),nl.
-composed_past_ok(_,_):-true.
+ct(E, T) :-
+    if(var(T),
+        simple_past(E, T),
+        no_var_evp_n(E, T)
+    ).
+
+no_var_evp_n(E, T) :-
+    functor(T, _, N),
+    if(N = 1,
+        simple_past(E, T),
+        composed_past(E, T)
+    ).
+
+simple_past(E, T) :-
+    clause(past(E, T, _), _).
+
+simple_past(E, T) :-
+    clause(remember(E, T, _), _).
+
+composed_past(E, T) :-
+    functor(T, F, _),
+    if(F = at,
+        composed_past_ok(E, T),
+        wrt_error_evp(T)
+    ).
+
+wrt_error_evp(T) :-
+    write('Error in writing time in past constraints: '),
+    write(T),
+    nl.
+
+composed_past_ok(_, _) :-
+    true.
 
 
 
