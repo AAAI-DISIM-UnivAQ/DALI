@@ -4,7 +4,7 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-carica_file(F):-see(F), 
+load_program_rules(F):-see(F), 
 	     repeat,
 		read(T),
                             if(T=end_of_file,true,

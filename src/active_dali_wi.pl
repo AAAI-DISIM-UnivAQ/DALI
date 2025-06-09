@@ -151,7 +151,7 @@ start1(Fe,AgentName,Libr,Fil):-
 
   aprifile_res(FilePl),
 
-  carica_file(FilePl),
+  load_program_rules(FilePl),
 
   togli_var(Fe),
 
