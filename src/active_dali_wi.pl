@@ -60,7 +60,7 @@
 :-op(1200,xfx,[:-,</]).
 :-op(1200,xfx,[:-,?/]).
 
-:-['leggi_mul.pl'].
+:-['multiple_events_processor.pl'].
 
 user:term_expansion((X,Y),[],[], ([X,Y]),[],[]).
 user:term_expansion((X;Y),[],[], ([X,Y]),[],[]).
@@ -151,7 +151,7 @@ start1(Fe,AgentName,Libr,Fil):-
 
   aprifile_res(FilePl),
 
-  carica_file(FilePl),
+  load_program_rules(FilePl),
 
   togli_var(Fe),
 
