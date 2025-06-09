@@ -24,7 +24,7 @@
 :-['tokefun.pl'].
 
 :-['meta1.pl'].
-:-['togli_var.pl'].
+:-['remove_variables.pl'].
 :-['memory.pl'].
 
 
