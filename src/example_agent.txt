@@ -1,0 +1,11 @@
+agent(
+    'program/example_agent',
+    example_agent,
+    'ontology/example.txt',
+    italian,
+    [],
+    [],
+    'profiles/example_profile.txt',
+    'onto/dali_example.txt',
+    basic
+).
