@@ -9,7 +9,7 @@ DALI is a meta interpreter built on top of Sicstus Prolog (R) (_at the moment_).
 ## Installation
 
 DALI is built upon the [SICStus Prolog](https://sicstus.sics.se/download4.html) interpreter,
-for which you a need a valid license. 
+for which you need a valid license. 
 You may use any latest SICStus version at your own risk, but DALI has been tested 
 to work reasonably well with the 4.6.0 version.
 
@@ -33,11 +33,11 @@ You will see different windows opening:
 
 **Windows:**
 
-We strogly suggest to run DALI on [WSL2](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) and follow instructions as in the previous Linux section.
+We strongly suggest to run DALI on [WSL2](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) and follow instructions as in the previous Linux section.
 
 Otherwise, you can download DALI from https://github.com/AAAI-DISIM-UnivAQ/DALI.git .
 
-* On Windows, unzip the repository, go to the folder "DALI/Examples/basic", and test if DALI works by duble clicking "startmas.bat" file (this will launch an example DALI MAS). 
+* On Windows, unzip the repository, go to the folder "DALI/Examples/basic", and test if DALI works by double clicking "startmas.bat" file (this will launch an example DALI MAS). 
 
 You will see different windows opening:
 
@@ -72,6 +72,10 @@ To create a new DALI MAS, you can use an example as a boilerplate:
 ## Release History
 
 Check [release history](http://github.com/AAAI-DISIM-UnivAQ/DALI/releases) page.
+
+## Software architecture
+
+Analyze architectural diagrams in the [DALI visualization](DALI_Architecture_Diagram.md)
 
 ## Contacts
 
