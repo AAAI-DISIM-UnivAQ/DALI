@@ -10,190 +10,214 @@
 %%
 
 :- multifile user:term_expansion/6.
-:- set_prolog_flag(discontiguous_warnings,off),
-   set_prolog_flag(single_var_warnings,off).
+:- set_prolog_flag(discontiguous_warnings, off),
+   set_prolog_flag(single_var_warnings, off).
 
 %%
-:-['communication_onto.pl'].
-:-['substitute.pl'].
-:-dynamic prefixes/1.
-:-dynamic repositories/1.
-:-dynamic ontology/3.
+:- ['communication_onto.pl'].
+:- ['substitute.pl'].
+:- dynamic prefixes/1.
+:- dynamic repositories/1.
+:- dynamic ontology/3.
 %%
 
-:-['tokefun.pl'].
+:- ['tokefun.pl'].
+:- ['meta1.pl'].
+:- ['remove_variables.pl'].
+:- ['memory.pl'].
+:- ['examine_past_constraints.pl'].
 
-:-['meta1.pl'].
-:-['remove_variables.pl'].
-:-['memory.pl'].
+:- dynamic tesg/1.
+:- dynamic ontology/2.
+:- dynamic en/1.
+:- dynamic told/6.
+:- dynamic export_past/1.
+:- dynamic export_past_do/1.
+:- dynamic export_past_not_do/1.
 
+:- dynamic deltat/1, 
+          deltatime/1, 
+          simultaneity_interval/1, 
+          wishlist/1, 
+          tstart/1, 
+          mem_current/1, 
+          mem_no_dup/1, 
+          mem_past/1, 
+          verifica_lista/1.
 
+:- dynamic user_profile_location/1,
+          dali_onto_location/1,
+          server_obj/1, 
+          specialization/1,
+          own_language/1, 
+          agente/4, 
+          agent/1, 
+          time_charge/1, 
+          da_agg/1.
 
+:- dynamic rule_base/1, 
+          mul/1,
+          no_check/0,
+          past/3,
+          tep/2,
+          fatto_mul/2,
+          azi/1,
+          even/1,
+          evin/1,
+          continue_mul_f/1,
+          evN/1.
 
-:-['examine_past_constraints.pl'].
+:- op(500, xfy, :>).
+:- op(500, xfy, :<).
+:- op(10, xfy, ~/).
+:- op(1200, xfy, </).
+:- op(200, xfy, ?/).
 
-:-dynamic tesg/1.
-:-dynamic ontology/2.
-:-dynamic en/1.
+:- op(1200, xfx, [:-, :>]).
+:- op(1200, xfx, [:-, :<]).
+:- op(1200, xfx, [:-, ~/]).
+:- op(1200, xfx, [:-, </]).
+:- op(1200, xfx, [:-, ?/]).
 
+:- ['multiple_events_processor.pl'].
 
-:-dynamic told/6.
-:-dynamic export_past/1.
-:-dynamic export_past_do/1.
-:-dynamic export_past_not_do/1.
+user:term_expansion((X,Y), [], [], ([X,Y]), [], []).
+user:term_expansion((X;Y), [], [], ([X,Y]), [], []).
+user:term_expansion((H:>B), [], [], (H:-B), [], []).
+user:term_expansion((X->Y), [], [], ([X,Y]), [], []).
+user:term_expansion((H:<B), [], [], (cd(H):-B), [], []).
+user:term_expansion((H~/B), [], [], (export_past(H):-decompose(H,B)), [], []).
+user:term_expansion((H</B), [], [], (export_past_not_do(H):-decompose_not_do(H,B)), [], []).
+user:term_expansion((H?/B), [], [], (export_past_do(H):-decompose_if_it_is(H,B)), [], []).
+user:term_expansion((H:B), [], [], (ct(H,B)), [], []).
+user:term_expansion((H:at(B)), [], [], (ct(H,B)), [], []).
 
-:-dynamic deltat/1, deltatime/1, simultaneity_interval/1, wishlist/1, tstart/1, mem_current/1, mem_no_dup/1, mem_past/1, verifica_lista/1.
-:-dynamic user_profile_location/1,dali_onto_location/1,server_obj/1, specialization/1,own_language/1, agente/4, agent/1, time_charge/1, da_agg/1.
-:-dynamic rule_base/1, mul/1,no_check/0,past/3,tep/2,fatto_mul/2,azi/1,even/1,evin/1,continue_mul_f/1,evN/1.
+:- use_module(library(random)),
+   use_module(library(lists)),
+   use_module(library(system)),
+   use_module(library('linda/client')),
+   use_module(library(clpq)),
+   use_module(library(fdbg)),
+   use_module(library(file_systems)).
 
-
-
-:-op(500,xfy,:>).
-:-op(500,xfy,:<).
-:-op(10,xfy,~/).
-:-op(1200,xfy,</).
-:-op(200,xfy,?/).
-
-:-op(1200,xfx,[:-,:>]).
-:-op(1200,xfx,[:-,:<]).
-:-op(1200,xfx,[:-,~/]).
-:-op(1200,xfx,[:-,</]).
-:-op(1200,xfx,[:-,?/]).
-
-:-['multiple_events_processor.pl'].
-
-user:term_expansion((X,Y),[],[], ([X,Y]),[],[]).
-user:term_expansion((X;Y),[],[], ([X,Y]),[],[]).
-user:term_expansion((H:>B),[],[],(H:-B),[],[]).
-user:term_expansion((X->Y),[],[],([X,Y]),[],[]).
-user:term_expansion((H:<B),[],[],(cd(H):-B),[],[]).
-user:term_expansion((H~/B),[],[],(export_past(H):-decompose(H,B)),[],[]).
-user:term_expansion((H</B),[],[],(export_past_not_do(H):-decompose_not_do(H,B)),[],[]).
-user:term_expansion((H?/B),[],[],(export_past_do(H):-decompose_if_it_is(H,B)),[],[]).
-user:term_expansion((H:B),[],[],(ct(H,B)),[],[]).
-user:term_expansion((H:at(B)),[],[],(ct(H,B)),[],[]).
-
-:-use_module(library(random)),
-  use_module(library(lists)),
-  use_module(library(system)),
-  use_module(library('linda/client')),
-  use_module(library(clpq)),
-  use_module(library(fdbg)),
-  use_module(library(file_systems)).
-
-:-dynamic eve/1.
-:-dynamic eve_cond/1.
-:-['utils.pl'].
+:- dynamic eve/1.
+:- dynamic eve_cond/1.
+:- ['utils.pl'].
 
 :- dynamic debug_on/0.
 % :- assertz(debug_on).
 
 trace_point(Message) :-
     if(debug_on,
-        (write('DEBUG: '), write(Message), nl),
-        true).
+       (write('DEBUG: '), write(Message), nl),
+       true).
 
 trace_point(Message, Args) :-
     if(debug_on,
-        (write('DEBUG: '), write(Args), nl),
-        true).
+       (write('DEBUG: '), write(Args), nl),
+       true).
 
 concat_args([], '').
 concat_args([H|T], Result) :-
     concat_args(T, Rest),
     atom_concat(H, Rest, Result).
     
-start0(FI):-set_prolog_flag(redefine_warnings,off),
-            set_prolog_flag(discontiguous_warnings,off),
-            open(FI,read,Stream,[]), read(Stream,Me), close(Stream),
-            Me \= end_of_file,
-            agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
-            open('server.txt',read,Stream2,[]),read(Stream2,T),close(Stream2),
-            if(UP=no, true, assert(user_profile_location(UP))),
-            if(DO=no,true,assert(dali_onto_location(DO))),
-            assert(server_obj('localhost':3010)), %% questo si puo togliere se si passa ad una sola funzione
-            filtra_fil(Fil),
-            assert(specialization(Specialization)),
-            if(Ontolog=no,true,load_ontology_file(Ontolog,AgentName)),
-            assert(own_language(Lang)),
+start0(FI) :-
+    set_prolog_flag(redefine_warnings, off),
+    set_prolog_flag(discontiguous_warnings, off),
+    open(FI, read, Stream, []), 
+    read(Stream, Me), 
+    close(Stream),
+    Me \= end_of_file,
+    agent(File, AgentName, Ontolog, Lang, Fil, Lib, UP, DO, Specialization) = Me,
+    open('server.txt', read, Stream2, []),
+    read(Stream2, T),
+    close(Stream2),
+    if(UP = no, true, assert(user_profile_location(UP))),
+    if(DO = no, true, assert(dali_onto_location(DO))),
+    assert(server_obj('localhost':3010)),
+    filtra_fil(Fil),
+    assert(specialization(Specialization)),
+    if(Ontolog = no, true, load_ontology_file(Ontolog, AgentName)),
+    assert(own_language(Lang)),
+    linda_client('localhost':3010),
+    out(activating_agent(AgentName)),
+    delete_agent_files(File),
+    token(File),
+    start1(File, AgentName, Lib, Fil).
 
-            linda_client('localhost':3010),
-            out(activating_agent(AgentName)),
+load_ontology_file(Ontolog, Agent) :-
+    open(Ontolog, read, Stream, []),
+    read(Stream, PrefixesC),
+    read(Stream, RepositoryC),
+    read(Stream, HostC),
+    close(Stream),
+    name(Repository, RepositoryC),
+    name(Prefixes, PrefixesC),
+    name(Host, HostC),
+    assert(ontology(Prefixes, [Repository, Host], Agent)).
 
-            delete_agent_files(File),
-            token(File),
-            start1(File, AgentName, Lib, Fil).
+filtra_fil(FI) :-
+    arg(1, FI, File),
+    token_fil(File),
+    retractall(parentesi(_)),
+    remove_var_file(File).
 
-load_ontology_file(Ontolog,Agent):-
-        open(Ontolog,read,Stream,[]),
-        read(Stream,PrefixesC),
-        read(Stream,RepositoryC),
-        read(Stream, HostC),
-        close(Stream),
-        name(Repository,RepositoryC),
-        name(Prefixes,PrefixesC),
-        name(Host,HostC),
-        assert(ontology(Prefixes,[Repository,Host],Agent)).
+start1(Fe, AgentName, Libr, Fil) :-
+    set_prolog_flag(discontiguous_warnings, off),
+    if(Libr = no, true, libreria(Fe, Libr, Fil)),
 
-filtra_fil(FI):-arg(1,FI,File),token_fil(File),retractall(parentesi(_)),remove_var_file(File).
+    pl_from_name(Fe, FilePl),
+    ple_from_name(Fe, FilePle),
+    plv_from_name(Fe, FilePlv),
+    plf_from_name(Fe, FilePlf),
+    txt_from_name(Fe, FileTxt),
 
-start1(Fe,AgentName,Libr,Fil):-
-  set_prolog_flag(discontiguous_warnings,off),
-  if(Libr=no,true,libreria(Fe,Libr,Fil)),
+    aprifile(FilePl),
+    aprifile_res(FilePl),
+    load_program_rules(FilePl),
 
-  pl_from_name(Fe, FilePl),
-  ple_from_name(Fe, FilePle),
-  plv_from_name(Fe, FilePlv),
-  plf_from_name(Fe, FilePlf),
-  txt_from_name(Fe, FileTxt),
+    remove_var(Fe),
+    remove_var_ple(Fe),
 
-  aprifile(FilePl),
+    if(file_exists(FilePlf),
+        controlla_ev_all(FilePle),
+        (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))
+    ),
 
-  aprifile_res(FilePl),
+    load_directives(FilePlf),
+    server_obj(Tee),
+    linda_client(Tee),
+    assert(agente(AgentName, Tee, FilePle, FilePl)),
+    clause(specialization(Sp), _),
+    out(specialized_to(AgentName, Tee, Sp)),
+    assert(agent(AgentName)),
+    in_noblock(activating_agent(AgentName)),
+    out(agente_attivo(AgentName, Tee)),
+    assert(time_charge(5)),
 
-  load_program_rules(FilePl),
+    actions(FilePlv),
+    cond_esterni(FilePlv), !,
 
-  remove_var(Fe),
+    asser_evN(FilePle),
+    obg_goal(FilePlv),
+    aprifile_en(FilePl),
+    ass_internal_repeat,
+    ass_stringhe_mul(FilePlv),
+    compile(FilePlv),
 
-  remove_var_ple(Fe),
-
-  if(file_exists(FilePlf),controlla_ev_all(FilePle), (inizializza_plf(FilePle), check_messaggio(FilePle, FilePlf))),
-
-  load_directives(FilePlf),
-  server_obj(Tee), %% questo si puo togliere se si passa ad una sola funzione
-  linda_client(Tee),
-  assert(agente(AgentName,Tee,FilePle,FilePl)),
-  clause(specialization(Sp),_),
-  out(specialized_to(AgentName,Tee,Sp)),
-  assert(agent(AgentName)),
-  in_noblock(activating_agent(AgentName)),
-  out(agente_attivo(AgentName,Tee)),
-  assert(time_charge(5)),
-
-  actions(FilePlv),
-
-  cond_esterni(FilePlv),!,
-
-  asser_evN(FilePle),
-
-  obg_goal(FilePlv),
-
-  aprifile_en(FilePl),
-
-  ass_internal_repeat,
-
-  ass_stringhe_mul(FilePlv),
-
-  compile(FilePlv),
-
-  apri_learn(FileTxt),
-  start_learn,
-  manage_export_past,
-  manage_export_past_not_do,
-  manage_export_past_do,
-  check_constr_all,
-  delete_agent_log_file(AgentName),
-  print('..................   Actived Agent '),print(AgentName),print(' ...................'),nl,go.
+    apri_learn(FileTxt),
+    start_learn,
+    manage_export_past,
+    manage_export_past_not_do,
+    manage_export_past_do,
+    check_constr_all,
+    delete_agent_log_file(AgentName),
+    print('..................   Actived Agent '),
+    print(AgentName),
+    print(' ...................'),
+    nl,
+    go.
 
 %L0 it should be communicationf/fipa
 libreria(F,L0,Fil):-name(F,Lf),append(Lf,[46,112,108],Ltf),
@@ -1703,58 +1727,119 @@ ass_learn:-assert(learn_if(_,_,_)).
 
 
 
-apri_learn(F):-see(F),
-             repeat,
-                read(T),expand_term(T,Te),
-                            if(T=end_of_file,true,
-                            assegna_nome(T,Te)),
-                                T == end_of_file,
-             !,
-             seen.
+apri_learn(F) :-
+    see(F),
+    repeat,
+        read(T),
+        expand_term(T, Te),
+        if(T = end_of_file,
+            true,
+            assegna_nome(T, Te)
+        ),
+        T == end_of_file,
+    !,
+    seen.
+
+assegna_nome(T, Te) :-
+    functor(Te, _, N),
+    if(N > 1,
+        assegna_nome1(T, Te),
+        true
+    ).
+
+assegna_nome1(T, Te) :-
+    arg(1, Te, Head),
+    fdbg_assign_name(Head, Name),
+    assert(modified_clause(Head, Name)),
+    assert(txt_clause(Name, T)).
 
 
-assegna_nome(T,Te):-functor(Te,_,N),if(N>1,assegna_nome1(T,Te),true).
-assegna_nome1(T,Te):-arg(1,Te,Head),fdbg_assign_name(Head,Name),assert(modified_clause(Head,Name)),
-assert(txt_clause(Name,T)).
+learn_clause(H, Ag) :-
+    clause(modified_clause(H, Name), _),
+    clause(txt_clause(Name, T), _),
+    open('prova1%13%.txt', write, Stream, []),
+    format(Stream, "'~p'.", [T]),
+    nl(Stream),
+    close(Stream),
+    leggi_l(Ag).
 
+leggi_l(Ag) :-
+    clause(agent(A), _),
+    see('prova1%13%.txt'),
+    read(T),
+    send_msg_learn(T, A, Ag),
+    seen,
+    if(file_exists('prova1%13%.txt'),
+        delete_file('prova1%13%.txt'),
+        true
+    ).
 
-learn_clause(H,Ag):-clause(modified_clause(H,Name),_),
-                  clause(txt_clause(Name,T),_),
-                  open('prova1%13%.txt',write,Stream,[]),
-            format(Stream,"'~p'.",[T]),nl(Stream),
-            close(Stream),leggi_l(Ag).
+learn_all(H, Ag) :-
+    findall(Name, clause(modified_clause(H, Name), _), LC),
+    last(LC, U),
+    open('prova1%13%.txt', write, Stream, []),
+    repeat,
+        member(Me, LC),
+        clause(txt_clause(Me, T), _),
+        format(Stream, "'~p'.", [T]),
+        nl(Stream),
+        Me == U,
+    !,
+    close(Stream),
+    leggi_all(Ag).
 
-leggi_l(Ag):-clause(agent(A),_),see('prova1%13%.txt'),
-       read(T),send_msg_learn(T,A,Ag),
-       seen, if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
-
-learn_all(H,Ag):-findall(Name,clause(modified_clause(H,Name),_),LC),
-         last(LC,U),
-           open('prova1%13%.txt',write,Stream,[]),
-          repeat,
-           member(Me,LC),
-                  clause(txt_clause(Me,T),_),
-                  format(Stream,"'~p'.",[T]),nl(Stream),
-           Me==U,!,
-           close(Stream),leggi_all(Ag).
-
-leggi_all(Ag):-clause(agent(A),_),
-        open('prova1%13%.txt',read,Stream,[]),
-        repeat,
-          read(Stream,T),
-          if((T= end_of_file),true,send_msg_learn(T,A,Ag)),
-          T==end_of_file,!,
-        close(Stream), if(file_exists('prova1%13%.txt'),delete_file('prova1%13%.txt'),true).
+leggi_all(Ag) :-
+    clause(agent(A), _),
+    open('prova1%13%.txt', read, Stream, []),
+    repeat,
+        read(Stream, T),
+        if((T = end_of_file),
+            true,
+            send_msg_learn(T, A, Ag)
+        ),
+        T == end_of_file,
+    !,
+    close(Stream),
+    if(file_exists('prova1%13%.txt'),
+        delete_file('prova1%13%.txt'),
+        true
+    ).
 
 %GESTIONE EVP CONSTRANTS
 
-ct(E,T):-if(var(T),simple_past(E,T),no_var_evp_n(E,T)).
-no_var_evp_n(E,T):-functor(T,_,N),if(N=1,simple_past(E,T),composed_past(E,T)).
-simple_past(E,T):-clause(past(E,T,_),_).
-simple_past(E,T):-clause(remember(E,T,_),_).
-composed_past(E,T):-functor(T,F,_),if(F=at,composed_past_ok(E,T),wrt_error_evp(T)).
-wrt_error_evp(T):-write('Error in writing time in past constraints: '),write(T),nl.
-composed_past_ok(_,_):-true.
+ct(E, T) :-
+    if(var(T),
+        simple_past(E, T),
+        no_var_evp_n(E, T)
+    ).
+
+no_var_evp_n(E, T) :-
+    functor(T, _, N),
+    if(N = 1,
+        simple_past(E, T),
+        composed_past(E, T)
+    ).
+
+simple_past(E, T) :-
+    clause(past(E, T, _), _).
+
+simple_past(E, T) :-
+    clause(remember(E, T, _), _).
+
+composed_past(E, T) :-
+    functor(T, F, _),
+    if(F = at,
+        composed_past_ok(E, T),
+        wrt_error_evp(T)
+    ).
+
+wrt_error_evp(T) :-
+    write('Error in writing time in past constraints: '),
+    write(T),
+    nl.
+
+composed_past_ok(_, _) :-
+    true.
 
 
 

@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# DALI Multi-Agent System Startup Script - Modular Architecture Version
+# Updated to use only project files and avoid external paths
+
 # Enable debugging
 # set -x  # Start debugging
 
@@ -10,13 +13,14 @@ current_dir=$(pwd)
 
 # Print the current directory
 echo "The current directory is: $current_dir"
+echo "Starting DALI MAS with Modular Architecture (Project-only version)..."
 
 # Reduce TIME_WAIT timeout based on OS
 os_name=$(uname -s)
 
 case "$os_name" in
     Darwin)
-        echo "Sistema operativo: macOS"
+        echo "Operating System: macOS"
         current_msl=$(sysctl -n net.inet.tcp.msl)
         if [ "$current_msl" -gt 1000 ]; then
             echo "Reducing TIME_WAIT timeout for macOS from $current_msl to 1000..."
@@ -26,7 +30,7 @@ case "$os_name" in
         fi
         ;;
     Linux)
-        echo "Sistema operativo: Linux"
+        echo "Operating System: Linux"
         current_timeout=$(sysctl -n net.ipv4.tcp_fin_timeout)
         if [ "$current_timeout" -gt 30 ]; then
             echo "Reducing TIME_WAIT timeout for Linux from $current_timeout to 30..."
@@ -37,7 +41,7 @@ case "$os_name" in
         fi
         ;;
     *)
-        echo "Sistema operativo non supportato: $os_name"
+        echo "Operating System not supported: $os_name"
         exit 1
         ;;
 esac
@@ -49,38 +53,71 @@ while netstat -an | grep -q "3010"; do
 done
 echo "Port 3010 is now free, proceeding with DALI startup..."
 
-# Define paths and variables
-SICSTUS_HOME=/usr/local/sicstus4.6.0
+# Auto-detect SICStus Prolog installation
+echo "Auto-detecting SICStus Prolog installation..."
+PROLOG=""
+
+# Common SICStus installation paths
+SICSTUS_PATHS=(
+    "/usr/local/sicstus4.6.0/bin/sicstus"
+    "/usr/local/sicstus/bin/sicstus"
+    "/opt/sicstus/bin/sicstus"
+    "/Applications/SICStus Prolog 4.6.0/bin/sicstus"
+    "sicstus"  # Try from PATH
+)
+
+for path in "${SICSTUS_PATHS[@]}"; do
+    if command -v "$path" &> /dev/null; then
+        PROLOG="$path"
+        echo "✅ SICStus Prolog found at: $PROLOG"
+        break
+    fi
+done
+
+if [ -z "$PROLOG" ]; then
+    echo "❌ Error: SICStus Prolog not found in common locations."
+    echo "Please ensure SICStus Prolog is installed and accessible."
+    echo "Tried paths: ${SICSTUS_PATHS[*]}"
+    exit 1
+fi
+
+# Define paths and variables - PROJECT-ONLY PATHS
 DALI_HOME="../../src"
+DALI_MODULAR_HOME="$DALI_HOME"  # Points to new modular structure
 COMMUNICATION_DIR=$DALI_HOME
 CONF_DIR=conf
-PROLOG="$SICSTUS_HOME/bin/sicstus"
 WAIT="ping -c 1 127.0.0.1"
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
+TEMP_DIR="$current_dir/temp_scripts"  # Use project directory instead of /tmp
 
-# Check if SICStus Prolog exists and is executable
-if [[ -x "$PROLOG" ]]; then
-  printf "SICStus Prolog found at %s\n" "$PROLOG"
-else
-  printf "Error: SICStus Prolog not found at %s or is not executable.\n" "$PROLOG" >&2
-  exit -1
-fi
+# Create temporary directory for scripts (in project folder)
+mkdir -p "$TEMP_DIR"
 
 # Verify critical directories exist
 for dir in "$INSTANCES_HOME" "$TYPES_HOME" "$BUILD_HOME" "$CONF_DIR"; do
     if [ ! -d "$dir" ]; then
         echo "Error: Directory $dir does not exist"
-        exit -1
+        exit 1
     fi
 done
+
+# Verify modular DALI structure exists
+if [ ! -f "$DALI_MODULAR_HOME/dali_core.pl" ]; then
+    echo "Error: Modular DALI core not found at $DALI_MODULAR_HOME/dali_core.pl"
+    echo "Please ensure the modular DALI system is properly installed"
+    exit 1
+fi
+
+echo "✅ Modular DALI system found at $DALI_MODULAR_HOME"
 
 # Clean directories
 rm -rf tmp/*
 rm -rf build/*
 rm -f work/*  # Remove agent history
 rm -rf conf/mas/*
+rm -rf "$TEMP_DIR"/*  # Clean our temporary scripts
 
 # Build agents based on instances
 for instance_filename in $INSTANCES_HOME/*.txt; do
@@ -104,6 +141,9 @@ echo "Built agents:"
 ls -l $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 chmod 755 work/*.txt
+
+# Counter for unique script names
+script_counter=0
 
 # Improved function to open a new terminal based on OS
 open_terminal() {
@@ -155,22 +195,22 @@ open_terminal "$srvcmd" "DALI Server"
 
 sleep 2  # Increased sleep time
 
-echo "Server ready. Starting the MAS..."
+echo "Server ready. Starting the MAS with Modular Architecture..."
 $WAIT > /dev/null  # Wait for a while
 
-echo "Launching agents instances..."
-# Launch agents in separate terminals
+echo "Launching agent instances using modular DALI system..."
+# Launch agents in separate terminals - UPDATED FOR MODULAR ARCHITECTURE
 for agent_filename in $BUILD_HOME/*; do
     agent_base="${agent_filename##*/}"
-    echo "Agent: $agent_base"
+    echo "Agent: $agent_base (using modular architecture)"
     # Create the agent configuration
     if ! $current_dir/conf/makeconf.sh $agent_base $DALI_HOME; then
         echo "Error: Failed to create configuration for agent $agent_base"
         exit -1
     fi
-    # Start the agent in a new terminal
-    agent_cmd="$current_dir/conf/startagent.sh $agent_base $PROLOG $DALI_HOME"
-    open_terminal "$agent_cmd" "DALI Agent: $agent_base"
+    # Start the agent in a new terminal using the NEW MODULAR SYSTEM
+    agent_cmd="$current_dir/conf/startagent_modular.sh $agent_base $PROLOG $DALI_MODULAR_HOME"
+    open_terminal "$agent_cmd" "DALI Agent (Modular): $agent_base"
     sleep 2  # Increased sleep time
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
@@ -179,29 +219,41 @@ done
 user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal user_interface."
 open_terminal "$user_cmd" "DALI User Interface"
 
-echo "MAS started."
+echo "✅ Modular MAS started successfully!"
+echo "🔧 Using new modular DALI architecture"
+echo "📁 Core system: $DALI_MODULAR_HOME/dali_core.pl"
+echo "📁 SICStus Prolog: $PROLOG"
+echo "📁 Temporary scripts: $TEMP_DIR"
+echo ""
 echo "Press Enter to shutdown the MAS"
 read
 
 # Clean up processes
-pkill -9 sicstus
-pkill -9 xterm
+echo "Shutting down MAS..."
 
+# Stop SICStus Prolog processes
+echo "Stopping SICStus Prolog processes..."
+pkill -9 sicstus 2>/dev/null || true
+
+# Close all terminals - simple and effective approach
 case "$os_name" in
         Darwin)
-            echo 
-            osascript -e 'tell application "Terminal" to quit'
+            echo "Closing all Terminal windows..."
+            pkill Terminal 2>/dev/null || true
             ;;
         Linux)
-            if command -v gnome-terminal &> /dev/null; then
-                pkill -9 gnome-terminal
-            elif command -v xterm &> /dev/null; then
-                pkill xterm
-            else
-                echo "Error: No supported terminal emulator found"
-                exit 1
-            fi
+            echo "Closing terminal windows..."
+            pkill gnome-terminal 2>/dev/null || true
+            pkill xterm 2>/dev/null || true
+            pkill konsole 2>/dev/null || true
             ;;
-    esac
+esac
 
+echo "Processes cleanup completed."
 
+# Clean up temporary scripts
+echo "Cleaning up temporary files..."
+rm -rf "$TEMP_DIR"
+
+echo "✅ MAS shutdown complete"
+echo "🔚 All tracked processes have been terminated" 

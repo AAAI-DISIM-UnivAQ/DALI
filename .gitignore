@@ -1,6 +1,7 @@
 .DS_Store
 .idea
 Examples/advanced/.DS_Store
+Examples/advanced/temp_scripts/
 Examples/advanced/build/*
 Examples/advanced/work/*
 Examples/advanced/conf/*
