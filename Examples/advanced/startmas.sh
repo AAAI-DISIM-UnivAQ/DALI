@@ -16,7 +16,7 @@ os_name=$(uname -s)
 
 case "$os_name" in
     Darwin)
-        echo "Sistema operativo: macOS"
+        echo "Operating system: macOS"
         current_msl=$(sysctl -n net.inet.tcp.msl)
         if [ "$current_msl" -gt 1000 ]; then
             echo "Reducing TIME_WAIT timeout for macOS from $current_msl to 1000..."
@@ -26,7 +26,7 @@ case "$os_name" in
         fi
         ;;
     Linux)
-        echo "Sistema operativo: Linux"
+        echo "Operating system: Linux"
         current_timeout=$(sysctl -n net.ipv4.tcp_fin_timeout)
         if [ "$current_timeout" -gt 30 ]; then
             echo "Reducing TIME_WAIT timeout for Linux from $current_timeout to 30..."
@@ -37,7 +37,7 @@ case "$os_name" in
         fi
         ;;
     *)
-        echo "Sistema operativo non supportato: $os_name"
+        echo "Unsupported operating system: $os_name"
         exit 1
         ;;
 esac
@@ -50,21 +50,21 @@ done
 echo "Port 3010 is now free, proceeding with DALI startup..."
 
 # =================================================================
-# CONFIGURAZIONE FINESTRE TERMINALI
+# TERMINAL WINDOWS CONFIGURATION
 # =================================================================
-# Posizionamento iniziale delle finestre
+# Initial window positioning
 WINDOW_START_X=100
 WINDOW_START_Y=100
 WINDOW_OFFSET=50
 
-# Dimensioni finestre
-# macOS: dimensioni in pixel (larghezza x altezza)
-WINDOW_WIDTH_MACOS=400
-WINDOW_HEIGHT_MACOS=300
+# Window dimensions
+# macOS: dimensions in pixels (width x height)
+WINDOW_WIDTH_MACOS=450
+WINDOW_HEIGHT_MACOS=325
 
-# Linux: dimensioni in caratteri (colonne x righe)
-WINDOW_COLS_LINUX=40
-WINDOW_ROWS_LINUX=12
+# Linux: dimensions in characters (columns x rows)
+WINDOW_COLS_LINUX=80
+WINDOW_ROWS_LINUX=25
 # =================================================================
 
 # Define paths and variables
@@ -131,12 +131,12 @@ chmod 755 work/*.txt
 # Counter for unique script names
 script_counter=0
 
-# Variabili per il posizionamento a pila delle finestre (inizializzate dalle costanti)
+# Variables for stacked window positioning (initialized from constants)
 window_x_pos=$WINDOW_START_X
 window_y_pos=$WINDOW_START_Y
 window_offset=$WINDOW_OFFSET
 
-# Array per tracciare le finestre DALI create (solo su macOS)
+# Array to track created DALI windows (macOS only)
 declare -a DALI_WINDOW_IDS=()
 
 # Improved function to open a new terminal based on OS with stacked window positioning
@@ -160,7 +160,7 @@ open_terminal() {
         Darwin)
             echo "Starting: $title (positioned at $window_x_pos,$window_y_pos, size ${WINDOW_WIDTH_MACOS}x${WINDOW_HEIGHT_MACOS})"
             if command -v osascript &> /dev/null; then
-                # Crea una nuova finestra Terminal con marker DALI e la posiziona
+                # Create a new Terminal window with DALI marker and position it
                 window_title="[DALI] $title"
                 osascript -e "
                 tell application \"Terminal\"
@@ -170,7 +170,7 @@ open_terminal() {
                     set bounds of front window to {$window_x_pos, $window_y_pos, $((window_x_pos + WINDOW_WIDTH_MACOS)), $((window_y_pos + WINDOW_HEIGHT_MACOS))}
                 end tell
                 " &
-                # Salva il titolo della finestra per il cleanup
+                # Save window title for cleanup
                 DALI_WINDOW_IDS+=("$window_title")
             else
                 # Fallback: open Terminal with the script
@@ -193,7 +193,7 @@ open_terminal() {
             ;;
     esac
     
-    # Incrementa la posizione per la prossima finestra (effetto a cascata/pila)
+    # Increment position for next window (cascade/stack effect)
     window_x_pos=$((window_x_pos + window_offset))
     window_y_pos=$((window_y_pos + window_offset))
 }
@@ -237,11 +237,11 @@ read
 pkill -9 sicstus
 pkill -9 xterm
 
-# Cleanup finestre terminali
+# Terminal windows cleanup
 case "$os_name" in
         Darwin)
             echo "Closing DALI Terminal windows..."
-            # Chiude solo le finestre DALI invece di chiudere tutto Terminal
+            # Close only DALI windows instead of closing all Terminal
             for window_title in "${DALI_WINDOW_IDS[@]}"; do
                 echo "Closing window: $window_title"
                 osascript -e "

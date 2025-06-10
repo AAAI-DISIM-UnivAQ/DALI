@@ -28,19 +28,20 @@
 
 % Load existing includes from original file
 % Note: These files will be modularized in future phases
-% :- use_module('communication_onto.pl').
-% :- use_module('substitute.pl').
-% :- use_module('tokefun.pl').
-% :- use_module('meta1.pl').
-% :- use_module('remove_variables.pl').
-% :- use_module('memory.pl').
-% :- use_module('examine_past_constraints.pl').
-% :- use_module('multiple_events_processor.pl').
-% :- use_module('utils.pl').
+:- ['communication_onto.pl'].
+:- ['substitute.pl'].
+:- ['tokefun.pl'].
+:- ['meta1.pl'].
+:- ['remove_variables.pl'].
+:- ['memory.pl'].
+:- ['examine_past_constraints.pl'].
+:- ['multiple_events_processor.pl'].
+:- ['utils.pl'].
 
 % Standard library modules
 :- use_module(library(random)).
-% Note: lists library conflicts with our custom list_utils
+% Note: lists library conflicts with our custom list_utils intersection/3
+% Will re-evaluate if needed for specific predicates not in dali_list_utils
 % :- use_module(library(lists)).
 :- use_module(library(system)).
 % Note: Specialized libraries may not be available in all SWI-Prolog installations
