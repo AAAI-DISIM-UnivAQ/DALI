@@ -49,6 +49,24 @@ while netstat -an | grep -q "3010"; do
 done
 echo "Port 3010 is now free, proceeding with DALI startup..."
 
+# =================================================================
+# CONFIGURAZIONE FINESTRE TERMINALI
+# =================================================================
+# Posizionamento iniziale delle finestre
+WINDOW_START_X=100
+WINDOW_START_Y=100
+WINDOW_OFFSET=50
+
+# Dimensioni finestre
+# macOS: dimensioni in pixel (larghezza x altezza)
+WINDOW_WIDTH_MACOS=400
+WINDOW_HEIGHT_MACOS=300
+
+# Linux: dimensioni in caratteri (colonne x righe)
+WINDOW_COLS_LINUX=40
+WINDOW_ROWS_LINUX=12
+# =================================================================
+
 # Define paths and variables
 SICSTUS_HOME=/usr/local/sicstus4.6.0
 DALI_HOME="../../src"
@@ -59,6 +77,7 @@ WAIT="ping -c 1 127.0.0.1"
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
+TEMP_DIR="$current_dir/temp_scripts"
 
 # Check if SICStus Prolog exists and is executable
 if [[ -x "$PROLOG" ]]; then
@@ -67,6 +86,9 @@ else
   printf "Error: SICStus Prolog not found at %s or is not executable.\n" "$PROLOG" >&2
   exit -1
 fi
+
+# Create temporary directory for scripts
+mkdir -p "$TEMP_DIR"
 
 # Verify critical directories exist
 for dir in "$INSTANCES_HOME" "$TYPES_HOME" "$BUILD_HOME" "$CONF_DIR"; do
@@ -81,6 +103,7 @@ rm -rf tmp/*
 rm -rf build/*
 rm -f work/*  # Remove agent history
 rm -rf conf/mas/*
+rm -rf "$TEMP_DIR"/*  # Clean temporary scripts
 
 # Build agents based on instances
 for instance_filename in $INSTANCES_HOME/*.txt; do
@@ -105,7 +128,18 @@ ls -l $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 chmod 755 work/*.txt
 
-# Improved function to open a new terminal based on OS
+# Counter for unique script names
+script_counter=0
+
+# Variabili per il posizionamento a pila delle finestre (inizializzate dalle costanti)
+window_x_pos=$WINDOW_START_X
+window_y_pos=$WINDOW_START_Y
+window_offset=$WINDOW_OFFSET
+
+# Array per tracciare le finestre DALI create (solo su macOS)
+declare -a DALI_WINDOW_IDS=()
+
+# Improved function to open a new terminal based on OS with stacked window positioning
 open_terminal() {
     local cmd="$1"
     local title="$2"
@@ -124,21 +158,33 @@ open_terminal() {
     
     case "$os_name" in
         Darwin)
-            echo "Starting: $title"
+            echo "Starting: $title (positioned at $window_x_pos,$window_y_pos, size ${WINDOW_WIDTH_MACOS}x${WINDOW_HEIGHT_MACOS})"
             if command -v osascript &> /dev/null; then
-                osascript -e "tell application \"Terminal\" to do script \"cd '$current_dir' && $cmd\"" &
+                # Crea una nuova finestra Terminal con marker DALI e la posiziona
+                window_title="[DALI] $title"
+                osascript -e "
+                tell application \"Terminal\"
+                    set newTab to do script \"cd '$current_dir' && $cmd\"
+                    delay 0.5
+                    set custom title of front window to \"$window_title\"
+                    set bounds of front window to {$window_x_pos, $window_y_pos, $((window_x_pos + WINDOW_WIDTH_MACOS)), $((window_y_pos + WINDOW_HEIGHT_MACOS))}
+                end tell
+                " &
+                # Salva il titolo della finestra per il cleanup
+                DALI_WINDOW_IDS+=("$window_title")
             else
                 # Fallback: open Terminal with the script
                 open -a Terminal "$script_name" &
             fi
             ;;
         Linux)
+            echo "Starting: $title (positioned at $window_x_pos,$window_y_pos, size ${WINDOW_COLS_LINUX}x${WINDOW_ROWS_LINUX})"
             if command -v gnome-terminal &> /dev/null; then
-                gnome-terminal --title="$title" -- bash -c "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
+                gnome-terminal --title="$title" --geometry=${WINDOW_COLS_LINUX}x${WINDOW_ROWS_LINUX}+$window_x_pos+$window_y_pos -- bash -c "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
             elif command -v xterm &> /dev/null; then
-                xterm -title "$title" -e "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
+                xterm -title "$title" -geometry ${WINDOW_COLS_LINUX}x${WINDOW_ROWS_LINUX}+$window_x_pos+$window_y_pos -e "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
             elif command -v konsole &> /dev/null; then
-                konsole --title "$title" -e bash -c "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
+                konsole --title "$title" --geometry ${WINDOW_COLS_LINUX}x${WINDOW_ROWS_LINUX}+$window_x_pos+$window_y_pos -e bash -c "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
             else
                 echo "Error: No supported terminal emulator found"
                 echo "Please install gnome-terminal, xterm, or konsole"
@@ -146,6 +192,10 @@ open_terminal() {
             fi
             ;;
     esac
+    
+    # Incrementa la posizione per la prossima finestra (effetto a cascata/pila)
+    window_x_pos=$((window_x_pos + window_offset))
+    window_y_pos=$((window_y_pos + window_offset))
 }
 
 # Start the LINDA server
@@ -187,21 +237,42 @@ read
 pkill -9 sicstus
 pkill -9 xterm
 
+# Cleanup finestre terminali
 case "$os_name" in
         Darwin)
-            echo 
-            osascript -e 'tell application "Terminal" to quit'
+            echo "Closing DALI Terminal windows..."
+            # Chiude solo le finestre DALI invece di chiudere tutto Terminal
+            for window_title in "${DALI_WINDOW_IDS[@]}"; do
+                echo "Closing window: $window_title"
+                osascript -e "
+                tell application \"Terminal\"
+                    repeat with w in windows
+                        if custom title of w is \"$window_title\" then
+                            close w
+                        end if
+                    end repeat
+                end tell
+                " 2>/dev/null || true
+            done
+            echo "DALI windows closed. Terminal.app remains open for your use."
             ;;
         Linux)
+            echo "Closing terminal windows..."
             if command -v gnome-terminal &> /dev/null; then
                 pkill -9 gnome-terminal
             elif command -v xterm &> /dev/null; then
                 pkill xterm
+            elif command -v konsole &> /dev/null; then
+                pkill konsole
             else
                 echo "Error: No supported terminal emulator found"
                 exit 1
             fi
             ;;
     esac
+
+# Clean up temporary scripts
+echo "Cleaning up temporary files..."
+rm -rf "$TEMP_DIR"
 
 
