@@ -105,27 +105,43 @@ ls -l $BUILD_HOME
 cp $BUILD_HOME/*.txt work
 chmod 755 work/*.txt
 
-# Funzione per aprire un nuovo terminale in base all'OS
+# Improved function to open a new terminal based on OS
 open_terminal() {
     local cmd="$1"
     local title="$2"
-    echo "#!/bin/bash" > /tmp/runmas.sh
-    echo "echo \"$title\"" >> /tmp/runmas.sh
-    echo "cd \"$current_dir\"" >> /tmp/runmas.sh
-    echo "$cmd" >> /tmp/runmas.sh
-    chmod 755 /tmp/runmas.sh
+    script_counter=$((script_counter + 1))
+    local script_name="$TEMP_DIR/dali_script_$script_counter.sh"
+    
+    # Create script with proper cleanup
+    echo "#!/bin/bash" > "$script_name"
+    echo "echo \"$title\"" >> "$script_name"
+    echo "cd \"$current_dir\"" >> "$script_name"
+    echo "echo \"Starting: $cmd\"" >> "$script_name"
+    echo "$cmd" >> "$script_name"
+    echo "echo \"Process finished. Press Enter to close this window...\"" >> "$script_name"
+    echo "read" >> "$script_name"
+    chmod 755 "$script_name"
+    
     case "$os_name" in
         Darwin)
-            echo 
-            open -a Terminal "/tmp/runmas.sh"
+            echo "Starting: $title"
+            if command -v osascript &> /dev/null; then
+                osascript -e "tell application \"Terminal\" to do script \"cd '$current_dir' && $cmd\"" &
+            else
+                # Fallback: open Terminal with the script
+                open -a Terminal "$script_name" &
+            fi
             ;;
         Linux)
             if command -v gnome-terminal &> /dev/null; then
-                gnome-terminal --title="$title" -- bash -c "cd '$current_dir' && $cmd; exec bash"
+                gnome-terminal --title="$title" -- bash -c "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
             elif command -v xterm &> /dev/null; then
-                xterm -title "$title" -e "cd '$current_dir' && $cmd; exec bash" &
+                xterm -title "$title" -e "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
+            elif command -v konsole &> /dev/null; then
+                konsole --title "$title" -e bash -c "cd '$current_dir' && $cmd; echo 'Process finished. Press Enter to close...'; read" &
             else
                 echo "Error: No supported terminal emulator found"
+                echo "Please install gnome-terminal, xterm, or konsole"
                 exit 1
             fi
             ;;
