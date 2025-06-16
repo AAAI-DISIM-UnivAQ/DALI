@@ -6,13 +6,13 @@
 ]).
 
 :- use_module(mcp_config).
-:- use_module(library(sockets)).  % SICStus socket library
+:- use_module(library(sockets)).
 :- use_module(library(lists)).
 
 % Main interface for LLM queries
 query_llm(Prompt, Context, Response) :-
     get_llm_config(Config),
-    format_llm_request(Prompt, Context, Config, Request),
+    format_ollama_request(Prompt, Context, Config, Request),
     make_http_request(Request, Response).
 
 % Weather data processing
@@ -37,33 +37,33 @@ process_image_analysis(ImageData, Analysis) :-
     parse_image_analysis_response(RawResponse, Analysis).
 
 % Helper predicates
-format_llm_request(Prompt, Context, Config, Request) :-
-    Request = [
-        method = post,
-        url = 'https://api.openai.com/v1/chat/completions',
-        headers = [
-            'Content-Type' = 'application/json',
-            'Authorization' = 'Bearer YOUR_API_KEY'
-        ],
-        body = [
-            model = Config.provider,
-            messages = [
-                [role = system, content = Context],
-                [role = user, content = Prompt]
-            ],
-            temperature = Config.temperature,
-            max_tokens = Config.max_tokens
-        ]
-    ].
+format_ollama_request(Prompt, Context, Config, Request) :-
+    arg(2, Config, Model),
+    arg(3, Config, Temperature),
+    arg(4, Config, MaxTokens),
+    Request = request(
+        method(post),
+        url('http://localhost:11434/api/generate'),
+        headers([content_type('application/json')]),
+        body([
+            model(Model),
+            prompt(Context),
+            system(Prompt),
+            temperature(Temperature),
+            max_tokens(MaxTokens)
+        ])
+    ).
 
 make_http_request(Request, Response) :-
-    socket_client_open('api.openai.com:443', Stream, []),
-    format(Stream, 'POST ~w HTTP/1.1\r\n', [Request.url]),
-    format(Stream, 'Host: api.openai.com\r\n', []),
-    format(Stream, 'Content-Type: ~w\r\n', [Request.headers.'Content-Type']),
-    format(Stream, 'Authorization: ~w\r\n', [Request.headers.Authorization]),
+    arg(2, Request, URL),
+    arg(3, Request, Headers),
+    arg(4, Request, Body),
+    socket_client_open('localhost:11434', Stream, []),
+    format(Stream, 'POST ~w HTTP/1.1\r\n', [URL]),
+    format(Stream, 'Host: localhost\r\n', []),
+    format(Stream, 'Content-Type: ~w\r\n', [Headers.content_type]),
     format(Stream, '\r\n', []),
-    format(Stream, '~w', [Request.body]),
+    format(Stream, '~w', [Body]),
     flush_output(Stream),
     read_http_response(Stream, Response),
     close(Stream).
@@ -91,7 +91,11 @@ read_http_response(Stream, Response) :-
     read_line(Stream, Line),
     read_http_headers(Stream, Headers),
     read_http_body(Stream, Headers, Body),
-    Response = [status = Line, headers = Headers, body = Body].
+    Response = response(
+        status(Line),
+        headers(Headers),
+        body(Body)
+    ).
 
 read_http_headers(Stream, []) :-
     peek_char(Stream, '\r'),
@@ -103,7 +107,7 @@ read_http_headers(Stream, [Header|Headers]) :-
     read_http_headers(Stream, Headers).
 
 read_http_body(Stream, Headers, Body) :-
-    member(content_length = Length, Headers),
+    member(content_length(Length), Headers),
     !,
     read_n_chars(Stream, Length, Body).
 read_http_body(_, _, ''). 

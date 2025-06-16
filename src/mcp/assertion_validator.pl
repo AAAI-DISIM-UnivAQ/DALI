@@ -4,8 +4,6 @@
     convert_to_dali_fact/2
 ]).
 
-:- use_module(library(error)).
-
 % Assertion validation
 validate_assertion(Assertion, ValidatedAssertion) :-
     check_syntax(Assertion),
@@ -65,4 +63,34 @@ assertion_to_fact(Assertion, DaliFact) :-
 % DALI fact validation
 validate_dali_fact(Fact) :-
     valid_dali_predicate(Fact),
-    valid_dali_arguments(Fact). 
+    valid_dali_arguments(Fact).
+
+% Basic validation predicates
+valid_predicate(Assertion) :-
+    compound(Assertion),
+    functor(Assertion, Name, _),
+    atom(Name).
+
+valid_arguments(Assertion) :-
+    compound(Assertion),
+    Assertion =.. [_|Args],
+    maplist(valid_argument, Args).
+
+valid_argument(Arg) :-
+    (atom(Arg) ; number(Arg) ; compound(Arg)).
+
+valid_dali_predicate(Fact) :-
+    compound(Fact),
+    functor(Fact, Name, _),
+    atom(Name).
+
+valid_dali_arguments(Fact) :-
+    compound(Fact),
+    Fact =.. [_|Args],
+    maplist(valid_argument, Args).
+
+contradicts_existing(Assertion) :-
+    retract(Assertion),
+    assert(Assertion),
+    fail.
+contradicts_existing(_). 

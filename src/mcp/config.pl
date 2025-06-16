@@ -7,12 +7,13 @@
 
 % Base configuration for LLM services
 get_llm_config(Config) :-
-    Config = [
-        provider = 'openai',
-        model = 'gpt-4',
-        temperature = 0.7,
-        max_tokens = 1000
-    ].
+    Config = config(
+        provider(ollama),
+        model('llama3.1:8b'),
+        temperature(0.7),
+        max_tokens(1000),
+        base_url('http://localhost:11434')
+    ).
 
 % API keys for various services
 get_weather_api_key('YOUR_WEATHER_API_KEY').
