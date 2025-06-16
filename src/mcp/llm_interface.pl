@@ -6,8 +6,8 @@
 ]).
 
 :- use_module(mcp_config).
-:- use_module(library(http/http_client)).
-:- use_module(library(json)).
+:- use_module(library(sockets)).  % SICStus socket library
+:- use_module(library(lists)).
 
 % Main interface for LLM queries
 query_llm(Prompt, Context, Response) :-
@@ -45,7 +45,7 @@ format_llm_request(Prompt, Context, Config, Request) :-
             'Content-Type' = 'application/json',
             'Authorization' = 'Bearer YOUR_API_KEY'
         ],
-        body = json([
+        body = [
             model = Config.provider,
             messages = [
                 [role = system, content = Context],
@@ -53,22 +53,57 @@ format_llm_request(Prompt, Context, Config, Request) :-
             ],
             temperature = Config.temperature,
             max_tokens = Config.max_tokens
-        ])
+        ]
     ].
 
 make_http_request(Request, Response) :-
-    http_post(Request.url, Request.body, Response,
-              [headers(Request.headers)]).
+    socket_client_open('api.openai.com:443', Stream, []),
+    format(Stream, 'POST ~w HTTP/1.1\r\n', [Request.url]),
+    format(Stream, 'Host: api.openai.com\r\n', []),
+    format(Stream, 'Content-Type: ~w\r\n', [Request.headers.'Content-Type']),
+    format(Stream, 'Authorization: ~w\r\n', [Request.headers.Authorization]),
+    format(Stream, '\r\n', []),
+    format(Stream, '~w', [Request.body]),
+    flush_output(Stream),
+    read_http_response(Stream, Response),
+    close(Stream).
 
 % Response parsing
 parse_weather_response(RawResponse, WeatherInfo) :-
-    json_read_dict(RawResponse, Dict),
+    parse_json(RawResponse, Dict),
     extract_weather_info(Dict, WeatherInfo).
 
 parse_geolocation_response(RawResponse, GeoInfo) :-
-    json_read_dict(RawResponse, Dict),
+    parse_json(RawResponse, Dict),
     extract_geo_info(Dict, GeoInfo).
 
 parse_image_analysis_response(RawResponse, Analysis) :-
-    json_read_dict(RawResponse, Dict),
-    extract_image_analysis(Dict, Analysis). 
+    parse_json(RawResponse, Dict),
+    extract_image_analysis(Dict, Analysis).
+
+% JSON parsing helper
+parse_json(JSONString, Dict) :-
+    atom_codes(JSONString, Codes),
+    phrase(json(Dict), Codes).
+
+% HTTP response reading helper
+read_http_response(Stream, Response) :-
+    read_line(Stream, Line),
+    read_http_headers(Stream, Headers),
+    read_http_body(Stream, Headers, Body),
+    Response = [status = Line, headers = Headers, body = Body].
+
+read_http_headers(Stream, []) :-
+    peek_char(Stream, '\r'),
+    !,
+    get_char(Stream, _),
+    get_char(Stream, _).
+read_http_headers(Stream, [Header|Headers]) :-
+    read_line(Stream, Header),
+    read_http_headers(Stream, Headers).
+
+read_http_body(Stream, Headers, Body) :-
+    member(content_length = Length, Headers),
+    !,
+    read_n_chars(Stream, Length, Body).
+read_http_body(_, _, ''). 
