@@ -1,33 +1,16 @@
+:- module(test_ollama, [
+    ollama_hi/0,
+    read_streaming_response/2,
+    read_stream_to_codes/2,
+    extract_content/2
+]).
+
 :- use_module(library(process)).
-:- use_module(library(lists)).
+:- use_module('../utils/dali_json_utils').
+:- use_module('../utils/dali_list_utils').
 
-ollama_hi :-
-    % JSON richiesta per Ollama
-    MessageCodes = "{\"model\":\"llama3.1:8b\", \"messages\":[{\"role\":\"user\", \"content\":\"Hi\"}]}",
-    atom_codes(DataAtom, MessageCodes),
-
-    % Chiamata HTTP con curl
-    process_create(path(curl),
-                   ['-s', '-X', 'POST',
-                    '-H', 'Content-Type: application/json',
-                    '-d', DataAtom,
-                    'http://localhost:11434/api/chat'],
-                   [stdout(pipe(Out)), process(PID)]),
-
-    % Leggi tutti i codici dal pipe
-    read_stream_to_codes(Out, Codes),
-    close(Out),
-    process_wait(PID, _),
-
-    % Converte in atomo
-    atom_codes(JsonAtom, Codes),
-
-    % Estrae contenuti da "content":"..."
-    extract_all_contents(JsonAtom, Fragments),
-
-    % Unisce tutto in una frase
-    join_with_separator(Fragments, ' ', Sentence),
-    write('Messaggio ricevuto: '), write(Sentence), nl.
+% test with:
+% /usr/local/sicstus4.6.0/bin/sicstus -l src/mcp/test_ollama.pl --goal "leash(off), trace, ollama_hi, notrace."
 
 % Lettura completa dello stream
 read_stream_to_codes(Stream, Codes) :-
@@ -37,34 +20,47 @@ read_stream_to_codes(Stream, Codes) :-
       read_stream_to_codes(Stream, Rest)
     ).
 
-% Estrazione ricorsiva dei content
-extract_all_contents(Json, Contents) :-
-    extract_all_contents(Json, Contents, Json).
+% Estrazione del contenuto dalla risposta JSON
+extract_content(json(Response), Content) :-
+    member(message=json(Message), Response),
+    member(content=Content, Message).
 
-extract_all_contents(_, [], Remainder) :-
-    \+ sub_atom(Remainder, _, _, _, '"content":"'), !.
+% Lettura e processamento della risposta streaming
+read_streaming_response(Stream, Content) :-
+    findall(Token,
+            (read_stream_to_codes(Stream, Codes),
+             Codes \= [],
+             json_from_codes(Codes, Response),
+             extract_content(Response, Token),
+             \+ (member(done='@true', Response))),
+            Tokens),
+    dali_list_utils:atomic_list_concat(Tokens, Content).
 
-extract_all_contents(Full, [Content|Rest], Remainder) :-
-    sub_atom(Remainder, Start, _, _, '"content":"'),
-    Pos is Start + 10,
-    sub_atom(Remainder, Pos, _, AfterLen, AfterStart),
-    sub_atom(AfterStart, 0, Len, _, '"'),
-    sub_atom(AfterStart, 0, Len, _, Content),
-    Content \= '',  % ← scarta content vuoti
-    PosNext is Pos + Len + 1,
-    sub_atom(Remainder, PosNext, _, 0, RemainingTail),
-    extract_all_contents(Full, Rest, RemainingTail).
-extract_all_contents(Full, Rest, Remainder) :-
-    % Salta contenuti vuoti
-    sub_atom(Remainder, Start, _, _, '"content":""'),
-    Pos is Start + 10 + 2,
-    sub_atom(Remainder, Pos, _, 0, RemainingTail),
-    extract_all_contents(Full, Rest, RemainingTail).
+ollama_hi :-
+    % Creazione della struttura JSON per la richiesta
+    Request = json([
+        model='llama3.1:8b',
+        messages=[json([
+            role='user',
+            content='Hi'
+        ])]
+    ]),
+    
+    % Conversione della struttura in JSON
+    json_to_atom(Request, DataAtom),
 
-% Concatena atomi con separatore
-join_with_separator([], _, '').
-join_with_separator([A], _, A) :- !.
-join_with_separator([H|T], Sep, Result) :-
-    join_with_separator(T, Sep, Partial),
-    atom_concat(H, Sep, Temp),
-    atom_concat(Temp, Partial, Result).
+    % Chiamata HTTP con curl
+    process_create(path(curl),
+                   ['-s', '-X', 'POST',
+                    '-H', 'Content-Type: application/json',
+                    '-d', DataAtom,
+                    'http://localhost:11434/api/chat'],
+                   [stdout(pipe(Out)), process(PID)]),
+
+    % Leggi e processa la risposta streaming
+    read_streaming_response(Out, Content),
+    close(Out),
+    process_wait(PID, _),
+    
+    write('Messaggio ricevuto: '), write(Content), nl.
+
