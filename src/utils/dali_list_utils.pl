@@ -12,7 +12,8 @@
     intersection/3,
     concatena_items_poi_in_string/2,
     list_in_ascii/2,
-    ascii_in_list/2
+    ascii_in_list/2,
+    atomic_list_concat/2
 ]).
 
 % Note: Removed library(lists) import to avoid conflicts with our custom intersection/3
@@ -108,4 +109,10 @@ trasform_ascii_in_list(La) :-
 
 create_new_term_list(Ln) :-
     findall(X, clause(new_this_term(X), _), Ln),
-    retractall(new_this_term(_)). 
+    retractall(new_this_term(_)).
+
+%% Concatenate list of atoms into a single atom
+atomic_list_concat([], '').
+atomic_list_concat([H|T], Result) :-
+    atomic_list_concat(T, Rest),
+    atom_concat(H, Rest, Result). 
