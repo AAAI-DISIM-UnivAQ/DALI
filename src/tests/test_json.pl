@@ -82,6 +82,28 @@ test_roundtrip :-
     json_from_atom(JSON2, Term2),
     Term = Term2.
 
+% Nuovi test cases
+test_nested_object :-
+    JSON = '{"person": {"name": "Mario", "address": {"city": "Roma"}}}',
+    json_from_atom(JSON, Term),
+    json_to_atom(Term, JSON2, [compact(true)]),
+    json_from_atom(JSON2, Term2),
+    Term = Term2.
+
+test_array_of_objects :-
+    JSON = '[{"id": 1, "name": "Mario"}, {"id": 2, "name": "Luigi"}]',
+    json_from_atom(JSON, Term),
+    json_to_atom(Term, JSON2, [compact(true)]),
+    json_from_atom(JSON2, Term2),
+    Term = Term2.
+
+test_special_chars :-
+    JSON = '{"text": "Ciao\\nMondo!", "special": "\\t\\n\\r"}',
+    json_from_atom(JSON, Term),
+    json_to_atom(Term, JSON2, [compact(true)]),
+    json_from_atom(JSON2, Term2),
+    Term = Term2.
+
 % Esegui tutti i test
 run_all_tests :-
     init_test_counters,
@@ -92,6 +114,9 @@ run_all_tests :-
     run_test(test_array),
     run_test(test_object),
     run_test(test_roundtrip),
+    run_test(test_nested_object),
+    run_test(test_array_of_objects),
+    run_test(test_special_chars),
     print_summary.
 
 % Entry point
