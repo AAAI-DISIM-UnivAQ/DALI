@@ -7,6 +7,11 @@
 
 :- use_module(library(system)).
 
+% Set the following environment variables to test the MCP
+%    export WEATHER_API_KEY="test_key"
+%    export GEOLOCATION_API_KEY="test_key" 
+%    export IMAGE_ANALYSIS_API_KEY="test_key"
+
 % Base configuration for LLM services
 get_llm_config(Config) :-
     Config = config(
