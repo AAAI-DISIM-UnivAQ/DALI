@@ -13,8 +13,16 @@ validate_assertion(Assertion, ValidatedAssertion) :-
 
 % Parsing LLM response into assertions
 parse_llm_response(LLMResponse, Assertions) :-
-    extract_assertions(LLMResponse, RawAssertions),
-    maplist(validate_assertion, RawAssertions, Assertions).
+    (   (atom(LLMResponse); string(LLMResponse))
+    ->  catch(atom_to_term(LLMResponse, Term, _), _, Term = 'PARSING_ERROR'),
+        ( Term == 'PARSING_ERROR' -> Assertions = []
+        ; ( is_list(Term) -> Terms = Term ; Terms = [Term] ),
+          extract_assertions(Terms, RawAssertions),
+          maplist(validate_assertion, RawAssertions, Assertions)
+        )
+    ;   extract_assertions(LLMResponse, RawAssertions),
+        maplist(validate_assertion, RawAssertions, Assertions)
+    ).
 
 % Conversion to DALI facts
 convert_to_dali_fact(Assertion, DaliFact) :-
@@ -36,6 +44,7 @@ check_consistency(Assertion) :-
 
 % Syntax validation
 is_valid_syntax(Assertion) :-
+    nonvar(Assertion),
     compound(Assertion),
     functor(Assertion, _, Arity),
     Arity > 0.
@@ -55,6 +64,14 @@ extract_assertions(LLMResponse, Assertions) :-
             (member(Line, LLMResponse),
              extract_assertion_from_line(Line, Assertion)),
             Assertions).
+
+% Extract assertion from single line/term
+extract_assertion_from_line(Line, Assertion) :-
+    (   compound(Line) -> Assertion = Line
+    ;   atom(Line) -> 
+        catch(atom_to_term(Line, Assertion, _), _, fail)
+    ;   fail
+    ).
 
 % Conversion from assertion to DALI fact
 assertion_to_fact(Assertion, DaliFact) :-

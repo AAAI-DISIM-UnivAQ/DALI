@@ -6,14 +6,16 @@
 ]).
 
 :- use_module('./config.pl', [get_llm_config/1]).
-:- use_module(library(sockets)).
-:- use_module(library(lists)).
+:- use_module('../utils/dali_ollama_client').
 
 % Main interface for LLM queries
 query_llm(Prompt, Context, Response) :-
     get_llm_config(Config),
-    format_ollama_request(Prompt, Context, Config, Request),
-    make_http_request(Request, Response).
+    arg(2, Config, Model),
+    format_prompt(Prompt, Context, FormattedPrompt),
+    ollama_chat(Model, FormattedPrompt, Response),
+    write('Prompt: '), write(FormattedPrompt), nl,
+    write('Response: '), write(Response), nl.
 
 % Weather data processing
 process_weather_data(Location, WeatherInfo) :-
@@ -37,75 +39,19 @@ process_image_analysis(ImageData, Analysis) :-
     parse_image_analysis_response(RawResponse, Analysis).
 
 % Helper predicates
-format_ollama_request(Prompt, Context, Config, Request) :-
-    arg(2, Config, Model),
-    arg(3, Config, Temperature),
-    arg(4, Config, MaxTokens),
-    Request = request(
-        method(post),
-        url('http://localhost:11434/api/generate'),
-        headers([content_type('application/json')]),
-        body([
-            model(Model),
-            prompt(Context),
-            system(Prompt),
-            temperature(Temperature),
-            max_tokens(MaxTokens)
-        ])
-    ).
+format_prompt(Prompt, Context, FormattedPrompt) :-
+    atom_concat(Prompt, '\n\nContext: ', Temp),
+    atom_concat(Temp, Context, FormattedPrompt).
 
-make_http_request(Request, Response) :-
-    arg(2, Request, URL),
-    arg(3, Request, Headers),
-    arg(4, Request, Body),
-    get_llm_config(Config),
-    arg(5, Config, BaseURL),
-    arg(1, BaseURL, URLString),
-    extract_host_port(URLString, Host0, Port),
-    (atom(Host0) -> Host = Host0 ; atom_string(Host, Host0)),
-    format('DEBUG: Host=~w, Port=~w~n', [Host, Port]),
-    catch(
-        (socket(internet, stream, Socket),
-         socket_connect(Socket, Host:Port),
-         socket_stream(Socket, Stream),
-         format(Stream, 'POST ~w HTTP/1.1\r\n', [URL]),
-         format(Stream, 'Host: ~w\r\n', [Host]),
-         nth0(0, Headers, ContentType),
-         arg(1, ContentType, ContentTypeValue),
-         format(Stream, 'Content-Type: ~w\r\n', [ContentTypeValue]),
-         format(Stream, '\r\n', []),
-         format(Stream, '~w', [Body]),
-         flush_output(Stream),
-         read_http_response(Stream, Response),
-         close(Stream),
-         socket_close(Socket)),
-        Error,
-        (format(user_error, 'Error in HTTP request: ~w~n', [Error]),
-         fail)
-    ).
-
-% Helper predicate to extract host and port from URL
-extract_host_port(URL, Host, Port) :-
-    atom_codes(URL, Codes),
-    phrase(parse_url(Host, Port), Codes).
-
-parse_url(Host, Port) -->
-    "http://",
-    host_chars(HostChars),
-    {atom_codes(Host, HostChars)},
-    (":", integer_chars(PortChars), {number_codes(Port, PortChars)} -> []; {Port = 80}).
-
-host_chars([C|Cs]) -->
-    [C],
-    {C \= 0':, C \= 0'/, C \= 0'?},
-    host_chars(Cs).
-host_chars([]) --> [].
-
-integer_chars([C|Cs]) -->
-    [C],
-    {C >= 0'0, C =< 0'9},
-    integer_chars(Cs).
-integer_chars([]) --> [].
+% Utility per stream di memoria compatibile Sicstus
+open_mem_write_stream(Stream, Atom) :-
+    open_null_stream(Null),
+    with_output_to(atom(Atom), (
+        set_output(Null), % workaround per Sicstus, output va su atom
+        true
+    )),
+    close(Null),
+    open_atom_stream(Atom, write, Stream).
 
 % Response parsing
 parse_weather_response(RawResponse, WeatherInfo) :-

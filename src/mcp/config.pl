@@ -9,7 +9,7 @@
 get_llm_config(Config) :-
     Config = config(
         provider(ollama),
-        model('llama3.1:8b'),
+        'llama3.1:8b',
         temperature(0.7),
         max_tokens(1000),
         base_url('http://localhost:11434')
