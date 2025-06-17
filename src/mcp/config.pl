@@ -5,6 +5,8 @@
     get_image_analysis_api_key/1
 ]).
 
+:- use_module(library(system)).
+
 % Base configuration for LLM services
 get_llm_config(Config) :-
     Config = config(
@@ -15,10 +17,27 @@ get_llm_config(Config) :-
         base_url('http://localhost:11434')
     ).
 
-% API keys for various services
-get_weather_api_key('YOUR_WEATHER_API_KEY').
-get_geolocation_api_key('YOUR_GEOLOCATION_API_KEY').
-get_image_analysis_api_key('YOUR_IMAGE_ANALYSIS_API_KEY').
+% API keys from environment variables
+get_weather_api_key(APIKey) :-
+    (   environ('WEATHER_API_KEY', APIKey)
+    ->  true
+    ;   write('Warning: WEATHER_API_KEY environment variable not set'), nl,
+        fail
+    ).
+
+get_geolocation_api_key(APIKey) :-
+    (   environ('GEOLOCATION_API_KEY', APIKey)
+    ->  true
+    ;   write('Warning: GEOLOCATION_API_KEY environment variable not set'), nl,
+        fail
+    ).
+
+get_image_analysis_api_key(APIKey) :-
+    (   environ('IMAGE_ANALYSIS_API_KEY', APIKey)
+    ->  true
+    ;   write('Warning: IMAGE_ANALYSIS_API_KEY environment variable not set'), nl,
+        fail
+    ).
 
 % Caching system configuration
 :- dynamic cache_entry/3.
