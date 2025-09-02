@@ -137,6 +137,8 @@ rm -f work/*  # Remove agent history
 rm -rf conf/mas/*
 rm -rf "$TEMP_DIR"/*  # Clean our temporary scripts
 
+mkdir -p build work conf/mas # fox issue #73
+
 # Build agents based on instances
 for instance_filename in $INSTANCES_HOME/*.txt; do
     if [ ! -f "$instance_filename" ]; then
