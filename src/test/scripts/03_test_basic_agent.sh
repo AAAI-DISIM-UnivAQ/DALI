@@ -42,8 +42,8 @@ SERVER_PID=$!
 # Wait for server to be ready
 sleep 2
 
-# Start the agent
-$SICSTUS --noinfo -l active_dali_wi.pl --goal "start0('test/conf/mas/agent1.txt')." &
+# Start the agent using the new modular system
+$SICSTUS --noinfo -l dali_core.pl --goal "start_dali_agent('test/conf/mas/agent1.txt')." &
 AGENT_PID=$!
 
 # Wait for agent to be ready

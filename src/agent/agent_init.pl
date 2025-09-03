@@ -16,12 +16,12 @@
     linda_client/1,
     out/1,
     in_noblock/1,
-    if/3,
     delete_file/1
 ]).
 
 :- use_module('../utils/dali_file_utils').
 :- use_module('../utils/dali_debug_utils').
+:- use_module('../parsing/rule_parser').
 :- use_module(library(random)).
 :- use_module(library(lists)).
 :- use_module(library(system)).
@@ -62,8 +62,7 @@ in_noblock(Term) :-
     fail.  % Always fail since no tuple space is implemented
 
 %% Utility predicates used by included DALI files
-if(Condition, Then, Else) :-
-    (Condition -> Then; Else).
+% if/3 is built-in in SICStus Prolog, no custom definition needed
 
 %% SICStus Prolog compatible delete_file
 delete_file(File) :-

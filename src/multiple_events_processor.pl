@@ -4,7 +4,9 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-load_program_rules(F):-
+% load_program_rules/1 moved to parsing/rule_parser.pl module
+
+load_program_rules_orig(F):-
     see(F), 
     repeat,
     read(T),

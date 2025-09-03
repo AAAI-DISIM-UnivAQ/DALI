@@ -12,6 +12,7 @@
     plv_from_name/2,
     plf_from_name/2,
     txt_from_name/2,
+    log_from_name/2,
     delete_agent_files/1,
     delete_agent_log_file/1
 ]).
@@ -44,6 +45,14 @@ txt_from_name(Base, TxtFile) :-
     name(Base, L),
     append(L, [46,116,120,116], Ltxt),  % .txt
     name(TxtFile, Ltxt).
+
+log_from_name(Name, LogFile) :-
+    name('log/log_', L0),
+    name(Name, L1),
+    name('.txt', L2),
+    append(L0, L1, L01),
+    append(L01, L2, L02),
+    name(LogFile, L02).
 
 %% Delete agent-related files
 delete_agent_files(File) :-
