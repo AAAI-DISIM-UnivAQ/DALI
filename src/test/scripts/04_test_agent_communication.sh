@@ -14,6 +14,7 @@ echo "Testing agent communication..."
 mkdir -p test/work
 mkdir -p test/conf/mas
 mkdir -p test/conf
+rm -fr test/work/*.pl
 
 # Copy the communication file from Examples/advanced/conf
 if [ -f "../Examples/advanced/conf/communication.con" ]; then
@@ -57,9 +58,9 @@ SERVER_PID=$!
 # Wait for server to be ready
 sleep 2
 
-# Start agents
+# Start agents using the new modular system
 for i in 1 2; do
-    $SICSTUS --noinfo -l active_dali_wi.pl --goal "start0('test/conf/mas/agent$i.txt')." &
+    $SICSTUS --noinfo -l dali_core.pl --goal "start_dali_agent('test/conf/mas/agent$i.txt')." &
     AGENT_PIDS[$i]=$!
     sleep 2
 done

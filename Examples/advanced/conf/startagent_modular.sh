@@ -23,6 +23,5 @@ if [ ! -f "$AGENT_CONFIG" ]; then
     exit 1
 fi
 
-# For now, use the standard DALI system (active_dali_wi.pl)
-# In the future, this could be replaced with a modular version
-eval "$SICSTUS_PATH --noinfo -l $DALI_HOME/active_dali_wi.pl --goal \"start0('$AGENT_CONFIG').\"" 
+# Use the new modular DALI system (dali_core.pl)
+eval "$SICSTUS_PATH --noinfo -l $DALI_HOME/dali_core.pl --goal \"start_dali_agent('$AGENT_CONFIG').\"" 

@@ -8,6 +8,7 @@
 
 :- module(rule_parser, [
     aprifile/1,
+    aprifile_en/1,
     take/0,
     spezza/1,
     ejec/2,
@@ -24,6 +25,7 @@
 
 % Dynamic predicates for rule processing
 :- dynamic rule_base/1.
+:- dynamic clause_man/1.
 :- dynamic mul/1.
 :- dynamic no_check/0.
 :- dynamic even/1.
@@ -54,6 +56,16 @@ aprifile(F) :-
     seen,
     take,
     costruisci0(F).
+
+%% Alternative file parser for clause management
+aprifile_en(F) :-
+    see(F),
+    repeat,
+    read(T),
+    assert(clause_man(T)),
+    T == end_of_file,
+    !,
+    seen.
 
 %% Process loaded rules
 take :-

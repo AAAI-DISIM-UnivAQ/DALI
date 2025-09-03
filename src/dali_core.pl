@@ -36,7 +36,7 @@
 :- ['memory.pl'].
 :- ['examine_past_constraints.pl'].
 :- ['multiple_events_processor.pl'].
-:- ['utils.pl'].
+% utils.pl NOT included - replaced by modular utils/ modules
 
 % Standard library modules
 :- use_module(library(random)).
@@ -213,9 +213,8 @@ processa_eve :- true.          % External event processing
 % examine_mul/0 is provided by rule_parser module (line 154: rule_parser:examine_mul)
 obtaining_goals :- true.       % Goal obtaining
 residue_goal :- true.          % Residual goal processing
-evaluate_evp_constr :- true.   % Constraint evaluation
-evaluate_evp_do :- true.       % Do constraint evaluation
-evaluate_evp_not_do :- true.   % Not-do constraint evaluation
+% evaluate_evp_constr/0, evaluate_evp_do/0, evaluate_evp_not_do/0 
+% are provided by examine_past_constraints.pl
 controlla_vita_past_base :- true.   % Past events lifecycle
 controlla_vita_remember :- true.    % Remember events lifecycle
 
