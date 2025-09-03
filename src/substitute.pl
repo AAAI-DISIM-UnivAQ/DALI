@@ -6,7 +6,8 @@
 
 %% Nella libreria "lists" di sicstus manca la funzione "substitute"
 
-:-use_module(library(lists)).
+% Use only specific predicates from lists to avoid conflicts with dali_list_utils
+:- use_module(library(lists), [reverse/2]).
 
 substitute(X,XL,Y,YL):-
 	substitute1(X,XL,Y,[],YL).

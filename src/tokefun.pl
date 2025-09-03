@@ -20,7 +20,8 @@
 :-op(1200,xfx,[:-,~/]).
 :-op(1200,xfx,[:-,</]).
 :-op(1200,xfx,[:-,?/]).
-:-use_module(library(lists)).
+% Use only specific predicates from lists to avoid conflicts with dali_list_utils
+:- use_module(library(lists), [append/3, member/2, last/2]).
 
 user:term_expansion((H:>B),[],[],(H:-B),[],[]).
 user:term_expansion((H:<B),[],[],(cd(H):-B),[],[]).
@@ -180,8 +181,35 @@ if(clause(buffer(ParsedC),_),
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
 	), (write('Errore take_meta_fil'),nl)).
 
-examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
+examine_all(Me):-if(Me='EOL',add_newline_to_buffer,examine_all1(Me)).
 
+% Add newline to buffer when EOL is encountered
+add_newline_to_buffer:-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    append(Parsed,[10],NewParsed),  % 10 is ASCII code for newline
+    assert(buffer(NewParsed)).
+
+% Add newline to buffer after a dot (end of clause)
+add_newline_after_dot:-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    append(Parsed,[10],NewParsed),  % 10 is ASCII code for newline
+    assert(buffer(NewParsed)).
+
+% Translate :> operator to :- during tokenization
+translate_rule_operator(':>'):-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    append(Parsed,[58,45],NewParsed),  % 58=':' 45='-' for ':-'
+    assert(buffer(NewParsed)).
+
+% Translate =.. operator (univ) correctly without spaces
+translate_univ_operator('=..'):-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    append(Parsed,[61,46,46],NewParsed),  % 61='=' 46='.' 46='.' for '=..'
+    assert(buffer(NewParsed)).
 
 examine_all1(Me):-if(member(Me,['(',')']), conta_parentesi(Me),true),
                   if(tempo(Me), scrittura(Me),                 % controlla se � stato inserito il deltat, se si scrivo nel file pl e asserisco time_add
@@ -226,9 +254,11 @@ aggiungi_39(L):-append([39],L,Lf),append(Lf,[39],Lf1),
 non_aggiungi(L):-clause(buffer(Parsed),_), retractall(buffer(_)),append(Parsed,L,Parola),
 						  assert(buffer(Parola)).
 
-write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/']), check_parentesi), write_parentesi, true),
-                                     
-                                        name(Me,L),re_write(L).
+write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/','=..'])), (check_parentesi, write_parentesi), true),
+                                     if(Me='.',add_newline_after_dot,true),
+                                     (if(Me=':>',translate_rule_operator(Me),
+                                        (if(Me='=..',translate_univ_operator(Me),
+                                           (name(Me,L),re_write(L)))))).
 write_parentesi:-re_write([41]),retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
 check_parentesi:-if((clause(evento_aperto,_),clause(parentesi(0),_)),true,false).
 

@@ -250,9 +250,15 @@ libreria1(F, L) :-
 
 appendi_regole0(Me) :-
     name(Me, L),
+    % First try .con file (communication configuration)
+    append(L, [46,99,111,110], Ltf_con),  % .con
+    name(T_con, Ltf_con),
+    (file_exists(T_con) -> appendi_regole(T_con); true),
+    % Then try .txt file
     append(L, [46,116,120,116], Ltf),  % .txt
     name(T, Ltf),
     (file_exists(T) -> appendi_files(T); true),
+    % Finally try .pl file
     append(L, [46,112,108], Ltf1),  % .pl
     name(T1, Ltf1),
     (file_exists(T1) -> appendi_regole(T1); true).

@@ -1,6 +1,7 @@
 %--****utils****--%
 :-use_module(library(pillow)).
-:-use_module(library(lists)).
+% Use only specific predicates from lists to avoid conflicts with dali_list_utils
+:- use_module(library(lists), [append/3, member/2, reverse/2]).
 :-use_module(library(xml)).
 
 :-dynamic elementlist/1.
@@ -25,7 +26,7 @@ normalize(Var, Result, NormalizedValue):-
         member(binding([name=Var], Type, Value), BindList),
         if(Type=uri,
                 take_name_uri(Value, NormalizedValue), 
-                if(Type=literal, take_name(Value,NormalizedValue), Value=NormalizedValue) %% ultimo caso significa che c'è un nodo blank.
+                if(Type=literal, take_name(Value,NormalizedValue), Value=NormalizedValue) %% ultimo caso significa che c'ï¿½ un nodo blank.
         ),!.
 
 fetch_ask(Response,Bool):-

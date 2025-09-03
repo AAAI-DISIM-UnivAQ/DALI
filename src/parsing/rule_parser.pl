@@ -20,8 +20,8 @@
 
 :- use_module('../utils/dali_list_utils').
 :- use_module('../utils/dali_debug_utils').
-% Note: lists library intersection/3 conflicts with our custom implementation
-% :- use_module(library(lists)).
+% Import standard lists predicates that don't conflict
+:- use_module(library(lists), [last/2, append/3, member/2]).
 
 % Dynamic predicates for rule processing
 :- dynamic rule_base/1.

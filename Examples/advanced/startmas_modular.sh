@@ -113,6 +113,12 @@ TEMP_DIR="$current_dir/temp_scripts"  # Use project directory instead of /tmp
 # Create temporary directory for scripts (in project folder)
 mkdir -p "$TEMP_DIR"
 
+# Cleaup old files
+rm -rf build/*
+rm -f work/*  # Remove agent history
+rm -rf conf/mas/*
+rm -rf "$TEMP_DIR"/*  # Clean our temporary scripts
+
 # Verify critical directories exist
 for dir in "$INSTANCES_HOME" "$TYPES_HOME" "$BUILD_HOME" "$CONF_DIR"; do
     if [ ! -d "$dir" ]; then
