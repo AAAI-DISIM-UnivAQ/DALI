@@ -32,9 +32,9 @@ if [ "$os_name" = "Darwin" ]; then
     ' 2>/dev/null)
     
     if [ -z "$dali_windows" ] || [ "$dali_windows" = "" ]; then
-        echo "✅ Nessuna finestra DALI trovata."
+        echo "Nessuna finestra DALI trovata."
     else
-        echo "🔍 Finestre DALI trovate:"
+        echo "Finestre DALI trovate:"
         echo "$dali_windows"
         echo ""
         
@@ -54,10 +54,10 @@ if [ "$os_name" = "Darwin" ]; then
                     end repeat
                 end tell
                 ' 2>/dev/null
-                echo "✅ Finestre DALI chiuse."
+                echo "Finestre DALI chiuse."
                 ;;
             *)
-                echo "❌ Operazione annullata."
+                echo "Operazione annullata."
                 ;;
         esac
     fi
@@ -81,15 +81,15 @@ elif [ "$os_name" = "Linux" ]; then
         y|Y|yes|YES)
             echo "Terminando processi SICStus..."
             pkill sicstus 2>/dev/null || true
-            echo "✅ Cleanup completato."
+            echo "Cleanup completato."
             ;;
         *)
-            echo "❌ Operazione annullata."
+            echo "Operazione annullata."
             ;;
     esac
     
 else
-    echo "❌ Sistema operativo non supportato: $os_name"
+    echo "Sistema operativo non supportato: $os_name"
     exit 1
 fi
 

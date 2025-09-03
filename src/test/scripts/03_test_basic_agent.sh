@@ -18,9 +18,9 @@ mkdir -p test/conf
 # Copy the communication file from Examples/advanced/conf
 if [ -f "../Examples/advanced/conf/communication.con" ]; then
     cp "../Examples/advanced/conf/communication.con" "test/conf/"
-    echo "✓ Copied communication.con from Examples/advanced/conf"
+    echo "Copied communication.con from Examples/advanced/conf"
 else
-    echo "✗ communication.con not found in ../Examples/advanced/conf"
+    echo "communication.con not found in ../Examples/advanced/conf"
     exit 1
 fi
 
@@ -51,10 +51,10 @@ sleep 2
 
 # Check if agent is running
 if ps -p $AGENT_PID > /dev/null; then
-    echo "✓ Agent started successfully"
+    echo "Agent started successfully"
 
 else
-    echo "✗ Agent failed to start"
+    echo "Agent failed to start"
     kill $SERVER_PID
     exit 1
 fi

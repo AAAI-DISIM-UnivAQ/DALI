@@ -42,21 +42,21 @@ src/
 │   ├── plan_generator.pl     # Plan generation (to be implemented)
 │   └── plan_executor.pl      # Plan execution (to be implemented)
 └── utils/                    # Common utilities
-    ├── dali_list_utils.pl    # List utilities ✓
-    ├── dali_file_utils.pl    # File I/O utilities ✓
-    ├── dali_time_utils.pl    # Time utilities ✓
-    └── dali_debug_utils.pl   # Debug and logging ✓
+    ├── dali_list_utils.pl    # List utilities
+    ├── dali_file_utils.pl    # File I/O utilities
+    ├── dali_time_utils.pl    # Time utilities
+    └── dali_debug_utils.pl   # Debug and logging
 ```
 
 ## Implementation Status
 
-### ✅ Completed
+### Completed
 - **utils/**: All basic utilities have been extracted and modularized
 - **dali_core.pl**: Main coordinator with execution cycle
 - **agent/agent_init.pl**: Agent initialization and configuration
 - **parsing/rule_parser.pl**: Rule parsing and processing
 
-### 🚧 In Development
+### In Development
 The following modules are defined as placeholders in `dali_core.pl` and need implementation:
 - External and internal event management
 - Communication and messaging system

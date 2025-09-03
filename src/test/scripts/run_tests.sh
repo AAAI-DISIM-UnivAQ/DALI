@@ -18,9 +18,9 @@ for script in "$SCRIPTS_DIR"/*.sh; do
         echo "------------------------"
         
         if "$script"; then
-            echo "✓ $(basename "$script") completed successfully"
+            echo "$(basename "$script") completed successfully"
         else
-            echo "✗ $(basename "$script") failed"
+            echo "$(basename "$script") failed"
             exit 1
         fi
     fi

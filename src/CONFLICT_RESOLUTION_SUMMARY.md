@@ -1,6 +1,6 @@
 # DALI Conflict Resolution - Final Summary
 
-## ✅ Problem Solved
+## Problem Solved
 
 **Issue**: The DALI modular system had naming conflicts with SICStus Prolog system libraries, causing redefinition warnings and requiring user intervention during agent startup.
 
@@ -9,7 +9,7 @@
 - `now/1` predicate → conflicted with `library(system)`
 - `datime/1` predicate → conflicted with `library(system)`
 
-## ✅ Solution Applied
+## Solution Applied
 
 ### 1. **Module Renaming** 
 All utility modules renamed with `dali_` prefix:
@@ -41,7 +41,7 @@ All import statements updated across the system:
 :- use_module('utils/dali_debug_utils').
 ```
 
-## ✅ Testing Results
+## Testing Results
 
 ### Before Fix
 ```
@@ -50,30 +50,30 @@ DALI Agent (Modular): agent1.txt
 The procedure now/1 is being redefined.
     Old file: /usr/local/sicstus4.6.0/bin/sp-4.6.0/sicstus-4.6.0/library/system.pl
     New file: /Users/giodegas/ai/DALI_2024/DALI/src/utils/dali_time_utils.pl
-Do you really want to redefine it?  (y, n, p, s, a, b, or ?) ⚠️
+Do you really want to redefine it?  (y, n, p, s, a, b, or ?) 
 
 DALI Agent (Modular): agent2.txt
 The procedure datime/1 is being redefined.
     Old file: /usr/local/sicstus4.6.0/bin/sp-4.6.0/sicstus-4.6.0/library/system.pl
     New file: /Users/giodegas/ai/DALI_2024/DALI/src/utils/dali_time_utils.pl
-Do you really want to redefine it?  (y, n, p, s, a, b, or ?) ⚠️
+Do you really want to redefine it?  (y, n, p, s, a, b, or ?) 
 ```
 
 ### After Fix
 ```
 Test Results:
-✅ dali_list_utils: PASS
-✅ dali_file_utils: PASS  
-✅ dali_time_utils: PASS
-✅ dali_debug_utils: PASS
-✅ agent_init: Module loads correctly
-✅ rule_parser: Module loads correctly
-✅ dali_core: Module loads correctly
+dali_list_utils: PASS
+dali_file_utils: PASS  
+dali_time_utils: PASS
+dali_debug_utils: PASS
+agent_init: Module loads correctly
+rule_parser: Module loads correctly
+dali_core: Module loads correctly
 ```
 
-**No more conflicts or user prompts!** 🎉
+**No more conflicts or user prompts!**
 
-## ✅ Usage Instructions
+## Usage Instructions
 
 ### For Developers
 
@@ -99,19 +99,19 @@ cd Examples/advanced
 ./startmas_modular.sh
 ```
 
-## ✅ Future Prevention
+## Future Prevention
 
 ### Naming Convention Established
 
 **All new DALI modules must use the `dali_` prefix:**
 
 ```
-✅ Good Examples:
+Good Examples:
 dali_event_manager.pl
 dali_communication_handler.pl
 dali_memory_manager.pl
 
-❌ Avoid:
+>> Avoid:
 event_manager.pl (too generic)
 memory.pl (conflicts with system)
 utils.pl (conflicts with system)
@@ -125,33 +125,33 @@ utils.pl (conflicts with system)
 2. **Use descriptive prefixes** for domain-specific predicates  
 3. **Test in both SWI-Prolog and SICStus** if targeting both
 
-## ✅ Files Modified
+## Files Modified
 
 ### Core System Files
-- ✅ `src/utils/dali_*.pl` - All utility modules renamed and updated
-- ✅ `src/dali_core.pl` - Import statements updated
-- ✅ `src/agent/agent_init.pl` - Import statements updated  
-- ✅ `src/parsing/rule_parser.pl` - Import statements updated
+- `src/utils/dali_*.pl` - All utility modules renamed and updated
+- `src/dali_core.pl` - Import statements updated
+- `src/agent/agent_init.pl` - Import statements updated  
+- `src/parsing/rule_parser.pl` - Import statements updated
 
 ### Build and Testing
-- ✅ `src/Makefile` - Test targets updated for new names
-- ✅ `src/README.md` - Documentation updated
+- `src/Makefile` - Test targets updated for new names
+- `src/README.md` - Documentation updated
 
 ### Documentation
-- ✅ `src/NAMESPACE_MIGRATION.md` - Detailed migration documentation
-- ✅ `src/CONFLICT_RESOLUTION_SUMMARY.md` - This summary
+- `src/NAMESPACE_MIGRATION.md` - Detailed migration documentation
+- `src/CONFLICT_RESOLUTION_SUMMARY.md` - This summary
 
-## ✅ Next Steps
+## Next Steps
 
 1. **Test with your agents**: Run your existing agent configurations
 2. **Verify startup**: Ensure no user prompts appear during startup
 3. **Development**: Use new naming conventions for future modules
 
-## ✅ Contact
+## Contact
 
 If you encounter any remaining conflicts or have questions about the new naming conventions, refer to:
 
 - `src/README.md` - Main documentation
 - `src/NAMESPACE_MIGRATION.md` - Detailed technical migration guide
 
-**Status**: All known conflicts resolved ✅ 
+**Status**: All known conflicts resolved 

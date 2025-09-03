@@ -87,13 +87,13 @@ SICSTUS_PATHS=(
 for path in "${SICSTUS_PATHS[@]}"; do
     if command -v "$path" &> /dev/null; then
         PROLOG="$path"
-        echo "✅ SICStus Prolog found at: $PROLOG"
+        echo "SICStus Prolog found at: $PROLOG"
         break
     fi
 done
 
 if [ -z "$PROLOG" ]; then
-    echo "❌ Error: SICStus Prolog not found in common locations."
+    echo "Error: SICStus Prolog not found in common locations."
     echo "Please ensure SICStus Prolog is installed and accessible."
     echo "Tried paths: ${SICSTUS_PATHS[*]}"
     exit 1
@@ -128,7 +128,7 @@ if [ ! -f "$DALI_MODULAR_HOME/dali_core.pl" ]; then
     exit 1
 fi
 
-echo "✅ Modular DALI system found at $DALI_MODULAR_HOME"
+echo "Modular DALI system found at $DALI_MODULAR_HOME"
 
 # Clean directories
 rm -rf tmp/*
@@ -263,11 +263,11 @@ done
 user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal user_interface."
 open_terminal "$user_cmd" "DALI User Interface"
 
-echo "✅ Modular MAS started successfully!"
-echo "🔧 Using new modular DALI architecture"
-echo "📁 Core system: $DALI_MODULAR_HOME/dali_core.pl"
-echo "📁 SICStus Prolog: $PROLOG"
-echo "📁 Temporary scripts: $TEMP_DIR"
+echo "Modular MAS started successfully!"
+echo "Using new modular DALI architecture"
+echo "Core system: $DALI_MODULAR_HOME/dali_core.pl"
+echo "SICStus Prolog: $PROLOG"
+echo "Temporary scripts: $TEMP_DIR"
 echo ""
 echo "Press Enter to shutdown the MAS"
 read
@@ -312,5 +312,5 @@ echo "Processes cleanup completed."
 echo "Cleaning up temporary files..."
 rm -rf "$TEMP_DIR"
 
-echo "✅ MAS shutdown complete"
-echo "🔚 All tracked processes have been terminated" 
+echo "MAS shutdown complete"
+echo "All tracked processes have been terminated" 

@@ -17,42 +17,42 @@ test-utils:
 	@echo "Testing utility modules..."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/utils/dali_list_utils'), \
 		remove_dups([1,2,2,3,3,4], X), \
-		(X = [1,2,3,4] -> write('✅ dali_list_utils: PASS') ; write('❌ dali_list_utils: FAIL')), \
+		(X = [1,2,3,4] -> write('dali_list_utils: PASS') ; write('❌ dali_list_utils: FAIL')), \
 		nl, halt."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/utils/dali_file_utils'), \
 		pl_from_name(test, PlFile), txt_from_name(test, TxtFile), \
-		(PlFile = 'test.pl', TxtFile = 'test.txt' -> write('✅ dali_file_utils: PASS') ; write('❌ dali_file_utils: FAIL')), \
+		(PlFile = 'test.pl', TxtFile = 'test.txt' -> write('dali_file_utils: PASS') ; write('❌ dali_file_utils: FAIL')), \
 		nl, halt."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/utils/dali_time_utils'), \
 		dali_now(T), number(T), \
 		dali_datime(DT), compound(DT), \
-		write('✅ dali_time_utils: PASS'), nl, halt."
+		write('dali_time_utils: PASS'), nl, halt."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/utils/dali_debug_utils'), \
 		trace_point('Test message'), \
-		write('✅ dali_debug_utils: PASS'), nl, halt."
+		write('dali_debug_utils: PASS'), nl, halt."
 
 # Test agent modules
 test-agent:
 	@echo "Testing agent modules..."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/agent/agent_init'), \
-		write('✅ agent_init: Module loads correctly'), nl, halt."
+		write('agent_init: Module loads correctly'), nl, halt."
 
 # Test parsing modules
 test-parsing:
 	@echo "Testing parsing modules..."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/parsing/rule_parser'), \
-		write('✅ rule_parser: Module loads correctly'), nl, halt."
+		write('rule_parser: Module loads correctly'), nl, halt."
 
 # Test core system
 test-core:
 	@echo "Testing core system..."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/dali_core'), \
-		write('✅ dali_core: Module loads correctly'), nl, halt."
+		write('dali_core: Module loads correctly'), nl, halt."
 
 # Check syntax of all Prolog files
 syntax-check:
 	@echo "Checking syntax of all Prolog files..."
-	@find . -name "*.pl" -exec $(SWIPL) -g "consult('{}'), write('✅ Syntax OK: {}'), nl, halt." \;
+	@find . -name "*.pl" -exec $(SWIPL) -g "consult('{}'), write('Syntax OK: {}'), nl, halt." \;
 
 # Generate documentation
 docs:
@@ -75,7 +75,7 @@ example-config:
 	@echo "    'onto/dali_example.txt'," >> example_agent.txt
 	@echo "    basic" >> example_agent.txt
 	@echo ")." >> example_agent.txt
-	@echo "✅ Created example_agent.txt configuration file"
+	@echo "Created example_agent.txt configuration file"
 
 # Clean generated files
 clean:
@@ -95,7 +95,7 @@ install:
 lint:
 	@echo "Performing style check..."
 	@echo "Checking for common Prolog style issues..."
-	@grep -r ":-use_module" . && echo "❌ Use ':- use_module' instead" || echo "✅ Module imports OK"
+	@grep -r ":-use_module" . && echo "❌ Use ':- use_module' instead" || echo "Module imports OK"
 	@grep -r "assert(" . | grep -v "assert(" | wc -l | \
 		xargs -I {} echo "Found {} assert statements (prefer assertz/asserta)"
 
@@ -104,29 +104,29 @@ perf-test:
 	@echo "Running performance tests..."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/utils/list_utils'), \
 		time((between(1, 1000, _), remove_dups([1,2,3,4,5,1,2,3], _), fail; true)), \
-		write('✅ Performance test completed'), nl, halt."
+		write('Performance test completed'), nl, halt."
 
 # Integration test
 integration-test: example-config
 	@echo "Running integration test..."
 	@$(SWIPL) -g "use_module('$(MODULES_DIR)/dali_core'), \
 		write('Starting DALI system test...'), nl, \
-		write('✅ Integration test passed'), nl, halt."
+		write('Integration test passed'), nl, halt."
 
 # Validate module structure
 validate-structure:
 	@echo "Validating module structure..."
-	@test -d utils && echo "✅ utils/ directory exists" || echo "❌ utils/ directory missing"
-	@test -d agent && echo "✅ agent/ directory exists" || echo "❌ agent/ directory missing"
-	@test -d parsing && echo "✅ parsing/ directory exists" || echo "❌ parsing/ directory missing"
-	@test -f dali_core.pl && echo "✅ dali_core.pl exists" || echo "❌ dali_core.pl missing"
-	@test -f README.md && echo "✅ README.md exists" || echo "❌ README.md missing"
+	@test -d utils && echo "utils/ directory exists" || echo "❌ utils/ directory missing"
+	@test -d agent && echo "agent/ directory exists" || echo "❌ agent/ directory missing"
+	@test -d parsing && echo "parsing/ directory exists" || echo "❌ parsing/ directory missing"
+	@test -f dali_core.pl && echo "dali_core.pl exists" || echo "❌ dali_core.pl missing"
+	@test -f README.md && echo "README.md exists" || echo "❌ README.md missing"
 
 # Development setup
 dev-setup:
 	@echo "Setting up development environment..."
 	@mkdir -p tests logs docs
-	@echo "✅ Development directories created"
+	@echo "Development directories created"
 
 # Full test suite
 test-all: validate-structure syntax-check test lint integration-test

@@ -39,16 +39,16 @@ sicstus -l ../../src/dali_core.pl --goal "start_dali_agent('conf/mas/agent1.txt'
 
 #### `startmas_modular.sh` Changes:
 
-- ✅ **Verification**: Checks for `dali_core.pl` existence
-- ✅ **Logging**: Enhanced startup messages
-- ✅ **Error Handling**: Better error detection for modular system
-- ✅ **Compatibility**: Calls `startagent_modular.sh` instead of `startagent.sh`
+- **Verification**: Checks for `dali_core.pl` existence
+- **Logging**: Enhanced startup messages
+- **Error Handling**: Better error detection for modular system
+- **Compatibility**: Calls `startagent_modular.sh` instead of `startagent.sh`
 
 #### `startagent_modular.sh` Changes:
 
-- ✅ **Core System**: Uses `dali_core.pl` instead of `active_dali_wi.pl`
-- ✅ **Entry Point**: Uses `start_dali_agent/1` instead of `start0/1`
-- ✅ **Validation**: Verifies modular system files exist
+- **Core System**: Uses `dali_core.pl` instead of `active_dali_wi.pl`
+- **Entry Point**: Uses `start_dali_agent/1` instead of `start0/1`
+- **Validation**: Verifies modular system files exist
 
 ## Usage Instructions
 
@@ -84,24 +84,24 @@ cd Examples/advanced
 
 ## Benefits of Modular System
 
-### 🔧 **Maintainability**
+### **Maintainability**
 - Cleaner code organization
 - Easier debugging and development
 - Modular components
 
-### 🚀 **Performance**
+### **Performance**
 - Selective module loading
 - Optimized memory usage
 - Better resource management
 
-### 🛠️ **Development**
+### **Development**
 - Individual module testing
 - Parallel development capability
 - Simplified integration
 
 ## Compatibility
 
-### ✅ **Maintained Compatibility**
+### **Maintained Compatibility**
 
 - **Agent Configuration Files**: No changes needed
 - **Instance and Type Files**: Work unchanged  
@@ -109,7 +109,7 @@ cd Examples/advanced
 - **User Interface**: Unchanged user experience
 - **Communication Protocol**: FIPA messages work as before
 
-### 🔄 **Migration Path**
+### **Migration Path**
 
 1. **Phase 1**: Use `startmas_modular.sh` (current)
 2. **Phase 2**: Additional modules will be implemented
@@ -169,13 +169,13 @@ ls -la ../../src/dali_core.pl
 
 ```
 Starting DALI MAS with Modular Architecture...
-✅ Modular DALI system found at ../../src
+Modular DALI system found at ../../src
 Server ready. Starting the MAS with Modular Architecture...
 Launching agent instances using modular DALI system...
 Agent: agent1.txt (using modular architecture)
-✅ Modular MAS started successfully!
-🔧 Using new modular DALI architecture
-📁 Core system: ../../src/dali_core.pl
+Modular MAS started successfully!
+Using new modular DALI architecture
+Core system: ../../src/dali_core.pl
 ```
 
 ## Next Steps

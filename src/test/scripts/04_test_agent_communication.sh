@@ -19,9 +19,9 @@ rm -fr test/work/*.pl
 # Copy the communication file from Examples/advanced/conf
 if [ -f "../Examples/advanced/conf/communication.con" ]; then
     cp "../Examples/advanced/conf/communication.con" "test/conf/"
-    echo "✓ Copied communication.con from Examples/advanced/conf"
+    echo "Copied communication.con from Examples/advanced/conf"
 else
-    echo "✗ communication.con not found in ../Examples/advanced/conf"
+    echo "communication.con not found in ../Examples/advanced/conf"
     exit 1
 fi
 
@@ -68,9 +68,9 @@ done
 # Check if agents are running
 for i in 1 2; do
     if ps -p ${AGENT_PIDS[$i]} > /dev/null; then
-        echo "✓ Agent$i started successfully"
+        echo "Agent$i started successfully"
     else
-        echo "✗ Agent$i failed to start"
+        echo "Agent$i failed to start"
         kill $SERVER_PID
         for j in 1 2; do
             kill ${AGENT_PIDS[$j]} 2>/dev/null

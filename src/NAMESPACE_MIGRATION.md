@@ -10,19 +10,18 @@ The original utility module names were conflicting with SICStus Prolog system li
 - `debug_utils.pl` → Potential conflict with SICStus debug utilities
 
 ## Solution Applied
-
-### 🔧 **File Renaming**
+### **File Renaming**
 
 All utility files have been renamed with the `dali_` prefix to avoid conflicts:
 
 | **Original Name** | **New Name** | **Status** |
 |---|---|---|
-| `list_utils.pl` | `dali_list_utils.pl` | ✅ Migrated |
-| `file_utils.pl` | `dali_file_utils.pl` | ✅ Migrated |
-| `time_utils.pl` | `dali_time_utils.pl` | ✅ Migrated |
-| `debug_utils.pl` | `dali_debug_utils.pl` | ✅ Migrated |
+| `list_utils.pl` | `dali_list_utils.pl` | Migrated |
+| `file_utils.pl` | `dali_file_utils.pl` | Migrated |
+| `time_utils.pl` | `dali_time_utils.pl` | Migrated |
+| `debug_utils.pl` | `dali_debug_utils.pl` | Migrated |
 
-### 🔧 **Module Name Updates**
+### **Module Name Updates**
 
 Module declarations have been updated accordingly:
 
@@ -40,7 +39,7 @@ Module declarations have been updated accordingly:
 :- module(dali_debug_utils, [...]).
 ```
 
-### 🔧 **Import Updates**
+### **Import Updates**
 
 All files that import these utilities have been updated:
 
@@ -81,7 +80,7 @@ All files that import these utilities have been updated:
 :- use_module('../utils/dali_debug_utils').
 ```
 
-### 🔧 **Additional Conflict Resolution**
+### **Additional Conflict Resolution**
 
 **1. Removed `library(lists)` import** from `dali_list_utils.pl`:
 
@@ -120,7 +119,7 @@ dali_datime(DateTime) :- get_time(TimeStamp), stamp_date_time(TimeStamp, DateTim
 
 **Reason**: SICStus Prolog's `library(system)` already defines both `now/1` and `datime/1`, causing redefinition warnings.
 
-### 🔧 **Testing Updates**
+### **Testing Updates**
 
 Updated `Makefile` test targets:
 
@@ -140,17 +139,17 @@ use_module('utils/dali_debug_utils')
 
 ## Benefits of This Migration
 
-### ✅ **Conflict Resolution**
+### **Conflict Resolution**
 - **No namespace collisions** with SICStus system libraries
 - **Clean module loading** without import warnings
 - **Predictable behavior** across different Prolog implementations
 
-### ✅ **Better Naming Convention**
+### **Better Naming Convention**
 - **Clear ownership**: `dali_` prefix indicates DALI-specific modules
 - **Consistent naming**: All utility modules follow same pattern
 - **Future-proof**: Template for naming additional modules
 
-### ✅ **Improved Compatibility**
+### **Improved Compatibility**
 - **SICStus compatibility**: Works without conflicts in SICStus Prolog
 - **SWI-Prolog compatibility**: Also works in SWI-Prolog
 - **Cross-platform**: Consistent behavior across systems
@@ -168,45 +167,45 @@ Do you really want to redefine it?
 
 ### After Migration  
 ```
-✅ dali_list_utils: PASS
-✅ dali_file_utils: PASS
-✅ dali_time_utils: PASS
-✅ dali_debug_utils: PASS
+dali_list_utils: PASS
+dali_file_utils: PASS
+dali_time_utils: PASS
+dali_debug_utils: PASS
 ```
 
-**All warnings and conflicts resolved!** ✅
+**All warnings and conflicts resolved!**
 
 ## Files Modified
 
-### 📁 **Core Files**
+### **Core Files**
 - `src/utils/dali_list_utils.pl` (renamed + module name updated)
 - `src/utils/dali_file_utils.pl` (renamed + module name updated)
 - `src/utils/dali_time_utils.pl` (renamed + module name updated)
 - `src/utils/dali_debug_utils.pl` (renamed + module name updated)
 
-### 📁 **Import References**
+### **Import References**
 - `src/dali_core.pl` (imports updated)
 - `src/agent/agent_init.pl` (imports updated)
 - `src/parsing/rule_parser.pl` (imports updated)
 
-### 📁 **Documentation & Testing**
+### **Documentation & Testing**
 - `src/README.md` (file structure updated)
 - `src/Makefile` (test targets updated)
 - `src/NAMESPACE_MIGRATION.md` (this document)
 
 ## Best Practices Established
 
-### 🎯 **Naming Convention**
+### **Naming Convention**
 - **Prefix all DALI modules** with `dali_` to avoid conflicts
 - **Use descriptive names** that clearly indicate purpose
 - **Maintain consistency** across all modules
 
-### 🎯 **Conflict Prevention**
+### **Conflict Prevention**
 - **Check for system library conflicts** before naming modules
 - **Use unique namespaces** for project-specific functionality
 - **Document naming decisions** for future reference
 
-### 🎯 **Testing Strategy**
+### **Testing Strategy**
 - **Test all renamed modules** individually
 - **Verify integration** with dependent modules
 - **Check for warnings** and resolve conflicts
@@ -216,15 +215,15 @@ Do you really want to redefine it?
 When creating new modules, follow this pattern:
 
 ```
-✅ Good: dali_event_manager.pl
-✅ Good: dali_message_handler.pl
-✅ Good: dali_memory_manager.pl
+Good: dali_event_manager.pl
+Good: dali_message_handler.pl
+Good: dali_memory_manager.pl
 
-❌ Avoid: event_manager.pl (too generic)
-❌ Avoid: utils.pl (conflicts with system utils)
-❌ Avoid: memory.pl (conflicts with system memory libs)
+Avoid: event_manager.pl (too generic)
+Avoid: utils.pl (conflicts with system utils)
+Avoid: memory.pl (conflicts with system memory libs)
 ```
 
-## Migration Complete ✅
+## Migration Complete
 
  

@@ -184,7 +184,7 @@ examine_all(Me):-if(Me='EOL',true,examine_all1(Me)).
 
 
 examine_all1(Me):-if(member(Me,['(',')']), conta_parentesi(Me),true),
-                  if(tempo(Me), scrittura(Me),                 % controlla se è stato inserito il deltat, se si scrivo nel file pl e asserisco time_add
+                  if(tempo(Me), scrittura(Me),                 % controlla se ï¿½ stato inserito il deltat, se si scrivo nel file pl e asserisco time_add
                     (if(variabile(Me),examine_variable(Me),
                         if(label(Me),examine_label(Me),write_NovarNolabel(Me)))
 
@@ -198,22 +198,28 @@ variabile(Me):-name(Me,L),
 isa_variable(El):-El>64,El<91.
 isa_variable(El):-El=95.
 
-%Verifica se è stato inserito il delta Temporale dall'agente
+%Verifica se ï¿½ stato inserito il delta Temporale dall'agente
 
-tempo(Me):- name(Me,L), nth0(0,L,El,L1), El==116, numbertime(L1).                       %controlla che il primo carattere è una t
-numbertime(L1):- nth0(0,L1,El,L_rest),check_number(El), scorri(L_rest).                 %controlla se il primo elemento della lista è un numero e scorre la lista
+tempo(Me):- name(Me,L), nth0(0,L,El,L1), El==116, numbertime(L1).                       %controlla che il primo carattere ï¿½ una t
+numbertime(L1):- nth0(0,L1,El,L_rest),check_number(El), scorri(L_rest).                 %controlla se il primo elemento della lista ï¿½ un numero e scorre la lista
 check_number(El):- El>47, El<58.                                                        %range in ASCII per i numeri da 0 a 9
 scorri(L_rest):-if(L_rest=[],true, scorri_list(L_rest)).                                %controlla che tutti gli elementi della lista sono numeri 
 scorri_list(L_rest):- nth0(0,L_rest,X,L2), check_number(X),scorri(L2).
 scrittura(Me):- name(Me,L),nth0(0,L,R,L3), append([100,101,108,116,97,116,40],L3,L1),   %scrittura sul file pl del deltat inserito dall'agente
                 append(L1,[41],L2), clause(buffer(Parsed),_), retractall(buffer(_)),
 		append(Parsed,L2,Parola),assert(buffer(Parola)),
-		clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che è stato inserito
+		clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che ï¿½ stato inserito
 
 
 
-re_write(L):-arg(1,L,N1),if(N1=39,aggiungi_39(L),non_aggiungi(L)).%%EDITED RIGA SOTTO
-aggiungi_39(L):-append([39,39,39,39,39,39],L,Lf),append(Lf,[39,39,39,39,39,39],Lf1),
+re_write(L):-arg(1,L,N1),if((N1=39,is_already_quoted(L)),non_aggiungi(L),if(N1=39,aggiungi_39(L),non_aggiungi(L))).%%EDITED RIGA SOTTO
+% Check if string is already quoted (starts and ends with apostrophe)
+is_already_quoted(L) :- 
+    length(L, Len), Len >= 2,
+    L = [39|_],
+    last(L, 39).
+
+aggiungi_39(L):-append([39],L,Lf),append(Lf,[39],Lf1),
 						clause(buffer(Parsed),_), retractall(buffer(_)),
 						append(Parsed,Lf1, Parola), assert(buffer(Parola)).
 
@@ -310,9 +316,9 @@ examine_clause1(Me,Nf):-if(member(Me,['(',')']), conta_parentesi_le(Me),true),
 
 		 ).
 
-re_write1(L,Nf):-arg(1,L,N1),if(N1=39,aggiungi_39_le(L,Nf),non_aggiungi_le(L,Nf)).
+re_write1(L,Nf):-arg(1,L,N1),if((N1=39,is_already_quoted(L)),non_aggiungi_le(L,Nf),if(N1=39,aggiungi_39_le(L,Nf),non_aggiungi_le(L,Nf))).
 
-aggiungi_39_le(L,Nf):-append([39,39,39,39,39,39],L,Lf),append(Lf,[39,39,39,39,39,39],Lf1),name(T,Lf1),open(Nf,append,Stream,[]),
+aggiungi_39_le(L,Nf):-append([39],L,Lf),append(Lf,[39],Lf1),name(T,Lf1),open(Nf,append,Stream,[]),
                     write(Stream,T),close(Stream).
 non_aggiungi_le(L,Nf):-name(T,L),open(Nf,append,Stream,[]),
                     write(Stream,T),close(Stream).

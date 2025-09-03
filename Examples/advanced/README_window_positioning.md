@@ -167,9 +167,9 @@ WINDOW_OFFSET=80
 - Al prossimo avvio di Terminal, non ci saranno finestre DALI da ripristinare
 
 **Vantaggi**:
-- ✅ Non interferisce con altre finestre Terminal dell'utente
-- ✅ Terminal.app rimane utilizzabile dopo lo shutdown di DALI
-- ✅ Nessun ripristino automatico di finestre DALI
+- Non interferisce con altre finestre Terminal dell'utente
+- Terminal.app rimane utilizzabile dopo lo shutdown di DALI
+- Nessun ripristino automatico di finestre DALI
 
 ## Note Tecniche
 
