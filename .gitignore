@@ -16,3 +16,15 @@ src/test/conf/*
 src/test/conf/mas/*
 **/conf/communication.*
 *.log
+
+# Test-generated files (06_message_exchange_test.sh)
+build/
+**/build/
+src/test/scripts/build/
+temp_scripts/
+**/temp_scripts/
+*.conf
+*.pl
+*.ple
+*.plf
+*.plv
