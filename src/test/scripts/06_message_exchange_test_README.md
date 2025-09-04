@@ -43,13 +43,14 @@ Il test utilizza gli agenti originali più un agente di test per lo scambio mess
 - Riceve messaggi da altri agenti
 - Mantiene la logica originale del tipo
 
-**Test Sender** (Agente di Test):
+**Test Sender** (Agente di Test - `test_agent.txt`):
 
+- **File sorgente**: `src/test/scripts/test_agent.txt`
 - **Solo invio messaggi**: Non risponde ad eventi, solo invia
-- **Timing automatico**: Inizia dopo 5 secondi dall'avvio
-- **Messaggi periodici**: Invia messaggi ogni 15 secondi
+- **Timer DALI**: `t10` per esecuzione periodica
+- **Regole interne**: `start_testingI` e `send_test_messagesI`
 - **Target**: Invia messaggi sia ad agent1 che ad agent2
-- **Sequenza**: Invia `go` ad agent1 e agent2 (triggera goE), poi messaggi di test
+- **Sequenza**: Invia `go` (triggera goE), poi `test_msg` e `hello`
 
 ## Utilizzo
 

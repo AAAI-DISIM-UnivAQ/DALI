@@ -11,6 +11,7 @@ Examples/advanced/conf/communication.pl
 Examples/advanced/conf/communication.txt
 Examples/advanced/server.txt
 src/test/scripts/*.txt
+!src/test/scripts/test_agent.txt
 src/test/work/*
 src/test/conf/*
 src/test/conf/mas/*

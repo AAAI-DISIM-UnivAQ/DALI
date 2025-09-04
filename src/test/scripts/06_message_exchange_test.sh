@@ -204,25 +204,17 @@ else
     exit 1
 fi
 
-# Always add test sender agent regardless of source
-cat > "build/test_sender.txt" << 'EOF'
-:- write('=== Test Sender Agent Started ==='), nl.
+# Always add test sender agent from external file
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+TEST_AGENT_FILE="$SCRIPT_DIR/test_agent.txt"
 
-% Timer for periodic sending
-t10.
-
-% Send initial test messages after startup
-start_testingI :- 
-    write('TestSender: Starting message sending...'), nl,
-    messageA(agent1, send_message(go, test_sender)),
-    messageA(agent2, send_message(go, test_sender)).
-
-% Send test messages periodically
-send_test_messagesI :-
-    write('TestSender: Sending periodic test messages...'), nl,
-    messageA(agent1, send_message(test_msg, test_sender)),
-    messageA(agent2, send_message(hello, test_sender)).
-EOF
+if [ -f "$TEST_AGENT_FILE" ]; then
+    cp "$TEST_AGENT_FILE" "build/test_sender.txt"
+    echo "Copied test agent from: $TEST_AGENT_FILE"
+else
+    echo "Error: Test agent file not found: $TEST_AGENT_FILE"
+    exit 1
+fi
 
 # Create configuration files for the agents
 echo "Creating agent configuration files..."
@@ -300,6 +292,12 @@ agent_count=0
 for agent_file in build/*.txt; do
     if [ -f "$agent_file" ]; then
         agent_name=$(basename "$agent_file" .txt)
+        
+        # Skip test_sender - it will be started separately later
+        if [ "$agent_name" = "test_sender" ]; then
+            continue
+        fi
+        
         agent_count=$((agent_count + 1))
         
         # Calculate window position
@@ -361,6 +359,40 @@ EOF
 esac
 
 echo "✓ DALI User Interface started"
+
+# Wait 3 seconds before starting test_sender
+echo ""
+echo "Waiting 3 seconds before starting test_sender..."
+sleep 3
+
+# Start test_sender agent
+echo ""
+echo "Starting Test Sender Agent..."
+TEST_SENDER_WINDOW_X=$((UI_WINDOW_X + WINDOW_OFFSET))
+TEST_SENDER_WINDOW_Y=$((UI_WINDOW_Y + WINDOW_OFFSET))
+
+TEST_SENDER_TITLE="[DALI] DALI Agent (Modular): test_sender.txt"
+DALI_WINDOW_IDS+=("$TEST_SENDER_TITLE")
+
+case "$os_name" in
+    Darwin)
+        echo "Starting: DALI Agent (Modular): test_sender.txt (positioned at $TEST_SENDER_WINDOW_X,$TEST_SENDER_WINDOW_Y, size ${WINDOW_WIDTH_MACOS}x${WINDOW_HEIGHT_MACOS})"
+        osascript << EOF
+tell application "Terminal"
+    set newTab to do script "cd '$current_dir' && '$PROLOG' --noinfo -l '$DALI_CORE_PATH/dali_core.pl' --goal \"start_dali_agent('build/test_sender.conf').\""
+    set custom title of newTab to "$TEST_SENDER_TITLE"
+    set position of front window to {$TEST_SENDER_WINDOW_X, $TEST_SENDER_WINDOW_Y}
+    set size of front window to {$WINDOW_WIDTH_MACOS, $WINDOW_HEIGHT_MACOS}
+end tell
+EOF
+        ;;
+    Linux)
+        gnome-terminal --title="$TEST_SENDER_TITLE" --geometry="${WINDOW_COLS_LINUX}x${WINDOW_ROWS_LINUX}+${TEST_SENDER_WINDOW_X}+${TEST_SENDER_WINDOW_Y}" -- bash -c "cd '$current_dir' && '$PROLOG' --noinfo -l '$DALI_CORE_PATH/dali_core.pl' --goal \"start_dali_agent('build/test_sender.conf').\"" &
+        ;;
+esac
+
+sleep 2
+echo "✓ Test Sender Agent started"
 
 # =================================================================
 # PHASE 3: SYSTEM INITIALIZATION WAIT
@@ -472,8 +504,9 @@ echo "Test Summary:"
 echo "- Total test cycles: $TEST_CYCLES"
 echo "- Message test interval per cycle: ${MESSAGE_TEST_INTERVAL}s"
 echo "- Total testing time: $((TEST_CYCLES * MESSAGE_TEST_INTERVAL + (TEST_CYCLES - 1) * STABILIZATION_TIME))s"
-echo "- Test agents: agent1 (original), agent2 (original), test_sender (automatic)"
-echo "- Message flow: test_sender -> agent1/agent2, agent2 -> agent1 (via start_agentI)"
+echo "- Test agents: agent1 (original), agent2 (original), test_sender (delayed start)"
+echo "- Startup sequence: Server -> agent1, agent2 -> UI -> test_sender (+3s)"
+echo "- Message flow: test_sender -> agent1/agent2 via start_agentI"
 echo ""
 
 # =================================================================
