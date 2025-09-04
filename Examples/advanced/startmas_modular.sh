@@ -179,6 +179,8 @@ window_offset=$WINDOW_OFFSET
 # Array to track created DALI windows (macOS only)
 declare -a DALI_WINDOW_IDS=()
 
+
+
 # Improved function to open a new terminal based on OS with stacked window positioning
 open_terminal() {
     local cmd="$1"
@@ -264,6 +266,8 @@ for agent_filename in $BUILD_HOME/*; do
     sleep 2  # Increased sleep time
     $WAIT > /dev/null  # Wait a bit before launching the next agent
 done
+
+echo "✓ All agents started successfully"
 
 # Start user agent in another terminal
 user_cmd="$PROLOG --noinfo -l $DALI_HOME/active_user_wi.pl --goal user_interface."

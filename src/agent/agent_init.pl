@@ -175,6 +175,8 @@ filtra_fil(FI) :-
     retractall(parentesi(_)),
     remove_var_file(File).
 
+
+
 %% Extended initialization phase
 start1(Fe, AgentName, Libr, Fil) :-
     set_prolog_flag(discontiguous_warnings, off),
@@ -186,9 +188,9 @@ start1(Fe, AgentName, Libr, Fil) :-
     plf_from_name(Fe, FilePlf),
     txt_from_name(Fe, FileTxt),
 
-    aprifile(FilePl),
-    aprifile_res(FilePl),
-    load_program_rules(FilePl),
+    aprifile(FilePlv),
+    aprifile_res(FilePlv),
+    load_program_rules(FilePlv),
 
     remove_var(Fe),
     remove_var_ple(Fe),

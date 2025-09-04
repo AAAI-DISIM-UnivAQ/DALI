@@ -80,7 +80,9 @@ for i in 1 2; do
 done
 
 # Wait for communication
-sleep 5
+echo "Waiting for agent communication..."
+sleep 8
+echo "Communication period ended"
 
 # Terminate processes
 pkill sicstus

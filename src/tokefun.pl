@@ -190,11 +190,16 @@ add_newline_to_buffer:-
     append(Parsed,[10],NewParsed),  % 10 is ASCII code for newline
     assert(buffer(NewParsed)).
 
-% Add newline to buffer after a dot (end of clause)
+% Add dot and newline to buffer after a dot (end of clause)
 add_newline_after_dot:-
     clause(buffer(Parsed),_), 
     retractall(buffer(_)),
-    append(Parsed,[10],NewParsed),  % 10 is ASCII code for newline
+    % Check if buffer already ends with a dot
+    (last(Parsed, 46) ->
+        append(Parsed,[10],NewParsed)  % Just add newline if dot already present
+    ;
+        append(Parsed,[46,10],NewParsed)  % Add dot and newline if not present
+    ),
     assert(buffer(NewParsed)).
 
 % Translate :> operator to :- during tokenization
@@ -210,6 +215,8 @@ translate_univ_operator('=..'):-
     retractall(buffer(_)),
     append(Parsed,[61,46,46],NewParsed),  % 61='=' 46='.' 46='.' for '=..'
     assert(buffer(NewParsed)).
+
+% Comma handling is now done in non_aggiungi/1
 
 examine_all1(Me):-if(member(Me,['(',')']), conta_parentesi(Me),true),
                   if(tempo(Me), scrittura(Me),                 % controlla se � stato inserito il deltat, se si scrivo nel file pl e asserisco time_add
@@ -234,9 +241,9 @@ check_number(El):- El>47, El<58.                                                
 scorri(L_rest):-if(L_rest=[],true, scorri_list(L_rest)).                                %controlla che tutti gli elementi della lista sono numeri 
 scorri_list(L_rest):- nth0(0,L_rest,X,L2), check_number(X),scorri(L2).
 scrittura(Me):- name(Me,L),nth0(0,L,R,L3), append([100,101,108,116,97,116,40],L3,L1),   %scrittura sul file pl del deltat inserito dall'agente
-                append(L1,[41],L2), clause(buffer(Parsed),_), retractall(buffer(_)),
-		append(Parsed,L2,Parola),assert(buffer(Parola)),
-		clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che � stato inserito
+                append(L1,[41,32],L2), clause(buffer(Parsed),_), retractall(buffer(_)),  % Add space after deltat(...)
+	append(Parsed,L2,Parola),assert(buffer(Parola)),
+	clause(deltaT(X),true),retractall(deltaT(X)),assert(deltaT(1)).         %asserisco deltat a 1 in modo tale da sapere che � stato inserito
 
 
 
@@ -251,14 +258,24 @@ aggiungi_39(L):-append([39],L,Lf),append(Lf,[39],Lf1),
 						clause(buffer(Parsed),_), retractall(buffer(_)),
 						append(Parsed,Lf1, Parola), assert(buffer(Parola)).
 
-non_aggiungi(L):-clause(buffer(Parsed),_), retractall(buffer(_)),append(Parsed,L,Parola),
-						  assert(buffer(Parola)).
+non_aggiungi(L):-
+    % Check if L is a comma
+    (L = [44] -> 
+        % Add comma with space
+        clause(buffer(Parsed),_), retractall(buffer(_)),
+        append(Parsed,[44,32],Parola),  % 44=',' 32=' '
+        assert(buffer(Parola))
+    ;
+        % Normal processing
+        clause(buffer(Parsed),_), retractall(buffer(_)),append(Parsed,L,Parola),
+        assert(buffer(Parola))
+    ).
 
-write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<',',','.',';','~/','</','?/','=..'])), (check_parentesi, write_parentesi), true),
-                                     if(Me='.',add_newline_after_dot,true),
-                                     (if(Me=':>',translate_rule_operator(Me),
-                                        (if(Me='=..',translate_univ_operator(Me),
-                                           (name(Me,L),re_write(L)))))).
+write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<','.',';','~/','</','?/','=..'])), (check_parentesi, write_parentesi), true),
+                                     (if(Me='.',add_newline_after_dot,
+                                        (if(Me=':>',translate_rule_operator(Me),
+                                           (if(Me='=..',translate_univ_operator(Me),
+                                              (name(Me,L),re_write(L)))))))).
 write_parentesi:-re_write([41]),retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
 check_parentesi:-if((clause(evento_aperto,_),clause(parentesi(0),_)),true,false).
 
