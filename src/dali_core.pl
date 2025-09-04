@@ -11,7 +11,10 @@
     go/0,
     pari/0,
     internal/0,
-    external/0
+    external/0,
+    messageA/2,
+    message/2,
+    a/1
 ]).
 
 % Load all utility modules
@@ -66,6 +69,18 @@
 :- op(1200, xfx, [:-, ~/]).
 :- op(1200, xfx, [:-, </]).
 :- op(1200, xfx, [:-, ?/]).
+
+% Message sending predicates
+messageA(Agent, Message) :- 
+    a(message(Agent, Message)).
+
+% Action predicate for asynchronous execution
+a(Action) :- 
+    call(Action).
+
+% Message handling predicate
+message(Agent, Message) :-
+    send(Agent, Message).
 
 % Dynamic predicates
 :- dynamic tesg/1.
