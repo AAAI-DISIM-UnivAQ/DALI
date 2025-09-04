@@ -6,5 +6,6 @@ t60.
 % Send initial test messages after startup
 start_agentI :- 
     write('TestSender: Starting message sending...'), nl,
-    messageA(agent1, send_message(go, test_sender)),
+    messageA(agent1, send_message(go, test_sender)).
+
 
