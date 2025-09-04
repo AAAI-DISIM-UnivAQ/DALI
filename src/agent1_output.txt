@@ -1,0 +1,30 @@
+* predicate append/3 imported by rule_parser from lists is built_in
+* Approximate lines: 24-25, file: '/Users/giodegas/ai/DALI_2024/DALI/src/parsing/rule_parser.pl'
+* predicate member/2 imported by rule_parser from lists is built_in
+* Approximate lines: 24-25, file: '/Users/giodegas/ai/DALI_2024/DALI/src/parsing/rule_parser.pl'
+* predicate append/3 imported by agent_init from lists is built_in
+* Approximate lines: 24-25, file: '/Users/giodegas/ai/DALI_2024/DALI/src/tokefun.pl'
+* predicate member/2 imported by agent_init from lists is built_in
+* Approximate lines: 24-25, file: '/Users/giodegas/ai/DALI_2024/DALI/src/tokefun.pl'
+* [R] - singleton variables
+* Approximate lines: 243-246, file: '/Users/giodegas/ai/DALI_2024/DALI/src/tokefun.pl'
+* clauses for user:term_expansion/6 are not together
+* Approximate lines: 8-9, file: '/Users/giodegas/ai/DALI_2024/DALI/src/memory.pl'
+* predicate append/3 imported by dali_core from lists is built_in
+* Approximate lines: 4-5, file: '/Users/giodegas/ai/DALI_2024/DALI/src/communication_onto_utils.pl'
+* predicate member/2 imported by dali_core from lists is built_in
+* Approximate lines: 4-5, file: '/Users/giodegas/ai/DALI_2024/DALI/src/communication_onto_utils.pl'
+* [AgM] - singleton variables
+* Approximate lines: 4-13, file: '/Users/giodegas/ai/DALI_2024/DALI/src/communication_onto.pl'
+* [AgM] - singleton variables
+* Approximate lines: 26-35, file: '/Users/giodegas/ai/DALI_2024/DALI/src/communication_onto.pl'
+* predicate append/3 imported by dali_core from lists is built_in
+* Approximate lines: 24-25, file: '/Users/giodegas/ai/DALI_2024/DALI/src/tokefun.pl'
+* predicate member/2 imported by dali_core from lists is built_in
+* Approximate lines: 24-25, file: '/Users/giodegas/ai/DALI_2024/DALI/src/tokefun.pl'
+* [R] - singleton variables
+* Approximate lines: 243-246, file: '/Users/giodegas/ai/DALI_2024/DALI/src/tokefun.pl'
+* The predicate remove_dups/2, already imported into module dali_core from module dali_list_utils, is NOT being redefined
+* Approximate lines: 10-11, file: '/Users/giodegas/ai/DALI_2024/DALI/src/memory.pl'
+SICStus 4.6.0 (x86_64-darwin-17.7.0): Mon Apr  6 18:23:42 CEST 2020
+Licensed to studentSP4.6cc.univaq.it

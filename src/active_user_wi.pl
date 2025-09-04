@@ -65,7 +65,7 @@ variables(A0, A, T, L0, L) :-
     variables(A1, A, T, L1, L).
 
 % similar as the following, but it is called within by the goal 'user.'.
-user_inteface :-
+user_interface :-
     linda_client('localhost':3010),
     out(active_agent(user, 'localhost':3010)),
     procedure_message('localhost':3010).

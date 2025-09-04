@@ -14,7 +14,9 @@ echo "Testing agent communication..."
 mkdir -p test/work
 mkdir -p test/conf/mas
 mkdir -p test/conf
+mkdir -p log
 rm -fr test/work/*.pl
+rm -f log/log_agent*.txt
 
 # Copy the communication file from Examples/advanced/conf
 if [ -f "../Examples/advanced/conf/communication.con" ]; then
@@ -35,13 +37,19 @@ done
 # Create agent program files
 cat > test/work/agent1.txt << EOL
 t60.
-helloE :> write('Agent1 received: '),write("hello"),nl.
+helloE :> write('*** AGENT1 RECEIVED MESSAGE: hello ***'),nl.
 EOL
 
 cat > test/work/agent2.txt << EOL
 :- dynamic start_agent/0.
+:- assert(start_agent).
+
 t60.
-start_agentI:- messageA(agent1, send_message(hello, agent2)).
+
+% Invia il messaggio dopo l'inizializzazione
+start_agentI :- 
+    write('Agent2 sending hello to agent1...'),nl,
+    messageA(agent1, hello).
 EOL
 
 echo "Waiting the 3010 port to be free..."
@@ -58,9 +66,10 @@ SERVER_PID=$!
 # Wait for server to be ready
 sleep 2
 
-# Start agents using the new modular system
+# Start agents using the new modular system with output capture
 for i in 1 2; do
-    $SICSTUS --noinfo -l dali_core.pl --goal "start_dali_agent('test/conf/mas/agent$i.txt')." &
+    echo "Starting agent$i..."
+    $SICSTUS --noinfo -l dali_core.pl --goal "start_dali_agent('test/conf/mas/agent$i.txt')." > "agent${i}_output.txt" 2>&1 &
     AGENT_PIDS[$i]=$!
     sleep 2
 done
@@ -81,11 +90,8 @@ done
 
 # Wait for communication
 echo "Waiting for agent communication..."
-sleep 8
+sleep 20
 echo "Communication period ended"
 
 # Terminate processes
 pkill sicstus
-
-
-echo "Test completed!"
