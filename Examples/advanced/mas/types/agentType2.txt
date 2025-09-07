@@ -1,2 +1,2 @@
 
-goE:> write('received'), nl.
+goE:> write('received').
