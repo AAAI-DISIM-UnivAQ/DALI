@@ -1,1 +1,0 @@
-# MAS Configuration Directory

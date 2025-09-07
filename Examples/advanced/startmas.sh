@@ -26,7 +26,7 @@ fi
 # tmux new-session -d -s DALI_session top
 
 # Define paths and variables
-SICSTUS_HOME=/usr/local/sicstus4.6.0
+SICSTUS_HOME=$HOME/sicstus4.4.1
 MAIN_HOME=../..
 DALI_HOME=../../src
 CONF_DIR=conf

@@ -1,9 +1,0 @@
-:- write('=== Test Sender Agent Started ==='), nl.
-
-t60.
-
-:- write('TestSender: Starting message sending...'), nl,
-   messageA(agent1, send_message(go, test_sender)),
-   write('sent.', nl.)
-
-
