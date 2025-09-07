@@ -164,6 +164,8 @@ repeat,
 member(Me,L),
 examine_all(Me),
 Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1)),true),
+	% Ensure proper rule termination before writing
+	ensure_rule_termination,
 	if(clause(buffer(ParsedC),_), 
 	( retractall(buffer(_)), name(Parsed,ParsedC), 
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
@@ -176,6 +178,8 @@ repeat,
 member(Me,L),
 examine_all(Me),
 Me==U,!,if(clause(residue(R),_),(name(R1,R),examine_all(R1,Nf)),true), 
+	% Ensure proper rule termination before writing
+	ensure_rule_termination,
 if(clause(buffer(ParsedC),_), 
 	( retractall(buffer(_)), name(Parsed,ParsedC), 
 	  open(Nf, append, Stream, []), write(Stream, Parsed), close(Stream)
@@ -187,34 +191,95 @@ examine_all(Me):-if(Me='EOL',add_newline_to_buffer,examine_all1(Me)).
 add_newline_to_buffer:-
     clause(buffer(Parsed),_), 
     retractall(buffer(_)),
-    append(Parsed,[10],NewParsed),  % 10 is ASCII code for newline
-    assert(buffer(NewParsed)).
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
+    ;
+        append(Parsed,[10],NewParsed),  % 10 is ASCII code for newline
+        assert(buffer(NewParsed))
+    ).
 
 % Add dot and newline to buffer after a dot (end of clause)
 add_newline_after_dot:-
     clause(buffer(Parsed),_), 
     retractall(buffer(_)),
-    % Check if buffer already ends with a dot
-    (last(Parsed, 46) ->
-        append(Parsed,[10],NewParsed)  % Just add newline if dot already present
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
     ;
-        append(Parsed,[46,10],NewParsed)  % Add dot and newline if not present
-    ),
-    assert(buffer(NewParsed)).
+        % Check if buffer already ends with a dot
+        (last(Parsed, 46) ->
+            append(Parsed,[10],NewParsed)  % Just add newline if dot already present
+        ;
+            append(Parsed,[46,10],NewParsed)  % Add dot and newline if not present
+        ),
+        assert(buffer(NewParsed))
+    ).
+
+% Add comma with space to buffer
+add_comma_with_space:-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
+    ;
+        append(Parsed,[44,32],NewParsed),  % 44=',' 32=' '
+        assert(buffer(NewParsed))
+    ).
+
+% Add semicolon with space to buffer
+add_semicolon_with_space:-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
+    ;
+        append(Parsed,[59,32],NewParsed),  % 59=';' 32=' '
+        assert(buffer(NewParsed))
+    ).
+
+% Ensure proper rule termination - add dot if missing at end of buffer
+ensure_rule_termination:-
+    clause(buffer(Parsed),_), 
+    retractall(buffer(_)),
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
+    ;
+        % Check if buffer ends with a dot
+        (last(Parsed, 46) ->
+            append(Parsed,[10],NewParsed)  % Just add newline if dot already present
+        ;
+            append(Parsed,[46,10],NewParsed)  % Add dot and newline if not present
+        ),
+        assert(buffer(NewParsed))
+    ).
 
 % Translate :> operator to :- during tokenization
 translate_rule_operator(':>'):-
     clause(buffer(Parsed),_), 
     retractall(buffer(_)),
-    append(Parsed,[58,45],NewParsed),  % 58=':' 45='-' for ':-'
-    assert(buffer(NewParsed)).
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
+    ;
+        append(Parsed,[58,45],NewParsed),  % 58=':' 45='-' for ':-'
+        assert(buffer(NewParsed))
+    ).
 
 % Translate =.. operator (univ) correctly without spaces
 translate_univ_operator('=..'):-
     clause(buffer(Parsed),_), 
     retractall(buffer(_)),
-    append(Parsed,[61,46,46],NewParsed),  % 61='=' 46='.' 46='.' for '=..'
-    assert(buffer(NewParsed)).
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([]))  % Keep empty buffer
+    ;
+        append(Parsed,[61,46,46],NewParsed),  % 61='=' 46='.' 46='.' for '=..'
+        assert(buffer(NewParsed))
+    ).
 
 % Comma handling is now done in non_aggiungi/1
 
@@ -256,30 +321,68 @@ is_already_quoted(L) :-
 
 aggiungi_39(L):-append([39],L,Lf),append(Lf,[39],Lf1),
 						clause(buffer(Parsed),_), retractall(buffer(_)),
-						append(Parsed,Lf1, Parola), assert(buffer(Parola)).
+						% Only process if buffer is not empty
+						(Parsed = [] ->
+							assert(buffer(Lf1))  % Just add the quoted string
+						;
+							append(Parsed,Lf1, Parola), assert(buffer(Parola))
+						).
 
 non_aggiungi(L):-
-    % Check if L is a comma
-    (L = [44] -> 
-        % Add comma with space
-        clause(buffer(Parsed),_), retractall(buffer(_)),
-        append(Parsed,[44,32],Parola),  % 44=',' 32=' '
-        assert(buffer(Parola))
+    % Normal processing - let write_NovarNolabel handle special characters
+    clause(buffer(Parsed),_), retractall(buffer(_)),
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer(L))  % Just add the character
     ;
-        % Normal processing
-        clause(buffer(Parsed),_), retractall(buffer(_)),append(Parsed,L,Parola),
-        assert(buffer(Parola))
+        append(Parsed,L,Parola), assert(buffer(Parola))
     ).
 
-write_NovarNolabel(Me):-if((member(Me,[':-',':>',':<','.',';','~/','</','?/','=..'])), (check_parentesi, write_parentesi), true),
-                                     (if(Me='.',add_newline_after_dot,
-                                        (if(Me=':>',translate_rule_operator(Me),
-                                           (if(Me='=..',translate_univ_operator(Me),
-                                              (name(Me,L),re_write(L)))))))).
-write_parentesi:-re_write([41]),retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
+write_NovarNolabel(Me):-
+    (member(Me,[':-',':>',':<','.',';','~/','</','?/','=..']) ->
+        (check_parentesi, write_parentesi)
+    ;
+        (Me='.' ->
+            add_newline_after_dot
+        ;
+            (Me=':>' ->
+                translate_rule_operator(Me)
+            ;
+                (Me='=..' ->
+                    translate_univ_operator(Me)
+                ;
+                    (Me=',' ->
+                        add_comma_with_space
+                    ;
+                        (Me=';' ->
+                            add_semicolon_with_space
+                        ;
+                            (name(Me,L),re_write(L))
+                        )
+                    )
+                )
+            )
+        )
+    ).
+write_parentesi:-
+    clause(buffer(Parsed),_), retractall(buffer(_)),
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer([41]))  % Just add the closing parenthesis
+    ;
+        append(Parsed,[41],Parola), assert(buffer(Parola))
+    ),
+    retractall(evento_aperto),retractall(parentesi(_)),assert(parentesi(0)).
 check_parentesi:-if((clause(evento_aperto,_),clause(parentesi(0),_)),true,false).
 
-examine_variable(Me):-name(Me,L),append([118,97,114,95],L,Lt),re_write(Lt).
+examine_variable(Me):-name(Me,L),append([118,97,114,95],L,Lt),
+    clause(buffer(Parsed),_), retractall(buffer(_)),
+    % Only process if buffer is not empty
+    (Parsed = [] ->
+        assert(buffer(Lt))  % Just add the variable
+    ;
+        append(Parsed,Lt,Parola), assert(buffer(Parola))
+    ).
 
 %ESAMINA LE ETICHETTE DEGLI EVENTI%
 label(Me):-name(Me,L),nth0(0,L,El),piccolo(El),last(L,U),app_label(U).
@@ -292,21 +395,37 @@ app_label(U):-U=65;U=69;U=73;U=71;U=84;U=80;U=78;U=82.
 examine_label(Me):-name(Me,L),last(L,U),if(U=65,appA(L,U),if(U=69,appE(L,U),if(U=73,appI(L,U),
                       if(U=71,appG(L,U),if(U=84,appT(L,U),if(U=80,appP(L,U),if(U=78,appN(L,U),if(U=82,appR(L,U),true)))))))).
 appA(L,U):-length(L,N),nth1(N,L,U,R),append([97,40],R,L1),
-                re_write(L1),assert(evento_aperto).
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto).
 appE(L,U):- conta_eventi_esterni,length(L,N),nth1(N,L,U,R),append([101,118,101,40],R,L1), %inserito conta_eventi_esterni 
-                re_write(L1),assert(evento_aperto).   
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto).   
 appI(L,U):-length(L,N),nth1(N,L,U,R),append([101,118,105,40],R,L1),
-                re_write(L1),assert(evento_aperto). 
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto). 
 appG(L,U):-length(L,N),nth1(N,L,U,R),append([111,98,103,40],R,L1),
-                re_write(L1),assert(evento_aperto).        
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto).        
 appT(L,U):-length(L,N),nth1(N,L,U,R),append([116,101,115,103,40],R,L1),
-                re_write(L1),assert(evento_aperto).  
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto).  
 appP(L,U):-length(L,N),nth1(N,L,U,R),append([101,118,112,40],R,L1),
-                re_write(L1),assert(evento_aperto). 
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto). 
 appN(L,U):-length(L,N),nth1(N,L,U,R),append([101,110,40],R,L1),
-                re_write(L1),assert(evento_aperto). 
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto). 
 appR(L,U):-length(L,N),nth1(N,L,U,R),append([114,101,109,40],R,L1),
-                re_write(L1),assert(evento_aperto). 
+                clause(buffer(Parsed),_), retractall(buffer(_)),
+                (Parsed = [] -> assert(buffer(L1)) ; append(Parsed,L1,Parola), assert(buffer(Parola))),
+                assert(evento_aperto). 
 
 conta_eventi_esterni:- clause(eventi_esterni(X),true), R is X+1, retractall(eventi_esterni(X)),assert(eventi_esterni(R)). %contatore degli eventi esterni
 

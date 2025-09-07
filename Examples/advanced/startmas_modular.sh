@@ -81,7 +81,7 @@ if [ ! -z "$SERVER_PROCESSES" ]; then
     
     # Wait for port to be freed
     echo "Waiting for port 3010 to be freed..."
-    local count=0
+    count=0
     while check_port_3010 && [ $count -lt 10 ]; do
         sleep 1
         count=$((count + 1))
@@ -220,13 +220,13 @@ for instance_filename in $INSTANCES_HOME/*.txt; do
     echo "Instance: " $instance_filename " of type: " $type_filename
     instance_base="${instance_filename##*/}"  # Extract instance base name
     cat "$type_filename" > "$BUILD_HOME/$instance_base"
-    chmod 755 "$BUILD_HOME/$instance_base"
+    # Note: .txt agent files should not be made executable per user requirements
 done
 
 echo "Built agents:"
 ls -l $BUILD_HOME
 cp $BUILD_HOME/*.txt work
-chmod 755 work/*.txt
+# Note: .txt agent files should not be made executable per user requirements
 
 # Counter for unique script names
 script_counter=0
@@ -300,7 +300,55 @@ open_terminal() {
     window_y_pos=$((window_y_pos + window_offset))
 }
 
-# Function to check Prolog syntax with timeout (macOS compatible)
+# Function to execute Prolog commands with timeout and proper cleanup (for one-time commands)
+execute_prolog_with_timeout() {
+    local timeout_seconds="$1"
+    local description="$2"
+    shift 2
+    local prolog_args=("$@")
+    
+    echo "Executing Prolog: $description (timeout: ${timeout_seconds}s)"
+    
+    # Create a temporary output file to capture detailed output
+    local temp_output="$TEMP_DIR/prolog_exec_$$.tmp"
+    
+    # Define timeout function for cross-platform compatibility
+    timeout_cmd() {
+        local duration="$1"
+        shift
+        if command -v timeout &> /dev/null; then
+            # Linux/GNU timeout
+            timeout "$duration" "$@"
+        else
+            # macOS fallback using perl (as per user memory)
+            perl -e 'alarm shift; exec @ARGV' "$duration" "$@"
+        fi
+    }
+    
+    # Execute Prolog with timeout
+    if timeout_cmd "$timeout_seconds" "$PROLOG" "${prolog_args[@]}" > "$temp_output" 2>&1; then
+        echo "✓ Prolog execution completed successfully: $description"
+        rm -f "$temp_output"
+        return 0
+    else
+        local exit_code=$?
+        echo "✗ Prolog execution failed or timed out: $description"
+        echo "Exit code: $exit_code"
+        echo "Output:"
+        cat "$temp_output"
+        echo ""
+        
+        # Kill any remaining SICStus processes that might be hanging
+        echo "Cleaning up any hanging SICStus processes..."
+        pkill -f "sicstus.*dali_full_compiler" 2>/dev/null || true
+        pkill -f "sicstus.*compile_with_dali" 2>/dev/null || true
+        
+        rm -f "$temp_output"
+        return 1
+    fi
+}
+
+# Function to check Prolog syntax with timeout and enhanced validation (macOS compatible)
 check_prolog_syntax() {
     local file="$1"
     local file_type="$2"
@@ -325,7 +373,7 @@ check_prolog_syntax() {
             fi
         }
         
-        # Use timeout to prevent Prolog from hanging
+        # First, perform basic syntax validation with enhanced error detection
         if ! timeout_cmd "$timeout_seconds" "$PROLOG" --noinfo --goal "catch((consult('$file'), write('SYNTAX_OK')), Error, (write('SYNTAX_ERROR: '), write(Error), nl)), halt." > "$temp_output" 2>&1; then
             echo "✗ Syntax check failed or timed out for $file"
             echo "Error details:"
@@ -357,6 +405,60 @@ check_prolog_syntax() {
             rm -f "$temp_output"
             return 1
         else
+            # Additional validation: check for common formatting issues
+            echo "Performing additional syntax validation..."
+            
+            # Check for missing dots at end of lines (basic check)
+            local missing_dots=$(grep -v '^$' "$file" | grep -v '\.$' | wc -l)
+            if [ "$missing_dots" -gt 0 ]; then
+                echo "✗ WARNING: Found $missing_dots lines without proper termination dots"
+                echo "This may indicate malformed Prolog syntax"
+                echo "File content:"
+                echo "----------------------------------------"
+                cat "$file"
+                echo "----------------------------------------"
+                echo ""
+                rm -f "$temp_output"
+                return 1
+            fi
+            
+            # Check for extremely long lines (potential concatenation issues)
+            local long_lines=$(awk 'length($0) > 200 {print NR ": " $0}' "$file" | wc -l)
+            if [ "$long_lines" -gt 0 ]; then
+                echo "✗ WARNING: Found $long_lines extremely long lines (potential concatenation issues)"
+                echo "This may indicate malformed Prolog syntax"
+                echo "Long lines:"
+                awk 'length($0) > 200 {print NR ": " $0}' "$file"
+                echo ""
+                echo "File content:"
+                echo "----------------------------------------"
+                cat "$file"
+                echo "----------------------------------------"
+                echo ""
+                rm -f "$temp_output"
+                return 1
+            fi
+            
+            # Check for duplicate content (potential compilation issues)
+            local line_count=$(wc -l < "$file")
+            local unique_lines=$(sort "$file" | uniq | wc -l)
+            if [ "$line_count" -gt 2 ] && [ "$line_count" -eq "$unique_lines" ] && [ "$line_count" -gt 1 ]; then
+                # Check if all non-empty lines are identical
+                local non_empty_lines=$(grep -v '^$' "$file" | wc -l)
+                local unique_non_empty=$(grep -v '^$' "$file" | sort | uniq | wc -l)
+                if [ "$non_empty_lines" -gt 1 ] && [ "$unique_non_empty" -eq 1 ]; then
+                    echo "✗ WARNING: All non-empty lines are identical - potential compilation issue"
+                    echo "This may indicate the compiler generated duplicate content"
+                    echo "File content:"
+                    echo "----------------------------------------"
+                    cat "$file"
+                    echo "----------------------------------------"
+                    echo ""
+                    rm -f "$temp_output"
+                    return 1
+                fi
+            fi
+            
             echo "✓ Syntax check passed for $file"
             rm -f "$temp_output"
             return 0
@@ -438,18 +540,17 @@ for agent_filename in work/*.txt; do
     
     echo "✓ Configuration file created for $agent_base"
     
-    # Use legacy compiler for REAL compilation (handles DALI syntax correctly)
-    echo "Running REAL DALI compilation for $agent_base using legacy compiler..."
+    # Use DALI compiler for REAL compilation (handles DALI syntax correctly)
+    echo "Running REAL DALI compilation for $agent_base using DALI compiler..."
     agent_config="$current_dir/conf/mas/$agent_base"
     
-    # Use legacy compiler for REAL compilation (handles DALI syntax and generates all files)
-    echo "Compiling with DALI legacy compiler (handles DALI syntax correctly)..."
-    if ! "$PROLOG" --noinfo -l "$DALI_MODULAR_HOME/dali_legacy_compiler.pl" --goal compile_with_legacy\(\'$agent_config\'\). > /dev/null 2>&1; then
-        echo "FATAL ERROR: Legacy DALI compilation failed for $agent_base"
+    # Use DALI compiler for REAL compilation (handles DALI syntax and generates all files)
+    echo "Compiling with DALI compiler (handles DALI syntax correctly)..."
+    if ! execute_prolog_with_timeout 10 "DALI compilation for $agent_base" --noinfo -l "$DALI_MODULAR_HOME/dali_working_compiler.pl" --goal compile_agent_working\(\'$agent_config\'\).; then
+        echo "FATAL ERROR: DALI compilation failed or timed out for $agent_base"
         echo "This indicates serious issues with the agent source file or configuration"
-        echo "Attempting compilation with visible output for debugging..."
-        "$PROLOG" -l "$DALI_MODULAR_HOME/dali_legacy_compiler.pl" --goal compile_with_legacy\(\'$agent_config\'\).
-        echo "Compilation failed. Exiting with halt as per requirements."
+        echo "The compilation process was terminated after 10 seconds timeout."
+        echo "Exiting with halt as per requirements."
         exit 1
     fi
     
@@ -508,7 +609,29 @@ if [ "$validation_failed" = true ]; then
 fi
 
 echo ""
-echo "Performing syntax validation for all generated files..."
+echo "Performing syntax validation for all generated files and configuration files..."
+
+# First, check configuration files
+echo "Checking configuration files..."
+config_files=(
+    "$CONF_DIR/communication.txt"
+    "$CONF_DIR/communication.pl"
+    "$CONF_DIR/communication.con"
+)
+
+for config_file in "${config_files[@]}"; do
+    if [ -f "$config_file" ]; then
+        echo "Checking configuration file: $config_file"
+        if ! check_prolog_syntax "$config_file" "configuration"; then
+            echo "FATAL ERROR: Syntax check failed for configuration file $config_file"
+            echo "Cannot proceed with MAS startup due to syntax errors in configuration."
+            echo ""
+            echo "Please fix the syntax errors in the configuration files before retrying."
+            echo "Configuration files must be valid Prolog syntax."
+            exit 1
+        fi
+    fi
+done
 
 # Now check syntax of all generated files
 for agent_filename in $BUILD_HOME/*; do
@@ -658,8 +781,14 @@ read
 # Clean up processes
 echo "Shutting down MAS..."
 
-# Stop SICStus Prolog processes
+# Stop SICStus Prolog processes with timeout
 echo "Stopping SICStus Prolog processes..."
+echo "Giving processes 5 seconds to terminate gracefully..."
+pkill sicstus 2>/dev/null || true
+sleep 2
+
+# Force kill any remaining SICStus processes
+echo "Force killing any remaining SICStus processes..."
 pkill -9 sicstus 2>/dev/null || true
 
 # Close only DALI terminals - improved approach
