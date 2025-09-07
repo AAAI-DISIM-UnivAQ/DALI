@@ -17,7 +17,7 @@ src/test/conf/*
 src/test/conf/mas/*
 **/conf/communication.*
 *.log
-
+!.gitkeep
 # Test-generated files (06_message_exchange_test.sh)
 build/
 **/build/
