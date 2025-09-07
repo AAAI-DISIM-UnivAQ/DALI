@@ -4,125 +4,30 @@
 % University of L'Aquila, ITALY
 % http://www.disim.univaq.it
 
-% Main DALI agent system coordinator
+% Main DALI agent system coordinator - Runtime execution system
 
 :- module(dali_core, [
     start_dali_agent/1,
     go/0,
     pari/0,
     internal/0,
-    external/0,
-    messageA/2,
-    message/2,
-    a/1
+    external/0
 ]).
 
-% Load all utility modules
-:- use_module('utils/dali_list_utils').
-:- use_module('utils/dali_file_utils').
-:- use_module('utils/dali_debug_utils').
-:- use_module('utils/dali_time_utils').
+% Load common DALI components
+:- use_module('dali_common').
 
-% Load core agent modules
+% Load core agent modules for runtime
 :- use_module('agent/agent_init').
 
-% Load parsing modules
-:- use_module('parsing/rule_parser').
+% Import debug utilities directly for trace_point
+:- use_module('utils/dali_debug_utils').
 
-% Load existing includes from original file
-% Note: These files will be modularized in future phases
-:- ['communication_onto.pl'].
-:- ['substitute.pl'].
-:- ['tokefun.pl'].
-:- ['meta1.pl'].
-:- ['remove_variables.pl'].
-:- ['memory.pl'].
-:- ['examine_past_constraints.pl'].
-:- ['multiple_events_processor.pl'].
-% utils.pl NOT included - replaced by modular utils/ modules
-
-% Standard library modules
-:- use_module(library(random)).
-% Note: lists library conflicts with our custom list_utils intersection/3
-% Will re-evaluate if needed for specific predicates not in dali_list_utils
-% :- use_module(library(lists)).
-:- use_module(library(system)).
-% Note: Specialized libraries may not be available in all SWI-Prolog installations
-% :- use_module(library('linda/client')).
-% :- use_module(library(clpq)).
-% :- use_module(library(fdbg)).
-% :- use_module(library(file_systems)).
-
-% Set compilation flags
-:- multifile user:term_expansion/6.
-:- set_prolog_flag(discontiguous_warnings, off).
-:- set_prolog_flag(single_var_warnings, off).
-
-% Define operators from original file
-:- op(500, xfy, :>).
-:- op(500, xfy, :<).
-:- op(10, xfy, ~/).
-:- op(1200, xfy, </).
-:- op(200, xfy, ?/).
-:- op(1200, xfx, [:-, :>]).
-:- op(1200, xfx, [:-, :<]).
-:- op(1200, xfx, [:-, ~/]).
-:- op(1200, xfx, [:-, </]).
-:- op(1200, xfx, [:-, ?/]).
-
-% Message sending predicates
-messageA(Agent, Message) :- 
-    a(message(Agent, Message)).
-
-% Action predicate for asynchronous execution
-a(Action) :- 
-    call(Action).
-
-% Message handling predicate
-message(Agent, Message) :-
-    send(Agent, Message).
-
-% Dynamic predicates
-:- dynamic tesg/1.
-:- dynamic ontology/2.
-:- dynamic en/1.
-:- dynamic told/6.
-:- dynamic export_past/1.
-:- dynamic export_past_do/1.
-:- dynamic export_past_not_do/1.
-:- dynamic deltat/1.
-:- dynamic deltatime/1.
-:- dynamic simultaneity_interval/1.
-:- dynamic wishlist/1.
-:- dynamic tstart/1.
-:- dynamic mem_current/1.
-:- dynamic mem_no_dup/1.
-:- dynamic mem_past/1.
-:- dynamic verifica_lista/1.
-:- dynamic past/3.
-:- dynamic tep/2.
-:- dynamic fatto_mul/2.
-:- dynamic continue_mul_f/1.
-:- dynamic eve/1.
-:- dynamic eve_cond/1.
-
-% Term expansion rules from original file
-user:term_expansion((X,Y), [], [], ([X,Y]), [], []).
-user:term_expansion((X;Y), [], [], ([X,Y]), [], []).
-user:term_expansion((H:>B), [], [], (H:-B), [], []).
-user:term_expansion((X->Y), [], [], ([X,Y]), [], []).
-user:term_expansion((H:<B), [], [], (cd(H):-B), [], []).
-user:term_expansion((H~/B), [], [], (export_past(H):-decompose(H,B)), [], []).
-user:term_expansion((H</B), [], [], (export_past_not_do(H):-decompose_not_do(H,B)), [], []).
-user:term_expansion((H?/B), [], [], (export_past_do(H):-decompose_if_it_is(H,B)), [], []).
-user:term_expansion((H:B), [], [], (ct(H,B)), [], []).
-user:term_expansion((H:at(B)), [], [], (ct(H,B)), [], []).
-
-%% Main entry point - initialize DALI agent
+%% Main entry point - initialize DALI agent with full execution
 start_dali_agent(ConfigFile) :-
-    trace_point('Starting DALI agent system'),
+    trace_point('Starting DALI agent system with full execution', ConfigFile),
     agent_init:start0(ConfigFile),
-    trace_point('Agent initialized, starting main loop'),
+    trace_point('Agent initialized, starting main execution loop'),
     go.
 
 %% Main agent execution loop
@@ -142,11 +47,11 @@ pari :-
         (external, internal)
     ).
 
-%% Internal event processing cycle
+%% Internal processing cycle
 internal :-
     blocco_constr,
     ricmess,
-    ev_int,
+    ev_int, 
     ev_goal,
     ev_int0,
     blocco_numero_ev_int,
@@ -163,7 +68,7 @@ internal :-
     blocco_constr,
     controlla_vita.
 
-%% External event processing cycle
+%% External processing cycle
 external :-
     blocco_constr,
     ricmess,
@@ -175,67 +80,5 @@ external :-
     blocco_constr,
     controlla_vita.
 
-%% Side goal processing
-side_goal :-
-    obtaining_goals,
-    residue_goal.
-
-%% Constraint evaluation
-blocco_constr :-
-    evaluate_evp_constr,
-    evaluate_evp_do,
-    evaluate_evp_not_do.
-
-%% Memory and past events management
-controlla_vita :-
-    controlla_vita_past_base,
-    controlla_vita_remember.
-
-%% Utility predicates
-en(X) :- en(X, _).
-not(X) :- (X -> false; true).
-
-%% Past event predicates
-evp(E) :- clause(past(E), _).
-evp(E) :- clause(past(E, _, _), _).
-rem(E) :- clause(remember(E, _, _), _).
-isa(E) :- clause(isa(E, _, _), _).
-
-%% Test goals
-tesg(X) :-
-    clause(past(X), _);
-    clause(isa(X, _, _), _);
-    clause(past(X, _, _), _).
-
-% Placeholder predicates that need to be implemented in separate modules
-% These will be moved to appropriate modules in later phases
-
-ricmess :- true.  % Communication module
-ev_int :- true.   % Internal events module
-ev_goal :- true.  % Goal management module
-ev_int0 :- true.  % Internal events processing
-blocco_numero_ev_int :- true.  % Internal events numbering
-blocco_frequenza :- true.      % Frequency management
-ev_int2 :- true.  % Internal events phase 2
-controlla_freq_tent :- true.   % Frequency control
-svuota_coda_priority :- true.  % Priority queue management
-controlla_freq_iv :- true.     % Internal frequency control
-scatena :- true.  % Event triggering
-keep_action :- true.           % Action management
-execute_do_action_propose :- true.  % Action execution
-prendi_action_normal :- true.  % Normal action processing
-processa_eve :- true.          % External event processing
-% examine_mul/0 is provided by rule_parser module (line 154: rule_parser:examine_mul)
-obtaining_goals :- true.       % Goal obtaining
-residue_goal :- true.          % Residual goal processing
-% evaluate_evp_constr/0, evaluate_evp_do/0, evaluate_evp_not_do/0 
-% are provided by examine_past_constraints.pl
-controlla_vita_past_base :- true.   % Past events lifecycle
-controlla_vita_remember :- true.    % Remember events lifecycle
-
 % Print startup message
-:- initialization((
-    write('DALI Agent System - Modular Version'), nl,
-    write('Modules loaded successfully'), nl,
-    write('Use start_dali_agent(ConfigFile) to start an agent'), nl
-)). 
+:- write('DALI Core Runtime System loaded'), nl.
