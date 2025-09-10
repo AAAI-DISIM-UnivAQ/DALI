@@ -6,12 +6,12 @@ This guide explains how to migrate from the original DALI system to the new modu
 
 ## Files Modified/Created
 
-### 🆕 New Files Created
+### New Files Created
 
 1. **`startmas_modular.sh`** - Updated version of `startmas.sh`
 2. **`conf/startagent_modular.sh`** - Updated version of `conf/startagent.sh`
 
-### 📝 Original Files (Still Available)
+### Original Files (Still Available)
 
 - `startmas.sh` - Original startup script (uses `active_dali_wi.pl`)
 - `conf/startagent.sh` - Original agent starter (uses `active_dali_wi.pl`)
