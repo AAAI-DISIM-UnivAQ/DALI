@@ -4,7 +4,7 @@
 
 DALI is a meta interpreter built on top of Sicstus Prolog (R) (_at the moment_).
 
-![DALI Logo](DALI_logo.png)
+![DALI Logo](img/DALI_logo.png)
 
 ## Installation
 
@@ -22,7 +22,7 @@ You can download DALI and test it by running an example DALI MAS:
 ```sh
 git clone https://github.com/AAAI-DISIM-UnivAQ/DALI.git
 cd DALI/Examples/advanced
-bash startmas_modular.sh
+bash startmas.sh
 ```
 
 You will see different windows opening:
@@ -30,6 +30,32 @@ You will see different windows opening:
 * Prolog LINDA server (active_server_wi.pl)
 * Prolog FIPA client (active_user_wi.pl)
 * 1 instance of DALI metaintepreter for each agent (dali_core.pl)
+
+Then you should have this output in your screen separated into panels by tmux:
+
+![DALI Startup Screen](img/startup.png)
+
+You can jump between panels with CTRL+B and arrows up/down.
+
+Then in the User Prolog prompt you can give these inputs:
+
+```prolog.
+agent1.
+user.
+send_message(go, user).
+```
+
+and obtain the following screen output:
+
+![DALI Message exchange](img/messages.png)
+
+To shutdown the MAS, open a new terminal and give the command:
+
+```bash
+   pkill sicstus
+```
+
+and press ENTER
 
 **Windows:**
 
