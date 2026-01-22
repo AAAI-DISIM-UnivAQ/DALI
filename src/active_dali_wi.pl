@@ -9,6 +9,8 @@
 %%:-leash([exception]).
 %%
 
+:- use_module(library(sockets)).
+
 :- multifile user:term_expansion/6.
 :- set_prolog_flag(discontiguous_warnings,off),
    set_prolog_flag(single_var_warnings,off).
@@ -2199,4 +2201,19 @@ divento_pass_and_first(E):-retract(tstart(_)),svuota_lista, passato, startFirstT
 
 
 
-
+ask_chatgpt(Type) :-
+    print('>>> [SYSTEM] Connected to Python LLM...'), nl,
+    catch(
+        (
+            socket_client_open('127.0.0.1':9000, Stream, [type(text)]),
+            write(Stream, 'Safety advice for '), write(Stream, Type), write(Stream, '.'), nl(Stream),
+            flush_output(Stream),
+            read(Stream, Advice),
+            close(Stream),
+            nl, print('***********************************'), nl,
+            print('>>> AI HINT: '), print(Advice), nl,
+            print('***********************************'), nl
+        ),
+        Error,
+        (print('>>> SOCKET ERROR: '), print(Error), nl)
+    ).
