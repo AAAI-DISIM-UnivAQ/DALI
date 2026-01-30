@@ -2199,7 +2199,7 @@ divento_pass_and_first(E):-retract(tstart(_)),svuota_lista, passato, startFirstT
 
 
 
-acquire_knowledge(Context) :-
+acquire_knowledge(Context, PrologFact) :-
     print('>>> [SYSTEM] INTERROGO ORACOLO AI...'), nl,
     catch(
         (
@@ -2211,11 +2211,11 @@ acquire_knowledge(Context) :-
             read(Stream, PrologFact),
             close(Stream),
             
-            print('>>> AI HA GENERATO IL FATTO: '), print(PrologFact), nl,
-            
-            assert(PrologFact),
-            print('>>> CONOSCENZA ACQUISITA.'), nl
+            print('>>> AI HA GENERATO IL FATTO: '), print(PrologFact), nl
         ),
         Error,
-        (print('>>> ERRORE ACQUISIZIONE: '), print(Error), nl)
+        (
+            print('>>> ERRORE ACQUISIZIONE: '), print(Error), nl, 
+            PrologFact = suggestion(nessun_consiglio) % Fallback in caso di errore
+        )
     ).
