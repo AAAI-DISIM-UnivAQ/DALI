@@ -2199,21 +2199,23 @@ divento_pass_and_first(E):-retract(tstart(_)),svuota_lista, passato, startFirstT
 
 
 
-
-
-ask_chatgpt(Type) :-
-    print('>>> [SYSTEM] Connected to Python LLM...'), nl,
+acquire_knowledge(Context) :-
+    print('>>> [SYSTEM] INTERROGO ORACOLO AI...'), nl,
     catch(
         (
             socket_client_open('127.0.0.1':9000, Stream, [type(text)]),
-            write(Stream, 'Safety advice for '), write(Stream, Type), write(Stream, '.'), nl(Stream),
+            
+            write(Stream, Context), write(Stream, '.'), nl(Stream),
             flush_output(Stream),
-            read(Stream, Advice),
+            
+            read(Stream, PrologFact),
             close(Stream),
-            nl, print('***********************************'), nl,
-            print('>>> AI HINT: '), print(Advice), nl,
-            print('***********************************'), nl
+            
+            print('>>> AI HA GENERATO IL FATTO: '), print(PrologFact), nl,
+            
+            assert(PrologFact),
+            print('>>> CONOSCENZA ACQUISITA.'), nl
         ),
         Error,
-        (print('>>> SOCKET ERROR: '), print(Error), nl)
+        (print('>>> ERRORE ACQUISIZIONE: '), print(Error), nl)
     ).
