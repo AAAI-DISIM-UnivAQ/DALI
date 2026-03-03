@@ -29,12 +29,14 @@ DALI_HOME=../../src
 CONF_DIR=conf
 PROLOG="$SICSTUS_HOME/bin/sicstus"
 LINDA_PORT=3010
-SPLIT_PANES=true   # true = all agents in split panes (tiled); false = one tmux window per agent
 INSTANCES_HOME=mas/instances
 TYPES_HOME=mas/types
 BUILD_HOME=build
 T0=$(date +%s%3N)   # script start time in milliseconds
 LOG_FILE="./log/restart.log"
+
+# This need to be false to see correctly the output in the UI
+SPLIT_PANES=false  # true = all agents in split panes (tiled); false = one tmux window per agent
 
 log() {
     local now; now=$(date +%s%3N)

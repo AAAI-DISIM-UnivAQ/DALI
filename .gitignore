@@ -1,5 +1,6 @@
 .DS_Store
 .idea
+.venv/
 Examples/advanced/.DS_Store
 Examples/advanced/temp_scripts/
 Examples/advanced/build/*
