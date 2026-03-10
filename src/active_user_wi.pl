@@ -42,3 +42,6 @@ utente:-open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
         out(agente_attivo(user,I)),
         procedure_message(I).
 
+% Compatibility entrypoint for tools that invoke the user client with this goal.
+user_interface :-
+        utente.
