@@ -34,7 +34,7 @@ T0=$(date +%s%3N)   # script start time in milliseconds
 LOG_FILE="./log/restart.log"
 
 # This need to be false to see correctly the output in the UI
-SPLIT_PANES=true  # true = all agents in split panes (tiled); false = one tmux window per agent
+SPLIT_PANES=false # true = all agents in split panes (tiled); false = one tmux window per agent
 
 log() {
     local now; now=$(date +%s%3N)
@@ -112,11 +112,13 @@ cleanup() {
     # Kill the tmux session if we exited or the terminal was closed abruptly
     tmux kill-session -t DALI_session 2>/dev/null || true
     
-    # Find all files in work, build, conf/mas and delete them, EXCEPT .gitkeep
     find work/ -type f ! -name '.gitkeep' -delete 2>/dev/null || true
     find build/ -type f ! -name '.gitkeep' -delete 2>/dev/null || true
     find conf/mas/ -type f ! -name '.gitkeep' -delete 2>/dev/null || true
     rm -f server.txt
+    
+    # Explicitly release the lock file
+    rm -f /tmp/dali_startmas.lock
     
     # Also ensure work/log exists for future runs
     mkdir -p work/log
