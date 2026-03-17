@@ -16,6 +16,12 @@ All notable changes to this project will be documented in this file.
   - Added auto support for the split `mas/instances` and `mas/types` structure replicating Linux build features.
   - Added a smart `pause` at the end of the script to automatically trigger dynamic files cleanup (`work/`, `conf/mas/`, `build/`) upon exit while purposely preserving `.gitkeep` placeholders.
   - Translated batch logs from Italian to English and changed `[DEBUG]` prefixes to `[LOG]`.
+- **Unix scripts `startmas.sh` and `makeconf.sh` (Examples/unix/basic & Examples/unix/advanced):**
+  - Copied the advanced Unix structure to `Examples/unix/basic` to provide a baseline layout parity.
+  - Decoupled `unix/basic` from the complex `mas/instances` topology, redirecting the builder to parse a **flat project structure** so glob expansions work flawlessly natively.
+  - Adjusted internal paths from `../../src` to `../../../src` to correctly target the DALI engine due to the deeper nested file structure.
+  - Added a `trap cleanup EXIT` hook to `startmas.sh` to automatically delete dynamically built agent files and proxy `.txt` files upon tmux session terminal shutdown, while meticulously preserving necessary `.gitkeep` structural markers.
+  - Integrated `tmux kill-session` into the cleanup handler to prevent orphan `SICStus` and server background processes when the terminal emulator window is abruptly closed.
 - **`makeconf.bat`:** 
   - Fixed the output path of temporary files that now land in `conf/mas/` consistently with the DALI base and startup builder, instead of dirtying the root `conf/` folder.
   - Recursively updated nested paths `../../src` to `../../../src` for `win/basic` and `win/advanced` nested setups.
