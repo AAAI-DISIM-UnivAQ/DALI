@@ -59,8 +59,20 @@ DALI leverages **tmux** for a powerful, tiled interface in Unix environments.
 3. A tmux session will launch with a tiled layout for all MAS components.
 
 ![DALI Unix Startup](img/unix.png)
+ 
+###  Docker (Platform Independent)
+Run DALI MAS entirely inside Docker containers, with no local installation of SICStus required beyond providing the installer tarball once.
+
+1. Navigate to `examples/docker`.
+2. Check **[`DOCKER.md`](examples/docker/DOCKER.md)** for detailed setup instructions.
+3. Build and launch:
+   ```bash
+   docker compose up --build -d
+   ```
+4. Access the **interactive web dashboard** at `http://localhost:5000`.
 
 ---
+
 
 ## Testing your MAS
 
@@ -109,12 +121,14 @@ The repository is organized to support different levels of complexity and deploy
 
 - **`src/`**: The core DALI engine and meta-interpreter.
 - **`examples/`**:
+  - **`docker/`**: Simplified, containerized DALI MAS with web UI.
   - **`win/`**: Native Windows `.bat` architectures.
     - **`basic/`**: Simple, flat agent structures (perfect for beginners).
     - **`advanced/`**: Complex structures using agent **types** and **instances**
   - **`unix/`**: Advanced `tmux` and `bash` architectures.
     - **`basic/`**: Simple, flat agent structures (perfect for beginners).
     - **`advanced/`**: Complex structures using agent **types** and **instances**.
+
 - **`img/`**: Screenshots and visual documentation assets.
 - **`docs/`**: Technical documentation and research papers.
 

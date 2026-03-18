@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased] - 2026-03-18
 
+### Changed
+
+- **Docker (`examples/docker/`):**
+  - Removed the `advanced/` subfolder — the Docker setup is now a single, flat structure directly under `examples/docker/`.
+  - Updated all relative paths in `Dockerfile`, `docker-compose.yml`, `entrypoint-mas.sh`, `entrypoint-ui.sh`, `startmas.sh`, and `dashboard.py` accordingly.
+  - Updated `DOCKER.md` to reflect the simplified directory layout, rewrote *Setup*, *Running*, *Architecture*, and *Shutting Down* sections.
+  - Converted the UNIX credentials reminder in `DOCKER.md` into a proper Markdown warning alert.
+
+### Added
+
+- **Documentation:**
+  - Added Docker section to root `README.md` (Quick Start) and `examples/README.md` with reference to `DOCKER.md`.
+  - Added `docker/` entry to the Repository Structure section in root `README.md`.
+
+---
+
+## [Unreleased] - 2026-03-18 (earlier)
+
 ### Fixed
 
 - **`startmas.bat` (Examples/win/basic):**
