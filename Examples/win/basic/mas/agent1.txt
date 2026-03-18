@@ -1,5 +1,0 @@
-:- write('Hello world!').
-
-eventE:> write('which event?').
-
-goE:> write('received.'), messageA(agent2,send_message(go,Me)).
