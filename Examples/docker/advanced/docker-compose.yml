@@ -1,0 +1,75 @@
+# DALI MAS — Docker Compose (Advanced Example)
+#
+# Containers:
+#   dali-mas-advanced  — runs the full MAS (LINDA server + all agents) via startmas.sh
+#   dali-ui-advanced   — runs the interactive user agent (reads stdin, needs TTY)
+#
+# Usage:
+#   docker compose up --build -d
+#
+# Then, in a separate terminal, launch the interactive UI:
+#   docker compose run --rm dali-ui-advanced
+
+x-license-env: &license-env
+  SICSTUS_LICENSE_SITE:     ${SICSTUS_LICENSE_SITE}
+  SICSTUS_LICENSE_EXPIRY:   ${SICSTUS_LICENSE_EXPIRY}
+  SICSTUS_LICENSE_KEY:      ${SICSTUS_LICENSE_KEY}
+
+services:
+
+  dali-mas-advanced:
+    build:
+      context: ../../..
+      dockerfile: examples/docker/advanced/Dockerfile
+    image: dali-mas-advanced:latest
+    container_name: dali-mas-advanced
+    entrypoint: ["/entrypoint-mas.sh"]
+    environment:
+      <<: *license-env
+      EXAMPLE_DIR: /dali/examples/docker/advanced
+      PYTHONUNBUFFERED: "1"
+      TMUX_TMPDIR: /tmp/tmux-shared
+    volumes:
+      - shared-advanced:/dali/shared
+      - .:/dali/examples/docker/advanced
+      - tmux-shared-advanced:/tmp/tmux-shared
+    networks:
+      - dali-net
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /dali/shared/server.txt"]
+      interval: 1s
+      timeout: 2s
+      retries: 20
+
+  dali-ui-advanced:
+    build:
+      context: ../../..
+      dockerfile: examples/docker/advanced/Dockerfile
+    image: dali-ui-advanced:latest
+    container_name: dali-ui-advanced
+    entrypoint: ["/entrypoint-ui.sh"]
+    environment:
+      <<: *license-env
+      SERVER_TXT: /dali/shared/server.txt
+      EXAMPLE_DIR: /dali/examples/docker/advanced
+      PYTHONUNBUFFERED: "1"
+      TMUX_TMPDIR: /tmp/tmux-shared
+    depends_on:
+      dali-mas-advanced:
+        condition: service_healthy
+    volumes:
+      - shared-advanced:/dali/shared
+      - .:/dali/examples/docker/advanced
+      - tmux-shared-advanced:/tmp/tmux-shared
+    networks:
+      - dali-net
+    ports:
+      - "5000:5000"
+
+volumes:
+  shared-advanced:
+  tmux-shared-advanced:
+
+networks:
+  dali-net:
+    driver: bridge

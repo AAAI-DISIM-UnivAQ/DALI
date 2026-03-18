@@ -1,0 +1,3 @@
+# Ignora gli installer SICStus Prolog per non committarli per sbaglio
+*.tar
+*.tar.gz

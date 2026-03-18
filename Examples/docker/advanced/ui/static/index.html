@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DALI Dashboard</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<header>
+  <h1 id="header-title">DALI Agent Dashboard</h1>
+  <span id="led"></span>
+  <span id="lbl">connecting&hellip;</span>
+  <div class="spacer"></div>
+  <button class="hbtn r" onclick="restartMas()" title="pkill sicstus + restart via startmas.sh">&#8635; Restart MAS</button>
+</header>
+
+<div id="view-logs">
+  <div class="grid" id="grid"></div>
+  <div id="minimized-tray"></div>
+</div>
+
+
+
+<div id="overlay">
+  <div class="spinner"></div>
+  <div id="overlay-msg">Restarting MAS&hellip;</div>
+  <div id="overlay-sub">Waiting for LINDA server&hellip;</div>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
