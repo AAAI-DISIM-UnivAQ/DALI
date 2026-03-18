@@ -152,7 +152,7 @@ To create your own DALI MAS from scratch, use an existing example as a boilerpla
   ![F1 Race Simulator - Agents View](img/f1_race_1.png)
   ![F1 Race Simulator - Track View](img/f1_race_2.png)
   
-  **[Video](https://github.com/Mik1810/f1_race/blob/main/video/Dali_project_edited_compressed.mp4)** from M. Piccirilli.
+  **[Video](https://youtu.be/-SxC4x3_CWI)** from M. Piccirilli.
 
 ## References
 
