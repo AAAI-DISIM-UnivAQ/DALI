@@ -14,7 +14,7 @@
 set -e
 
 # Launch UI dashboard
-cd /dali/examples/docker/advanced
+cd /dali/examples/docker
 echo "[ui] Starting Dashboard on port 5000..."
 # dashboard.py will find tmux session via TMUX_TMPDIR env var
 exec python3 ui/dashboard.py --folder . --port 5000

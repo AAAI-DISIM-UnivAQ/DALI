@@ -16,7 +16,7 @@ set -e
  
 SICSTUS_HOME=${SICSTUS_HOME:-/opt/sicstus}
 SHARED=${SHARED:-/dali/shared}
-EXAMPLE_DIR=${EXAMPLE_DIR:-/dali/examples/docker/advanced}
+EXAMPLE_DIR=${EXAMPLE_DIR:-/dali/examples/docker}
 LICENSE_FILE="${SICSTUS_HOME}/lib/sicstus-4.6.0/license/sp-license"
 
 # ── Write SICStus license ─────────────────────────────────────────

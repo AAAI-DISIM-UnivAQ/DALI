@@ -1,0 +1,3 @@
+:- write('Agent Type 2 ready.').
+
+goE:> write('received.').

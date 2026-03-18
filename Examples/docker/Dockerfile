@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # ── SICStus installation ──────────────────────────────────────────
 ARG SICSTUS_TARBALL=sp-4.6.0-x86_64-linux-glibc2.17.tar
-COPY examples/docker/advanced/installer/${SICSTUS_TARBALL} /tmp/sicstus_installer.tar
+COPY examples/docker/installer/${SICSTUS_TARBALL} /tmp/sicstus_installer.tar
 
 RUN mkdir -p /tmp/sicstus_unpacked && \
     tar -xf /tmp/sicstus_installer.tar -C /tmp/sicstus_unpacked --strip-components=1 && \
@@ -52,8 +52,8 @@ WORKDIR /dali
 COPY src/ /dali/src/
 
 # ── Entrypoints ───────────────────────────────────────────────────
-COPY examples/docker/advanced/entrypoint-mas.sh /entrypoint-mas.sh
-COPY examples/docker/advanced/entrypoint-ui.sh  /entrypoint-ui.sh
+COPY examples/docker/entrypoint-mas.sh /entrypoint-mas.sh
+COPY examples/docker/entrypoint-ui.sh  /entrypoint-ui.sh
 RUN chmod +x /entrypoint-mas.sh /entrypoint-ui.sh
 
 ENTRYPOINT ["/bin/bash"]
