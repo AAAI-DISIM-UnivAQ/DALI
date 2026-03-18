@@ -11,22 +11,12 @@ in the folder `mas/instances`
 
 ## MAS startup
 
-Be sure to have the terminal multiplexer
-[tmux](https://github.com/tmux/tmux/wiki/Installing) 
-installed in the system.
+Be sure to have the terminal multiplexer [tmux](https://github.com/tmux/tmux/wiki/Installing) installed in the system.
 
-Then use the command that should open a multiple terminal 
-console in which every single agent shows its messages.
-
-### TMUX shortcuts
-
-* ...
-* ...
-
-# Other advanced examples
+Then use the command that should open a multiple terminal console in which every single agent shows its messages.
 
 ## Mobile Robotics
 
 * [TurtleBot2 MAS Project](https://github.com/valent0ne/turtlebot2-mas) 
-* (more to come..)
+* [F1 race simulator](https://github.com/Mik1810/f1_race)
 

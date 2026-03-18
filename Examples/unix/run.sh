@@ -30,11 +30,11 @@ fi
 
 # Install dependencies (only when requirements.txt changed) 
 STAMP="$VENV/.installed_stamp"
-if [[ ! -f "$STAMP" || "$SCRIPT_DIR/requirements.txt" -nt "$STAMP" ]]; then
+if [[ ! -f "$STAMP" || "$SCRIPT_DIR/ui/requirements.txt" -nt "$STAMP" ]]; then
     echo "Installing dependencies..."
-    "$PYTHON" -m pip install -q -r "$SCRIPT_DIR/requirements.txt"
+    "$PYTHON" -m pip install -r "$SCRIPT_DIR/ui/requirements.txt"
     touch "$STAMP"
 fi
 
 # Launch 
-exec "$PYTHON" "$SCRIPT_DIR/dashboard.py" "$@"
+exec "$PYTHON" "$SCRIPT_DIR/ui/dashboard.py" "$@"

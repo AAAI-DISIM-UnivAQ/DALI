@@ -33,8 +33,13 @@ BUILD_HOME=build
 T0=$(date +%s%3N)   # script start time in milliseconds
 LOG_FILE="./log/restart.log"
 
-# This need to be false to see correctly the output in the UI
-SPLIT_PANES=false # true = all agents in split panes (tiled); false = one tmux window per agent
+# This is toggled via --no-split argument
+SPLIT_PANES=true # true = all agents in split panes (tiled); false = one tmux window per agent
+
+if [ "$1" == "--no-split" ]; then
+    SPLIT_PANES=false
+    log "Enabling UI mode: SPLIT_PANES=false"
+fi
 
 log() {
     local now; now=$(date +%s%3N)
@@ -125,8 +130,8 @@ cleanup() {
     log "END cleanup dynamic files"
 }
 
-# Register the cleanup function to run when the script exits
-trap cleanup EXIT
+# Register the cleanup function to run when the script exits or is killed
+trap cleanup EXIT INT TERM
 
 # Clean directories on startup (belt-and-suspenders)
 cleanup
@@ -242,4 +247,12 @@ if [ -t 0 ]; then
     tmux attach -t DALI_session
     echo "Press Enter to shutdown the MAS"
     read
+else
+    # Non-interactive mode (e.g. from UI): keep the script alive 
+    # so the EXIT trap doesn't kill the session immediately.
+    # The UI will kill the process group when it wants to stop.
+    log "Non-interactive mode: keeping script alive..."
+    while tmux has-session -t DALI_session 2>/dev/null; do
+        sleep 5
+    done
 fi

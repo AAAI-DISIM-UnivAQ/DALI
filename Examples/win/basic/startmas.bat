@@ -1,12 +1,11 @@
 @echo off
+setlocal enabledelayedexpansion
 cls
 title "MAS"
 
 
 
 
-echo [LOG] Current PATH:
-echo %PATH%
 
 echo [LOG] Searching for spwin.exe in PATH...
 for %%I in (spwin.exe) do set prolog=%%~$PATH:I
@@ -71,15 +70,9 @@ if not exist build mkdir build
 if not exist work\log mkdir work\log
 if not exist conf\mas mkdir conf\mas
 
-:: Building agents: reading instances from mas\instances like startmas.sh does
+:: Building agents: in basic version agents are directly in mas/
 echo [INFO] Building agents...
-for %%I in (mas\instances\*.txt) do (
-	setlocal enabledelayedexpansion
-	set instance=%%I
-	for /f "usebackq delims=" %%T in (%%I) do set type=%%T
-	copy /y mas\types\!type!.txt build\%%~nxI >nul
-	endlocal
-)
+copy /y mas\*.txt build\ >nul 2>nul
 copy build\*.txt work\ >nul 2>nul
 
 :: Starting LINDA server

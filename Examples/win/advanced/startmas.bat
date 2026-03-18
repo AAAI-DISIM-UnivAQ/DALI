@@ -1,68 +1,40 @@
 @echo off
+setlocal enabledelayedexpansion
 cls
 title "MAS"
 
 
-
-
-echo [LOG] Current PATH:
-echo %PATH%
-
-echo [LOG] Searching for spwin.exe in PATH...
-for %%I in (spwin.exe) do set prolog=%%~$PATH:I
-if not "%prolog%"=="" echo [LOG] Found in PATH: %prolog%
-if "%prolog%"=="" echo [LOG] Not found in PATH, trying dynamic search...
-
-:: If not found in PATH, search in %PROGRAMFILES% and %PROGRAMFILES(X86)% to avoid issues with localized paths (e.g. Programmi)
-if "%prolog%"=="" (
-	echo [LOG] Searching for spwin.exe in default installation paths...
-	
-	:: Search in SICStus* in Program Files
-	for /d %%D in ("%PROGRAMFILES%\SICStus*") do (
-		echo [LOG] Controllo "%%D\bin\spwin.exe"
-		if exist "%%D\bin\spwin.exe" set "prolog=%%D\bin\spwin.exe"
-	)
-	
-	:: If still not found, search in SICStus* in Program Files (x86)
-	if "!prolog!"=="" (
-		for /d %%D in ("%PROGRAMFILES(x86)%\SICStus*") do (
-			echo [LOG] Controllo "%%D\bin\spwin.exe"
-			if exist "%%D\bin\spwin.exe" set "prolog=%%D\bin\spwin.exe"
-		)
-	)
-	
-	:: If still not found, generic fallback
-	if "!prolog!"=="" (
-		for /d %%D in ("%PROGRAMFILES%\*\bin" "%PROGRAMFILES(x86)%\*\bin") do (
-			echo [LOG] Controllo "%%D\spwin.exe"
-			if exist "%%D\spwin.exe" set "prolog=%%D\spwin.exe"
-		)
-	)
-)
-
-:: Print the found path (if found)
-if not "%prolog%"=="" echo [INFO] spwin.exe found at: %prolog%
-if "%prolog%"=="" echo [LOG] spwin.exe not found in any path
-
-:: If not found, show error and exit
-if "%prolog%"=="" (
-	echo ERROR: spwin.exe not found in PATH or program files.
-	exit /b 1
-)
-
-echo [INFO] Starting DALI MAS (Windows)
-
+:: Configuration
 set main_home=..\..\..
 set dali_home=..\..\..\src
 set conf_dir=conf
-:: Closing any previous processes (Prolog/agents)
-echo [INFO] Closing any previous Prolog/Agent processes...
+
+:: Search for spwin.exe
+for %%I in (spwin.exe) do set prolog=%%~$PATH:I
+if "%prolog%"=="" (
+	for /d %%D in ("%PROGRAMFILES%\SICStus*") do (
+		if exist "%%D\bin\spwin.exe" set "prolog=%%D\bin\spwin.exe"
+	)
+)
+if "%prolog%"=="" (
+	for /d %%D in ("%PROGRAMFILES(x86)%\SICStus*") do (
+		if exist "%%D\bin\spwin.exe" set "prolog=%%D\bin\spwin.exe"
+	)
+)
+
+if "%prolog%"=="" (
+	echo ERROR: spwin.exe not found.
+	exit /b 1
+)
+echo [INFO] spwin.exe found at: %prolog%
+
+
+
+:: Cleanup
+echo [INFO] Closing previous processes and cleaning folders...
 taskkill /F /IM spwin.exe /T >nul 2>&1
 taskkill /F /IM sprt.exe /T >nul 2>&1
 taskkill /F /IM sicstus.exe /T >nul 2>&1
-
-:: Cleaning folders as in startmas.sh
-echo [INFO] Cleaning work\, conf\mas\, build\ and server.txt
 for /R work %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
 for /R build %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
 for /R conf\mas %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
@@ -71,76 +43,53 @@ if not exist build mkdir build
 if not exist work\log mkdir work\log
 if not exist conf\mas mkdir conf\mas
 
-:: Building agents: reading instances from mas\instances like startmas.sh does
+:: Building agents
 echo [INFO] Building agents...
 for %%I in (mas\instances\*.txt) do (
-	setlocal enabledelayedexpansion
-	set instance=%%I
 	for /f "usebackq delims=" %%T in (%%I) do set type=%%T
 	copy /y mas\types\!type!.txt build\%%~nxI >nul
-	endlocal
 )
 copy build\*.txt work\ >nul 2>nul
 
 :: Starting LINDA server
 echo [INFO] Starting LINDA server...
-start /B "" "%prolog%" --noinfo -l "%dali_home%\active_server_wi.pl" --goal go(3010,'server.txt').
+start "MAS - Server" "%prolog%" --noinfo -l "%dali_home%\active_server_wi.pl" --goal "go(3010,'server.txt')."
 
-:: Waiting for LINDA server to start (to print port on server.txt) as in Linux
-echo [INFO] Waiting for server.txt preparation...
+:: Waiting for server
+echo [INFO] Waiting for server.txt...
 set server_ready=0
-for /L %%i in (1,1,30) do (
+for /L %%i in (1,1,20) do (
     if exist "server.txt" (
-        for %%F in ("server.txt") do (
-            if %%~zF GTR 0 (
-                set server_ready=1
-                goto :server_started
-            )
-        )
+        set server_ready=1
+        goto :server_ok
     )
     timeout /t 1 /nobreak >nul
 )
-
-if "!server_ready!"=="0" (
-    echo [ERROR] LINDA server did not start in time.
-    exit /b 1
-)
-
-:server_started
-echo [INFO] LINDA server ready!
+:server_ok
 
 :: Starting user
 echo [INFO] Starting user...
-start /B "" "%prolog%" --noinfo -l "%dali_home%\active_user_wi.pl" --goal utente.
-timeout /t 3 /nobreak >nul
+start "MAS - User" "%prolog%" --noinfo -l "%dali_home%\active_user_wi.pl" --goal "utente."
+timeout /t 2 /nobreak >nul
 
 :: Starting agents
 echo [INFO] Starting agents...
+set idx=1
 for %%G in (build\*.txt) do (
-	setlocal enabledelayedexpansion
-	set agent=%%~nG
-	call conf\makeconf.bat !agent! %%G
-	start /B "" "%prolog%" --noinfo -l "%dali_home%\active_dali_wi.pl" --goal "start0('conf/mas/%%~nxG')."
-	endlocal
-	timeout /t 3 /nobreak >nul
+	set "agent=%%~nG"
+	call conf\makeconf.bat !agent! "%%G"
+    start "MAS - Agent !idx!" "%prolog%" --noinfo -l "%dali_home%\active_dali_wi.pl" --goal "start0('conf/mas/%%~nxG')."
+    set /a idx+=1
+	timeout /t 2 /nobreak >nul
 )
 
-echo [INFO] MAS started. Press any key to shut down the architecture and clean the session.
+
+
+echo [INFO] MAS started. Press any key to shut down.
 pause >nul
 
-:: Shutting down MAS
-echo [INFO] Shutting down running processes...
+:: Final cleanup
 taskkill /F /IM spwin.exe /T >nul 2>&1
 taskkill /F /IM sprt.exe /T >nul 2>&1
 taskkill /F /IM sicstus.exe /T >nul 2>&1
-
-:: Cleaning folders as in startmas.sh
-echo [INFO] Removing dynamically autogenerated files (work, conf\mas, build)...
-for /R work %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
-for /R build %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
-for /R conf\mas %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
-del /q server.txt >nul 2>&1
-
-echo [INFO] Environment cleaned!
-timeout /t 2 /nobreak >nul
 exit /b 0

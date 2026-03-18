@@ -1,0 +1,25 @@
+# Handle line endings automatically for files detected as text
+# and leave all binary files untouched.
+* text=auto
+
+# Enforce LF (Unix) line endings for all shell scripts
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Enforce LF (Unix) line endings for DALI agent and type definitions
+# These are often processed by shell scripts or sent to Unix-like environments.
+*.txt text eol=lf
+*.pl text eol=lf
+*.con text eol=lf
+
+# Enforce CRLF (Windows) line endings for batch files
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Common text files should be normalized
+*.py text
+*.js text
+*.css text
+*.html text
+*.md text
+*.json text
