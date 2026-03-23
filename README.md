@@ -144,7 +144,9 @@ To create your own DALI MAS from scratch, use an existing example as a boilerpla
 ## Examples of Applications
 
 - in Robotics: coordination among store delivery robots:
+  
   [![Delivery robots cordination](https://img.youtube.com/vi/1dfWthhUovk/0.jpg)](https://www.youtube.com/watch?v=1dfWthhUovk)
+  
   **[Video](https://youtu.be/1dfWthhUovk)** from S. Valentini.
 
 - F1 Race Simulator: A Formula 1 race simulator where DALI agents control racing cars in a competitive environment.
