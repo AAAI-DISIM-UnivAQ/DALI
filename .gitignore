@@ -2,16 +2,14 @@
 .idea
 .venv/
 
-examples/win/win/advanced/.DS_Store
-examples/win/win/advanced/temp_scripts/
-examples/win/advanced/build/*
-examples/win/advanced/work/*
-examples/win/advanced/conf/*
-examples/win/advanced/log/*
-examples/win/advanced/conf/mas/*.txt
-examples/win/advanced/conf/communication.pl
-examples/win/advanced/conf/communication.txt
-examples/win/advanced/server.txt
+Examples/win/advanced/.DS_Store
+Examples/win/advanced/temp_scripts/
+Examples/win/advanced/build/*
+Examples/win/advanced/work/*
+Examples/win/advanced/conf/mas/*.txt
+Examples/win/advanced/log/*
+Examples/win/advanced/conf/communication.pl
+Examples/win/advanced/conf/communication.txt
 
 examples/unix/advanced/.DS_Store
 examples/unix/advanced/temp_scripts/
@@ -29,7 +27,9 @@ src/test/scripts/*.txt
 src/test/work/*
 src/test/conf/*
 src/test/conf/mas/*
-**/conf/communication.*
+# Runtime communication artifacts generated under any conf/ folder.
+**/conf/communication.pl
+**/conf/communication.txt
 *.log
 *.env
 !.gitkeep

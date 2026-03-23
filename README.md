@@ -42,7 +42,7 @@ No complex setup is required. The Windows scripts feature dynamic discovery of S
 > The University has purchased licenses for **SICStus Prolog 4.6.0**. However, the official SICStus website currently only provides downloads for more recent versions (4.8 to 4.10).  
 > To obtain the installer for the correct version (4.6.0), please contact **Prof. Giovanni De Gasperis** at [giovanni.degasperis@univaq.it](mailto:giovanni.degasperis@univaq.it).
 
-1. Navigate to `examples/win/basic`.
+1. Navigate to `Examples/win/basic`.
 2. Double-click **`startmas.bat`**.
 3. Descriptive windows for the Server, User agent, and Agents will open automatically.
 
@@ -51,7 +51,7 @@ No complex setup is required. The Windows scripts feature dynamic discovery of S
 ### Unix (Linux / macOS / WSL2)
 DALI leverages **tmux** for a powerful, tiled interface in Unix environments.
 
-1. Navigate to `examples/unix/advanced`.
+1. Navigate to `Examples/unix/advanced`.
 2. Run the startup script:
    ```bash
    ./startmas.sh
@@ -59,20 +59,8 @@ DALI leverages **tmux** for a powerful, tiled interface in Unix environments.
 3. A tmux session will launch with a tiled layout for all MAS components.
 
 ![DALI Unix Startup](img/unix.png)
- 
-###  Docker (Platform Independent)
-Run DALI MAS entirely inside Docker containers, with no local installation of SICStus required beyond providing the installer tarball once.
-
-1. Navigate to `examples/docker`.
-2. Check **[`DOCKER.md`](examples/docker/DOCKER.md)** for detailed setup instructions.
-3. Build and launch:
-   ```bash
-   docker compose up --build -d
-   ```
-4. Access the **interactive web dashboard** at `http://localhost:5000`.
 
 ---
-
 
 ## Testing your MAS
 
@@ -102,12 +90,12 @@ Monitor and interact with your MAS through a modern, **Zero-Config** web interfa
 ### Launching the Dashboard
 From a Unix-like environment (including WSL2):
 ```bash
-cd examples/unix/ui
-./run.sh --folder ../advanced
+cd Examples/unix
+./run.sh --folder ./advanced
 ```
 Access the UI at `http://localhost:5000`.
 
-For more detailed information on available CLI flags and internal functionality, see [DASHBOARD.md](examples/unix/ui/DASHBOARD.md).
+For more detailed information on available CLI flags and internal functionality, see [DASHBOARD.md](Examples/unix/ui/DASHBOARD.md).
 
 ![DALI Dashboard Overview](img/ui.png)
 
@@ -120,15 +108,13 @@ For more detailed information on available CLI flags and internal functionality,
 The repository is organized to support different levels of complexity and deployment environments:
 
 - **`src/`**: The core DALI engine and meta-interpreter.
-- **`examples/`**:
-  - **`docker/`**: Simplified, containerized DALI MAS with web UI.
+- **`Examples/`**:
   - **`win/`**: Native Windows `.bat` architectures.
     - **`basic/`**: Simple, flat agent structures (perfect for beginners).
     - **`advanced/`**: Complex structures using agent **types** and **instances**
   - **`unix/`**: Advanced `tmux` and `bash` architectures.
     - **`basic/`**: Simple, flat agent structures (perfect for beginners).
     - **`advanced/`**: Complex structures using agent **types** and **instances**.
-
 - **`img/`**: Screenshots and visual documentation assets.
 - **`docs/`**: Technical documentation and research papers.
 
@@ -147,7 +133,7 @@ To create your own DALI MAS from scratch, use an existing example as a boilerpla
 1. **Create a project folder** (e.g., `projectFolder`).
 2. **Copy the core engine** — place the `DALI/src` folder inside your `projectFolder`.
 3. **Initialize your application** — create a sub-folder for your DALI app (e.g., `DALIappFolder`).
-4. **Copy a boilerplate** — use `examples/unix/advanced` or `examples/unix/basic` if on Unix or `examples/win/advanced` or `examples/win/basic` (Windows) as a starting point.
+4. **Copy a boilerplate** — use `Examples/unix/advanced` or `Examples/unix/basic` if on Unix or `Examples/win/advanced` or `Examples/win/basic` (Windows) as a starting point.
 5. **Define your agents**:
    - **Advanced layout**: define agent types in `mas/types/` and instances in `mas/instances/`.
    - **Basic layout**: place all agent `.pl` files directly in `mas/`.

@@ -37,7 +37,7 @@ taskkill /F /IM sprt.exe /T >nul 2>&1
 taskkill /F /IM sicstus.exe /T >nul 2>&1
 for /R work %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
 for /R build %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
-for /R conf\mas %%F in (*.*) do (if not "%%~nxF"==".gitkeep" del /q "%%F" >nul 2>&1)
+for /R conf\mas %%F in (*.*) do (if /I not "%%~nxF"==".gitkeep" if /I not "%%~nxF"=="communication.con" if /I not "%%~nxF"=="communication.conf" del /q "%%F" >nul 2>&1)
 del /q server.txt >nul 2>&1
 if not exist build mkdir build
 if not exist work\log mkdir work\log
@@ -92,4 +92,5 @@ pause >nul
 taskkill /F /IM spwin.exe /T >nul 2>&1
 taskkill /F /IM sprt.exe /T >nul 2>&1
 taskkill /F /IM sicstus.exe /T >nul 2>&1
+del /q server.txt >nul 2>&1
 exit /b 0
