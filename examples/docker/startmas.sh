@@ -123,7 +123,10 @@ cleanup() {
 
     rm -f /tmp/dali_startmas.lock
 
+    # Ensure runtime dirs always exist for future runs.
     mkdir -p work/log
+    mkdir -p "$BUILD_HOME"
+    mkdir -p conf/mas
     log "END cleanup dynamic files"
 }
 
@@ -133,9 +136,15 @@ trap cleanup EXIT INT TERM
 # Clean directories on startup (belt-and-suspenders)
 cleanup
 
+# Ensure runtime directories exist before build/copy steps.
+mkdir -p "$BUILD_HOME"
+mkdir -p work
+mkdir -p conf/mas
+
 # Build agents based on instances
 log "START build instances loop"
-for instance_filename in $INSTANCES_HOME/*.txt; do
+for instance_filename in "$INSTANCES_HOME"/*.txt; do
+    [ -e "$instance_filename" ] || continue
     type=$(tr -d '\r' < "$instance_filename")  # Agent type name (strip Windows \r)
     type_filename="$TYPES_HOME/$type.txt"
     log "  instance: $instance_filename  type: $type_filename"
@@ -144,8 +153,8 @@ for instance_filename in $INSTANCES_HOME/*.txt; do
 done
 log "END build instances loop"
 
-ls $BUILD_HOME
-cp $BUILD_HOME/*.txt work
+ls "$BUILD_HOME"
+cp "$BUILD_HOME"/*.txt work
 
 # Wait until a tmux pane has produced at least one line of output.
 # Usage: wait_for_pane <pane_id|session:window> [timeout_seconds]
@@ -214,7 +223,8 @@ else
 fi
 
 # Launch agents — pane or window depending on SPLIT_PANES
-for agent_filename in $BUILD_HOME/*; do
+for agent_filename in "$BUILD_HOME"/*; do
+    [ -e "$agent_filename" ] || continue
     agent_base="${agent_filename##*/}"
     agent_name="${agent_base%.*}"
     log "  START agent $agent_name"
