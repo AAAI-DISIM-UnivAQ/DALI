@@ -125,8 +125,10 @@ cleanup() {
     # Explicitly release the lock file
     rm -f /tmp/dali_startmas.lock
     
-    # Also ensure work/log exists for future runs
+    # Ensure runtime directories always exist for future runs
     mkdir -p work/log
+    mkdir -p "$BUILD_HOME"
+    mkdir -p conf/mas
     log "END cleanup dynamic files"
 }
 
@@ -135,6 +137,11 @@ trap cleanup EXIT INT TERM
 
 # Clean directories on startup (belt-and-suspenders)
 cleanup
+
+# Ensure runtime directories exist before build/copy steps.
+mkdir -p "$BUILD_HOME"
+mkdir -p work
+mkdir -p conf/mas
 
 # Build agents based on instances
 log "START build instances loop"
