@@ -8,14 +8,15 @@ The backend is written in Python (Flask) and serves a single-page UI that automa
 ## Structure
 
 ```
-ui/
-├── dashboard.py      ← Flask backend (Zero-Config)
-├── requirements.txt  ← Python dependencies (flask only)
+unix/
 ├── run.sh            ← launch script (creates venv, installs deps, starts server)
-└── static/
-    ├── index.html
-    ├── style.css
-    └── app.js
+└── ui/
+    ├── dashboard.py      ← Flask backend (Zero-Config)
+    ├── requirements.txt  ← Python dependencies (flask only)
+    └── static/
+        ├── index.html
+        ├── style.css
+        └── app.js
 ```
 
 ---
@@ -23,7 +24,7 @@ ui/
 ## Quick Start
 
 ```bash
-cd examples/unix
+cd Examples/unix
 ./run.sh --folder ./advanced
 ```
 
