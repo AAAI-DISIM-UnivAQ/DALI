@@ -19,6 +19,11 @@ Modern, terminal-based environments using **tmux** for process management.
 *   **[Advanced](unix/advanced)**: Full-featured MAS with agent types and instances.
 *   ** [Web Dashboard](unix/ui)**: The recommended way to monitor and interact with your MAS on Unix. It provides a real-time web interface with "Zero-Config" auto-discovery.
 
+### [Docker (`docker/`)](docker/)
+Containerized setup for running DALI in a reproducible Unix-like environment.
+*   **[Docker Guide](docker/DOCKER.md)**: Setup, build, run, and shutdown instructions for the Docker-based MAS environment.
+*   **[Installer Notes](docker/installer/INSTALLER.md)**: How to provide the required SICStus installer before building the image.
+
 ### [More Examples](more/)
 A collection of MAS projects and examples derived from student projects and research.
 

@@ -2,7 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased] - 2026-03-18
+## [2026-03-24]
+
+### Changed
+
+- **Documentation (`examples/`):**
+  - Renamed the examples index from `examples/README.md` to `examples/EXAMPLES.md`.
+  - Reworked `examples/WARNINGS.md` into a clearer note about the `t60.` declaration and event simultaneity warnings.
+  - Expanded `examples/more/PROJECTS.md` and added a reference to [`.gitmodules`](.gitmodules) for cloneable external example projects.
+- **Unix documentation (`examples/unix/`):**
+  - Rewrote the Unix basic and advanced guides to match the current folder layout and startup scripts.
+  - Renamed Unix documentation files to clearer names: `UNIX_BASIC.md`, `UNIX_ADVANCED.md`, `TYPES.md`, and `INSTANCES.md`.
+  - Updated internal links across the Unix documentation set.
+- **Windows documentation (`examples/win/`):**
+  - Renamed Windows nested documentation files to `TYPES.md` and `INSTANCES.md`.
+  - Rewrote the Windows `types` and `instances` guides to align with the Unix documentation structure.
+  - Added `WINDOWS_BASIC.md` and `WINDOWS_ADVANCED.md` so the Windows section mirrors the Unix documentation layout.
+- **Root documentation:**
+  - Added a documentation map to the root `README.md` with links to the other Markdown files in the repository.
+
+## [2026-03-18]
 
 ### Changed
 
@@ -20,7 +39,7 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-## [Unreleased] - 2026-03-18 (earlier)
+## [2026-03-18] (earlier)
 
 ### Fixed
 
@@ -47,7 +66,7 @@ All notable changes to this project will be documented in this file.
     - Registered trademark symbol `®` replacing `(R)` for SICStus Prolog across all documentation.
   - Added `img/f1_race_1.png` and `img/f1_race_2.png` screenshots for the F1 Race Simulator.
 
-## [Unreleased] - 2026-03-17
+## [2026-03-17]
 
 ### Fixed
 

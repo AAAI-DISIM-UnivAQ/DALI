@@ -2,7 +2,7 @@
 
 > DALI Multi Agent Systems Framework
 
-DALI is a meta interpreter built on top of Sicstus Prolog ® (_at the moment_).
+DALI is a meta interpreter built on top of SICStus Prolog ® (_at the moment_).
 
 ![DALI Logo](img/DALI_logo.png)
 
@@ -16,6 +16,37 @@ DALI is a powerful framework that extends standard logic programming with reacti
 - **Maintain** internal state and memory.
 - **Communicate** using FIPA-compliant patterns.
 
+## Documentation Index
+
+Repository Markdown guides and notes:
+
+### General Notes
+
+- [Examples Overview](examples/EXAMPLES.md)
+- [Warnings and Timers](examples/WARNINGS.md)
+- [Double Events](examples/DOUBLE_EVENTS.md)
+- [Additional Projects](examples/more/PROJECTS.md)
+
+### Unix
+
+- [Unix Basic Guide](examples/unix/basic/UNIX_BASIC.md)
+- [Unix Advanced Guide](examples/unix/advanced/UNIX_ADVANCED.md)
+- [Unix Advanced Types](examples/unix/advanced/mas/types/TYPES.md)
+- [Unix Advanced Instances](examples/unix/advanced/mas/instances/INSTANCES.md)
+- [Unix Dashboard Guide](examples/unix/ui/DASHBOARD.md)
+
+### Windows
+
+- [Windows Basic Guide](examples/win/basic/WINDOWS_BASIC.md)
+- [Windows Advanced Guide](examples/win/advanced/WINDOWS_ADVANCED.md)
+- [Windows Advanced Types](examples/win/advanced/mas/types/TYPES.md)
+- [Windows Advanced Instances](examples/win/advanced/mas/instances/INSTANCES.md)
+
+### Docker
+
+- [Docker Guide](examples/docker/DOCKER.md)
+- [Docker Installer Notes](examples/docker/installer/INSTALLER.md)
+
 ---
 
 ## Prerequisites
@@ -23,7 +54,7 @@ DALI is a powerful framework that extends standard logic programming with reacti
 DALI requires **SICStus Prolog** to be installed and activated on your system.
 
 ### 1. Download & Install
-Download the SICStus Prolog interpreter from the official [website](https://sicstus.sics.se/download4.html).
+Download the SICStus Prolog interpreter from the version offered by the University by contacting Prof. Giovanni De Gasperis at [giovanni.degasperis@univaq.it](mailto:giovanni.degasperis@univaq.it).
 
 ### 2. License Activation
 You must activate SICStus using the **site-wide license** provided by the University. Follow the installer instructions to enter the license key.
@@ -32,9 +63,9 @@ You must activate SICStus using the **site-wide license** provided by the Univer
 
 ## Quick Start
 
-DALI supports native execution on both Windows and Unix-like systems. For the best experience, choose the method that fits your operating system.
+DALI supports native execution on Windows and Unix-like systems, and also provides a Docker-based setup for containerized runs. Choose the method that best fits your environment.
 
-###  Windows (Native Batch)
+###  Windows
 No complex setup is required. The Windows scripts feature dynamic discovery of SICStus Prolog and streamlined execution.
 
 > [!WARNING]
@@ -42,7 +73,7 @@ No complex setup is required. The Windows scripts feature dynamic discovery of S
 > The University has purchased licenses for **SICStus Prolog 4.6.0**. However, the official SICStus website currently only provides downloads for more recent versions (4.8 to 4.10).  
 > To obtain the installer for the correct version (4.6.0), please contact **Prof. Giovanni De Gasperis** at [giovanni.degasperis@univaq.it](mailto:giovanni.degasperis@univaq.it).
 
-1. Navigate to `Examples/win/basic`.
+1. Navigate to `examples/win/basic`.
 2. Double-click **`startmas.bat`**.
 3. Descriptive windows for the Server, User agent, and Agents will open automatically.
 
@@ -51,7 +82,7 @@ No complex setup is required. The Windows scripts feature dynamic discovery of S
 ### Unix (Linux / macOS / WSL2)
 DALI leverages **tmux** for a powerful, tiled interface in Unix environments.
 
-1. Navigate to `Examples/unix/advanced`.
+1. Navigate to `examples/unix/advanced`.
 2. Run the startup script:
    ```bash
    ./startmas.sh
@@ -59,6 +90,13 @@ DALI leverages **tmux** for a powerful, tiled interface in Unix environments.
 3. A tmux session will launch with a tiled layout for all MAS components.
 
 ![DALI Unix Startup](img/unix.png)
+
+### Docker
+
+For a containerized setup, use the material in `examples/docker/`.
+
+1. See [Docker Guide](examples/docker/DOCKER.md) for setup, build, and runtime instructions.
+2. See [Docker Installer Notes](examples/docker/installer/INSTALLER.md) for the required SICStus installer placement.
 
 ---
 
@@ -90,12 +128,12 @@ Monitor and interact with your MAS through a modern, **Zero-Config** web interfa
 ### Launching the Dashboard
 From a Unix-like environment (including WSL2):
 ```bash
-cd Examples/unix
+cd examples/unix
 ./run.sh --folder ./advanced
 ```
 Access the UI at `http://localhost:5000`.
 
-For more detailed information on available CLI flags and internal functionality, see [DASHBOARD.md](Examples/unix/ui/DASHBOARD.md).
+For more detailed information on available CLI flags and internal functionality, see [DASHBOARD.md](examples/unix/ui/DASHBOARD.md).
 
 ![DALI Dashboard Overview](img/ui.png)
 
@@ -108,13 +146,16 @@ For more detailed information on available CLI flags and internal functionality,
 The repository is organized to support different levels of complexity and deployment environments:
 
 - **`src/`**: The core DALI engine and meta-interpreter.
-- **`Examples/`**:
+- **`examples/`**:
   - **`win/`**: Native Windows `.bat` architectures.
     - **`basic/`**: Simple, flat agent structures (perfect for beginners).
     - **`advanced/`**: Complex structures using agent **types** and **instances**
   - **`unix/`**: Advanced `tmux` and `bash` architectures.
     - **`basic/`**: Simple, flat agent structures (perfect for beginners).
     - **`advanced/`**: Complex structures using agent **types** and **instances**.
+    - **`ui/`**: Web dashboard utilities and documentation for Unix-based runs.
+  - **`docker/`**: Containerized environment for running DALI with Docker.
+  - **`more/`**: Additional projects, references, and linked examples.
 - **`img/`**: Screenshots and visual documentation assets.
 - **`docs/`**: Technical documentation and research papers.
 
@@ -133,10 +174,10 @@ To create your own DALI MAS from scratch, use an existing example as a boilerpla
 1. **Create a project folder** (e.g., `projectFolder`).
 2. **Copy the core engine** — place the `DALI/src` folder inside your `projectFolder`.
 3. **Initialize your application** — create a sub-folder for your DALI app (e.g., `DALIappFolder`).
-4. **Copy a boilerplate** — use `Examples/unix/advanced` or `Examples/unix/basic` if on Unix or `Examples/win/advanced` or `Examples/win/basic` (Windows) as a starting point.
+4. **Copy a boilerplate** — use `examples/unix/advanced` or `examples/unix/basic` if on Unix, or `examples/win/advanced` or `examples/win/basic` on Windows as a starting point.
 5. **Define your agents**:
    - **Advanced layout**: define agent types in `mas/types/` and instances in `mas/instances/`.
-   - **Basic layout**: place all agent `.pl` files directly in `mas/`.
+   - **Basic layout**: place all agent `.txt` files directly in `mas/`.
 6. **Run the startup script** — the script will automatically discover your SICStus installation and launch the MAS.
 
 ---
@@ -158,7 +199,7 @@ To create your own DALI MAS from scratch, use an existing example as a boilerpla
 
 ## References
 
-- DALI 1.0 original URL: http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI (no more active)
+- DALI 1.0 original URL(no more active): [http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI](http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI) 
 - COSTANTINI, Stefania. [The DALI Agent-Oriented Logic Programming Language: Summary and References 2015.](https://people.disim.univaq.it/stefcost/pubbls/Dali_References.pdf)
 - COSTANTINI S, TOCCHIO A. [A logic programming language for multi-agent systems.](docs/DALI_Language_description.pdf) Logics in Artificial Intelligence, Springer Berlin Heidelberg, 2002, pp:1-13.
 - COSTANTINI S, TOCCHIO A. _The DALI logic programming agent-oriented language._ In Logics in Artificial Intelligence Springer Berlin Heidelberg, 2004, pp:685-688.
