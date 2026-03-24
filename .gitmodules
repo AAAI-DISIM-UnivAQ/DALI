@@ -1,6 +1,9 @@
-[submodule "Examples/more/Knapsack-example"]
-	path = Examples/more/Knapsack-example
+[submodule "examples/more/Knapsack-example"]
+	path = examples/more/Knapsack-example
 	url = https://github.com/AAAI-DISIM-UnivAQ/Knapsack-example
-[submodule "Examples/more/DALI-Auction-example"]
-	path = Examples/more/DALI-Auction-example
+[submodule "examples/more/DALI-Auction-example"]
+	path = examples/more/DALI-Auction-example
 	url = https://github.com/AAAI-DISIM-UnivAQ/DALI-Auction-example
+[submodule "examples/more/DALI-F1-race"]
+	path = examples/more/DALI-F1-race
+	url = https://github.com/Mik1810/f1_race

@@ -1,142 +1,193 @@
-# DALI
+# DALI - Multi-Agent System Framework
 
 > DALI Multi Agent Systems Framework
 
-DALI is a meta interpreter built on top of Sicstus Prolog (R) (_at the moment_).
+DALI is a meta interpreter built on top of Sicstus Prolog ® (_at the moment_).
 
 ![DALI Logo](img/DALI_logo.png)
 
-## Installation
+---
 
-DALI is built upon the [SICStus Prolog](https://sicstus.sics.se/download4.html) interpreter,
-for which you need a valid license. 
-You may use any latest SICStus version at your own risk, but DALI has been tested 
-to work reasonably well with the 4.6.0 version.
+## Overview
 
-Also some OS-specific instructions:
+DALI is a powerful framework that extends standard logic programming with reactive and proactive capabilities. It allows for the creation of intelligent agents that can:
+- **React** to external events.
+- **Proactively** pursue goals.
+- **Maintain** internal state and memory.
+- **Communicate** using FIPA-compliant patterns.
 
-**macOS, Linux and Windows WSL2:**
+---
 
-You can download DALI and test it by running an example DALI MAS:
+## Prerequisites
 
-```sh
-git clone https://github.com/AAAI-DISIM-UnivAQ/DALI.git
-cd DALI/Examples/advanced
-bash startmas.sh
-```
+DALI requires **SICStus Prolog** to be installed and activated on your system.
 
-You will see different windows opening:
+### 1. Download & Install
+Download the SICStus Prolog interpreter from the official [website](https://sicstus.sics.se/download4.html).
 
-* Prolog LINDA server (active_server_wi.pl)
-* Prolog FIPA client (active_user_wi.pl)
-* 1 instance of DALI metaintepreter for each agent (dali_core.pl)
+### 2. License Activation
+You must activate SICStus using the **site-wide license** provided by the University. Follow the installer instructions to enter the license key.
 
-Then you should have this output in your screen separated into panels by tmux:
+---
 
-![DALI Startup Screen](img/startup.png)
+## Quick Start
 
-You can jump between panels with CTRL+B and arrows up/down.
+DALI supports native execution on both Windows and Unix-like systems. For the best experience, choose the method that fits your operating system.
 
-Then in the User Prolog prompt you can give these inputs:
+###  Windows (Native Batch)
+No complex setup is required. The Windows scripts feature dynamic discovery of SICStus Prolog and streamlined execution.
 
-```prolog.
-agent1.
-user.
-send_message(go, user).
-```
+> [!WARNING]
+> **SICStus Prolog License & Version Availability**  
+> The University has purchased licenses for **SICStus Prolog 4.6.0**. However, the official SICStus website currently only provides downloads for more recent versions (4.8 to 4.10).  
+> To obtain the installer for the correct version (4.6.0), please contact **Prof. Giovanni De Gasperis** at [giovanni.degasperis@univaq.it](mailto:giovanni.degasperis@univaq.it).
 
-and obtain the following screen output:
+1. Navigate to `Examples/win/basic`.
+2. Double-click **`startmas.bat`**.
+3. Descriptive windows for the Server, User agent, and Agents will open automatically.
+
+![DALI Windows Startup](img/win.png)
+
+### Unix (Linux / macOS / WSL2)
+DALI leverages **tmux** for a powerful, tiled interface in Unix environments.
+
+1. Navigate to `Examples/unix/advanced`.
+2. Run the startup script:
+   ```bash
+   ./startmas.sh
+   ```
+3. A tmux session will launch with a tiled layout for all MAS components.
+
+![DALI Unix Startup](img/unix.png)
+
+---
+
+## Testing your MAS
+
+Once the MAS is running, you can test the communication between agents using the **User Console** (or the Web Dashboard).
+
+1. In the User Console window (Prolog prompt), identify the target agent:
+   ```prolog
+   agent1.
+   ```
+2. Identify yourself:
+   ```prolog
+   user.
+   ```
+3. Send a message (e.g., the `go` event):
+   ```prolog
+   send_message(go, user).
+   ```
 
 ![DALI Message exchange](img/messages.png)
 
-To shutdown the MAS, open a new terminal and give the command:
+---
 
+## DALI Web Dashboard
+
+Monitor and interact with your MAS through a modern, **Zero-Config** web interface. The dashboard automatically discovers agents and provides real-time logs and command input.
+
+### Launching the Dashboard
+From a Unix-like environment (including WSL2):
 ```bash
-   pkill sicstus
+cd Examples/unix
+./run.sh --folder ./advanced
 ```
+Access the UI at `http://localhost:5000`.
 
-and press ENTER
+For more detailed information on available CLI flags and internal functionality, see [DASHBOARD.md](Examples/unix/ui/DASHBOARD.md).
 
-**Windows:**
+![DALI Dashboard Overview](img/ui.png)
 
-We strongly suggest to run DALI on [WSL2](https://en.wikipedia.org/wiki/Windows_Subsystem_for_Linux) and follow instructions as in the previous Linux section.
+![DALI Dashboard Tiled Layout](img/ui2.png)
 
-Otherwise, you can download DALI from https://github.com/AAAI-DISIM-UnivAQ/DALI.git .
+---
 
-* On Windows, unzip the repository, go to the folder "DALI/Examples/basic", and test if DALI works by double clicking "startmas.bat" file (this will launch an example DALI MAS). 
+## Repository Structure
 
-You will see different windows opening:
+The repository is organized to support different levels of complexity and deployment environments:
 
-* Prolog LINDA server (active_server_wi.pl)
-* Prolog FIPA client (active_user_wi.pl) 
-* 1 instance of DALI metaintepreter for each agent (active_dali_wi.pl)
+- **`src/`**: The core DALI engine and meta-interpreter.
+- **`Examples/`**:
+  - **`win/`**: Native Windows `.bat` architectures.
+    - **`basic/`**: Simple, flat agent structures (perfect for beginners).
+    - **`advanced/`**: Complex structures using agent **types** and **instances**
+  - **`unix/`**: Advanced `tmux` and `bash` architectures.
+    - **`basic/`**: Simple, flat agent structures (perfect for beginners).
+    - **`advanced/`**: Complex structures using agent **types** and **instances**.
+- **`img/`**: Screenshots and visual documentation assets.
+- **`docs/`**: Technical documentation and research papers.
 
-## Usage example
-
-You can find some examples into the Example folder, where examples are divided into 3 subfolders:
-
-* __basic__: aimed at basic Windows-based setup, no agent types, every agent living in a separated sicstus window.
-* __advanced__: more complex, aimed at Unix-like based environment, with agent type, instances, each agent living in a separated xterm console.
-* __more__: MAS examples derived from our students projects.
-
-## Development setup
-
-To create a new DALI MAS, you can use an example as a boilerplate:
-
-1. Create a folder to contain your project, for example let's call it "projectFolder"
-2. Copy the folder "DALI/src" into "projectFolder"
-3. In "projectFolder", create a folder that will contain your DALI app, for example let's call it "DALIappFolder"
-4. Copy the content of "DALI/Examples/advanced" folder in "projectFolder/DALIappFolder"
-5. Rewrite the files contained in "projectFolder/DALIappFolder/mas/instances" and in "projectFolder/DALIappFolder/mas/instances" in a proper way (see DALI documentation), in order to create your DALI MAS.
-6. Open the "```startmas(_modular).sh```" file and change the following variables according to your paths:
-
-* **sicstus_home:** The SICStus prolog path
-* **main_home:**  # The "projectFolder" path, in relation to the "startmas" file position (in this example it is "..")
-* **dali_home:**  # The "projectFolder/src" folder path, in relation to the "startmas" file position (in this example it is "../src")
-* **conf_dir:**  # The "projectFolder/conf" folder path, in relation to the "startmas" file position (in this example it is "conf")
+---
 
 ## Release History
 
-Check [release history](http://github.com/AAAI-DISIM-UnivAQ/DALI/releases) page.
+Check the [release history](https://github.com/AAAI-DISIM-UnivAQ/DALI/releases) page for more information.
 
-## Software architecture
+---
 
-Analyze architectural diagrams in the [DALI visualization](DALI_Architecture_Diagram.md)
+## Development Setup
 
-## Contacts
+To create your own DALI MAS from scratch, use an existing example as a boilerplate:
 
-Giovanni De Gasperis – email: giovanni.degasperis-at-univaq-it
+1. **Create a project folder** (e.g., `projectFolder`).
+2. **Copy the core engine** — place the `DALI/src` folder inside your `projectFolder`.
+3. **Initialize your application** — create a sub-folder for your DALI app (e.g., `DALIappFolder`).
+4. **Copy a boilerplate** — use `Examples/unix/advanced` or `Examples/unix/basic` if on Unix or `Examples/win/advanced` or `Examples/win/basic` (Windows) as a starting point.
+5. **Define your agents**:
+   - **Advanced layout**: define agent types in `mas/types/` and instances in `mas/instances/`.
+   - **Basic layout**: place all agent `.pl` files directly in `mas/`.
+6. **Run the startup script** — the script will automatically discover your SICStus installation and launch the MAS.
 
-Distributed under the Apache License 2.0. See ``LICENSE`` for more information.
-
-[http://github.com/AAAI-DISIM-UnivAQ](http://github.com/AAAI-DISIM-UnivAQ)
-
-## Contributing
-
-1. Fork it
-2. Create your feature branch (`git checkout -b feature/fooBar`)
-3. Commit your changes (`git commit -am 'Add some fooBar'`)
-4. Push to the branch (`git push origin feature/fooBar`)
-5. Create a new Pull Request to our ```dev``` branch
+---
 
 ## Examples of Applications
 
-* in Robotics: coordination among store delivery robots: 
-   [![Delivery robots cordination](https://img.youtube.com/vi/1dfWthhUovk/0.jpg)](https://www.youtube.com/watch?v=1dfWthhUovk)
-[Video](https://youtu.be/1dfWthhUovk) from S. Valentini:
+- in Robotics: coordination among store delivery robots:
+  
+  [![Delivery robots cordination](https://img.youtube.com/vi/1dfWthhUovk/0.jpg)](https://www.youtube.com/watch?v=1dfWthhUovk)
+  
+  **[Video](https://youtu.be/1dfWthhUovk)** from S. Valentini.
+
+- F1 Race Simulator: A Formula 1 race simulator where DALI agents control racing cars in a competitive environment.
+  
+  ![F1 Race Simulator - Agents View](img/f1_race_1.png)
+  ![F1 Race Simulator - Track View](img/f1_race_2.png)
+  
+  **[Video](https://youtu.be/-SxC4x3_CWI)** from M. Piccirilli.
 
 ## References
 
-* DALI 1.0 original URL: http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI (no more active)
-* COSTANTINI, Stefania. [The DALI Agent-Oriented Logic Programming Language: Summary and References 2015.](https://people.disim.univaq.it/stefcost/pubbls/Dali_References.pdf)
-* COSTANTINI S, TOCCHIO A. [A logic programming language for multi-agent systems.](docs/DALI_Language_description.pdf) Logics in Artificial Intelligence, Springer Berlin Heidelberg, 2002, pp:1-13.
-* COSTANTINI S, TOCCHIO A. *The DALI logic programming agent-oriented language.* In Logics in Artificial Intelligence Springer Berlin Heidelberg, 2004, pp:685-688.
-* COSTANTINI S, TOCCHIO A. *DALI: An Architecture for Intelligent Logical Agents.* In: AAAI Spring Symposium: Emotion, Personality, and Social Behavior. 2008. pp:13-18.
-* BEVAR V, COSTANTINI S, TOCCHIO A, DE GASPERIS G. *A multi-agent system for industrial fault detection and repair.* In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:47-55.
-* DE GASPERIS, G, BEVAR V, COSTANTINI S, TOCCHIO A, PAOLUCCI A. *Demonstrator of a multi-agent system for industrial fault detection and repair.* In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:237-240.
-* DE GASPERIS Giovanni. *DETF 1st Release (Version 14.08a).* Zenodo. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1044488.svg)](https://doi.org/10.5281/zenodo.1044488), 2014, August 6. 
-* COSTANTINI, Stefania; DE GASPERIS, Giovanni; NAZZICONE, Giulio. *DALI for cognitive robotics: principles and prototype implementation.* In: International Symposium on Practical Aspects of Declarative Languages. Springer, Cham, 2017. p. 152-162.
-* COSTANTINI, Stefania, DE GASPERIS, Giovanni, PITONI Valentina, SALUTARI Agnese. [DALI: A multi agent system framework for the web, cognitive robotic and complex event processing.](http://ceur-ws.org/Vol-1949/CILCpaper05.pdf), [CILC 2017](http://cilc2017.unina.it), 32nd Italian Conference on Computational Logic
-26-28 September 2017, Naples, Italy
-* RAFANELLI, Andrea; COSTANTINI, Stefania; DE GASPERIS, Giovanni. [A Multi-Agent-System framework for flooding events. 2022](https://ceur-ws.org/Vol-3261/paper11.pdf). WOA 2022: 23rd Workshop From Objects to Agents, September 1–2, Genova, Italy
-* COSTANTINI, Stefania. [Ensuring trustworthy and ethical behaviour in intelligent logical agents](https://academic.oup.com/logcom/article/32/2/443/6513773). Journal of Logic and Computation, 2022, 32.2: 443-478.
+- DALI 1.0 original URL: http://www.di.univaq.it/stefcost/Sito-Web-DALI/WEB-DALI (no more active)
+- COSTANTINI, Stefania. [The DALI Agent-Oriented Logic Programming Language: Summary and References 2015.](https://people.disim.univaq.it/stefcost/pubbls/Dali_References.pdf)
+- COSTANTINI S, TOCCHIO A. [A logic programming language for multi-agent systems.](docs/DALI_Language_description.pdf) Logics in Artificial Intelligence, Springer Berlin Heidelberg, 2002, pp:1-13.
+- COSTANTINI S, TOCCHIO A. _The DALI logic programming agent-oriented language._ In Logics in Artificial Intelligence Springer Berlin Heidelberg, 2004, pp:685-688.
+- COSTANTINI S, TOCCHIO A. _DALI: An Architecture for Intelligent Logical Agents._ In: AAAI Spring Symposium: Emotion, Personality, and Social Behavior. 2008. pp:13-18.
+- BEVAR V, COSTANTINI S, TOCCHIO A, DE GASPERIS G. _A multi-agent system for industrial fault detection and repair._ In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:47-55.
+- DE GASPERIS, G, BEVAR V, COSTANTINI S, TOCCHIO A, PAOLUCCI A. _Demonstrator of a multi-agent system for industrial fault detection and repair._ In: Advances on Practical Applications of Agents and Multi-Agent Systems. Springer Berlin Heidelberg, 2012. pp:237-240.
+- DE GASPERIS Giovanni. _DETF 1st Release (Version 14.08a)._ Zenodo. [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1044488.svg)](https://doi.org/10.5281/zenodo.1044488), 2014, August 6.
+- COSTANTINI, Stefania; DE GASPERIS, Giovanni; NAZZICONE, Giulio. _DALI for cognitive robotics: principles and prototype implementation._ In: International Symposium on Practical Aspects of Declarative Languages. Springer, Cham, 2017. p. 152-162.
+- COSTANTINI, Stefania, DE GASPERIS, Giovanni, PITONI Valentina, SALUTARI Agnese. [DALI: A multi agent system framework for the web, cognitive robotic and complex event processing.](http://ceur-ws.org/Vol-1949/CILCpaper05.pdf), [CILC 2017](http://cilc2017.unina.it), 32nd Italian Conference on Computational Logic
+  26-28 September 2017, Naples, Italy
+- RAFANELLI, Andrea; COSTANTINI, Stefania; DE GASPERIS, Giovanni. [A Multi-Agent-System framework for flooding events. 2022](https://ceur-ws.org/Vol-3261/paper11.pdf). WOA 2022: 23rd Workshop From Objects to Agents, September 1–2, Genova, Italy
+- COSTANTINI, Stefania. [Ensuring trustworthy and ethical behaviour in intelligent logical agents](https://academic.oup.com/logcom/article/32/2/443/6513773). Journal of Logic and Computation, 2022, 32.2: 443-478.
+
+---
+
+## Contacts
+
+**Giovanni De Gasperis**  
+Email: [giovanni.degasperis@univaq.it](mailto:giovanni.degasperis@univaq.it)
+
+Distributed under the **Apache License 2.0**. See `LICENSE` for more information.
+
+---
+
+## Contributing
+
+We welcome contributions!
+1. **Fork** the repository.
+2. Create your **feature branch** (`git checkout -b feature/fooBar`).
+3. **Commit** your changes (`git commit -am 'Add some fooBar'`).
+4. **Push** to the branch (`git push origin feature/fooBar`).
+5. Create a new **Pull Request** to our `dev` branch.

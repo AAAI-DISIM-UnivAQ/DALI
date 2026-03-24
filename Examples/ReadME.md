@@ -1,48 +1,60 @@
-# DALI Examples
+# DALI MAS Examples
 
-The examples are divided into two subfolders:
+This folder contains various configurations and examples for the DALI Multi-Agent System, organized by Operating System and complexity.
 
-* [_basic_](basic) : aimed at basic Windows-based setup, no agent types, every agent living in a separated sicstus window.
-* [_advanced_](advanced) : more complex, aimed at Unix-like based environment, like GNU/Linux or macOS,
-with agent type, instances, each agent living in a separated terminal console
-* [_more_](more) : MAS examples derived from our students projects
+---
 
-## Linux Issues
+## Repository Structure
 
-Put attention to the TCP errors. The new startup script shoudl take care of this.
+The examples are now categorized by platform to provide the best native experience:
 
-Otherwise:
+### [Windows (`win/`)](win/)
+Aimed at classic Windows setups using **SICStus Prolog** directly.
+*   **[Basic](win/basic)**: Flat structure, no agent types. Each agent runs in its own separate SICStus window.
+*   **[Advanced](win/advanced)**: Uses the `mas/types` and `mas/instances` topology.
 
-### Fast restart of the MAS
+### [Unix / macOS / WSL2 (`unix/`)](unix/)
+Modern, terminal-based environments using **tmux** for process management.
+*   **[Basic](unix/basic)**: Simplified structure for Unix, running agents in a flat project layout.
+*   **[Advanced](unix/advanced)**: Full-featured MAS with agent types and instances.
+*   ** [Web Dashboard](unix/ui)**: The recommended way to monitor and interact with your MAS on Unix. It provides a real-time web interface with "Zero-Config" auto-discovery.
 
-With Linux if you need to start the MAS during debug many times, you can avoid the server error, with the following command
+### [More Examples](more/)
+A collection of MAS projects and examples derived from student projects and research.
 
-    sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+---
 
-(Note: this does not work if you have kernel version >= 4.12. See [this](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=4396e46187ca5070219b81773c4e65088dac50cc) for more information.)
+## Key Concepts
 
-### Line command editor with memory
+*   **[Double Events](DOUBLE_EVENTS.md)**: Learn how to handle multiple simultaneous external events (conjunctions) in DALI rules.
+*   **[Warnings & Timers](WARNINGS.md)**: Important information about the `t60.` window and default agent behavior.
 
-With Linux, Mac OS X when you start the MAS from the shell, the user agent may not have memory of the commands already sent. You can install rlwrap:
+---
 
-    sudo apt-get install rlwrap
+## 🛠️ Troubleshooting & Setup
 
-and modify the [startmas.sh](advanced/startmas.sh) launch script to add the ```rlwrap``` command before launching the ```$cmd``` command.
+> [!WARNING]
+> **Legacy Versions Note:** The technical issues and workarounds listed below primarily reference **older versions of DALI and SICStus Prolog**. Modern environments and current DALI releases may have already addressed these natively.
 
-### Sicstus 32 bit install
+### Unix: Fast Restart (TCP Reuse)
+If you restart the MAS frequently during debug, you might encounter "Address already in use" errors. To fix this:
+```bash
+sudo sysctl -w net.ipv4.tcp_tw_reuse=1
+# For macOS
+sudo sysctl net.inet.tcp.msl=1
+```
 
-If you want to use the 32bit version of the sictsus prolog within an ubuntu derived linux box, use these commands:
+### Unix: Command History with `rlwrap`
+The User Console in a raw terminal might lack command history. You can install `rlwrap`:
+```bash
+sudo apt-get install rlwrap
+```
+Then prepend `rlwrap` to the SICStus execution command in `startmas.sh`.
 
-    sudo dpkg --add-architecture i386
-    sudo apt-get install gcc-multilib
-    sudo apt-get install libc6:i386 libncurses5:i386 libstdc++6:i386
-    
-## OS X Issues
-
-### Fast restart of the MAS in macOS
-
-Within macOS, if you need to start the MAS during debug many times, you can avoid the server TCP error, with the following command
-
-    sudo sysctl net.inet.tcp.msl=1
-
-but the latest startup script should take care of this automatically.
+### Unix: 32-bit SICStus on 64-bit Linux
+If using an older 32-bit SICStus version on a 64-bit system (e.g., Ubuntu):
+```bash
+sudo dpkg --add-architecture i386
+sudo apt-get update
+sudo apt-get install gcc-multilib libc6:i386 libncurses5:i386 libstdc++6:i386
+```

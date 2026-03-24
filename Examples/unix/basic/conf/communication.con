@@ -1,0 +1,113 @@
+% Licensed with Apache Public License
+% by AAAI Research Group
+% Department of Information Engineering and Computer Science and Mathematics
+% University of L'Aquila, ITALY
+% http://www.disim.univaq.it
+
+told(_,send_message(_)):-true.
+tell(_,_,send_message(_)):-true.
+
+told(_,confirm(_),200):-true. 
+told(_,disconfirm(_)):-true. 
+told(_,inform(_,_),70):-true. 
+told(_,inform(_),70):-true. 
+tell(_,_,confirm(_)):-true. 
+tell(_,_,disconfirm(_)):-true. 
+tell(_,_,inform(_,_)):-true.
+tell(_,_,inform(_)):-true. 
+
+meta(P,V,AgM):-
+        functor(P,F,N),N=0,clause(agent(Ag),_),
+        clause(ontology(Pre,[Rep,Host],Ag),_),
+        if(
+         (eq_property(F,V,Pre,[Rep,Host]);
+          same_as(F,V,Pre,[Rep,Host]);
+          eq_class(F,V,Pre,[Rep,Host])
+         ),true,
+			if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	(if(
+         	 (eq_property(F,V,PreM,[RepM,HostM]); 
+        	 	  same_as(F,V,PreM,[RepM,HostM]);
+         	  eq_class(F,V,PreM,[RepM,HostM])
+         	 ),true,false)
+				),false
+			)
+        ).
+meta(P,V,AgM):-
+        functor(P,F,N),(N=1;N=2),clause(agent(Ag),_),
+        clause(ontology(Pre,[Rep,Host],Ag),_),
+        if(
+         (eq_property(F,H,Pre,[Rep,Host]);
+          same_as(F,H,Pre,[Rep,Host]);
+          eq_class(F,H,Pre,[Rep,Host])
+         ),true,
+			if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	(if(
+         	 (eq_property(F,H,PreM,[RepM,HostM]); 
+        	 	  same_as(F,H,PreM,[RepM,HostM]);
+         	  eq_class(F,H,PreM,[RepM,HostM])
+         	 ),true,false)
+				),false
+			)
+        ),
+		  P=..L,substitute(F,L,H,Lf),V=..Lf.
+
+meta(P,V,_):-functor(P,F,N),N=2,symmetric(F),P=..L,
+           delete(L,F,R),reverse(R,R1),
+           append([F],R1,R2),V=..R2.
+
+meta(P,V,AgM):-
+			 clause(agent(Ag),_),functor(P,F,N),N=2,(symmetric(F,AgM);symmetric(F)), P=..L,
+          delete(L,F,R),reverse(R,R1),
+		 	 clause(ontology(Pre,[Rep,Host],Ag),_),
+          if(
+           (eq_property(F,Y,Pre,[Rep,Host]);
+            same_as(F,Y,Pre,[Rep,Host]);
+            eq_class(F,Y,Pre,[Rep,Host])
+           ),true,
+			  if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	  (if(
+         	   (eq_property(F,Y,PreM,[RepM,HostM]); 
+        	 	    same_as(F,Y,PreM,[RepM,HostM]);
+         	    eq_class(F,Y,PreM,[RepM,HostM])
+         	   ),true,false)
+				  ),false
+			  )
+          ),          
+			 append([Y],R1,R2),V=..R2.
+
+meta(P,V,AgM):-
+			clause(agent(Ag),_),clause(ontology(Pre,[Rep,Host],Ag),_),
+			functor(P,F,N),N>2,
+			if(
+          (eq_property(F,H,Pre,[Rep,Host]);
+           same_as(F,H,Pre,[Rep,Host]);
+           eq_class(F,H,Pre,[Rep,Host])
+          ),true,
+			 if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+          	 (if(
+         	  (eq_property(F,H,PreM,[RepM,HostM]); 
+        	 	   same_as(F,H,PreM,[RepM,HostM]);
+         	   eq_class(F,H,PreM,[RepM,HostM])
+         	  ),true,false)
+				 ),false
+			 )
+         ),
+			P=..L,substitute(F,L,H,Lf),V=..Lf.
+
+meta(P,V,AgM):-clause(agent(Ag),_), clause(ontology(Pre,[Rep,Host],Ag),_), functor(P,F,N),N=2,P=..L,
+			if(
+          (eq_property(F,H,Pre,[Rep,Host]);
+           same_as(F,H,Pre,[Rep,Host]);
+           eq_class(F,H,Pre,[Rep,Host])
+          ),true,
+			 if(clause(ontology(PreM, [RepM,HostM], AgM),_),
+         	 (if(
+         	  (eq_property(F,H,PreM,[RepM,HostM]); 
+        	 	   same_as(F,H,PreM,[RepM,HostM]);
+         	   eq_class(F,H,PreM,[RepM,HostM])
+         	  ),true,false)
+				 ),false
+			 )
+         ),
+			substitute(F,L,H,Lf),V=..Lf.

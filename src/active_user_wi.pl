@@ -35,18 +35,13 @@ variables(T,L0,L):-nonvar(T), functor(T,_,A), variables(0,A,T,L0,L).
 variables(A,A,T,L0,L):-retractall(result_format(_)),assert(result_format(T)),!,L=L0.
 variables(A0,A,T,L0,L):-A0<A, A1 is A0+1, arg(A1,T,X), variables(X,L0,L1), variables(A1,A,T,L1,L).
 
-% similar as the following, but it is called within by the goal 'utente.'.
-utente:-% open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
-        linda_client('localhost':3010),
-        out(agente_attivo(user,'localhost':3010)),
-        procedure_message('localhost':3010).
+% Opens server.txt to get the LINDA server address, connects to it,
+% announces the user agent on the blackboard and enters the message loop.
+utente:-open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
+        linda_client(I),
+        out(agente_attivo(user,I)),
+        procedure_message(I).
 
-% Opens the file with the linda server information, connects to this,
-% writes on the backboard that the agent 'user' is active and calls the
-% loop procedure for processing the messages.
-:- %open('server.txt',read,Stream,[]), read(Stream,I), close(Stream),
-  linda_client('localhost':3010),
-  out(agente_attivo(user,'localhost':3010)),
-  assert(ind('localhost':3010)),
-  procedure_message('localhost':3010).
-
+% Compatibility entrypoint for tools that invoke the user client with this goal.
+user_interface :-
+        utente.
