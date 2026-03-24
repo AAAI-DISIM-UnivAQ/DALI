@@ -32,8 +32,8 @@ Run DALI MAS entirely inside Docker containers, with no local installation of SI
    SICSTUS_LICENSE_EXPIRY=...
    SICSTUS_LICENSE_KEY=...
    ```
-   > [!WARNING]
-   > Remember to use the right UNIX credentials.
+ > [!WARNING]
+ > Remember to use the right UNIX credentials.
 
 
 3. Build and start the Docker containers:
