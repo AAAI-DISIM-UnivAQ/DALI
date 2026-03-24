@@ -8,7 +8,7 @@ Run DALI MAS entirely inside Docker containers, with no local installation of SI
 |---|---|
 | Docker Engine ≥ 24 | [Install Docker](https://docs.docker.com/get-docker/) |
 | Docker Compose v2 | Included with Docker Desktop |
-| SICStus 4.6.0 Linux tarball | [Download from SICStus](https://sicstus.sics.se/download4.html) |
+| SICStus 4.6.0 Linux tarball | Ask to the professor for the installer (folder on sharepoint) |
 
 ## Setup (one-time)
 
