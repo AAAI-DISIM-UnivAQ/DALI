@@ -1,13 +1,23 @@
-In this folder all the agent types shall 
-exist as DALI sources. From these files all the agent 
-instances will be forked from the same type, 
-sharing the same DALI code.
+# Warnings And Timers
 
-If you add this fact at the first line of agent:
+This note explains the warning shown by DALI when an agent does not declare a default time window for grouping close external events.
 
-    t60.
+## The `t60.` Declaration
 
-indicate a default time windows of 60 seconds in which 
-two subsequent external events have to be considered simultaneous.
+If you add this fact at the beginning of an agent:
 
-If this line is missing, every agent instance will show a warning message.
+```prolog
+t60.
+```
+
+the agent uses a default time window of 60 seconds. Within that window, two consecutive external events can be treated as simultaneous.
+
+## What Happens If It Is Missing
+
+If the declaration is not present, each agent instance may print a warning at startup to signal that no default simultaneity window has been defined.
+
+## Why It Matters
+
+This setting is useful when your agent logic depends on conjunctions of external events or on event grouping behavior.
+
+For a related example, see [DOUBLE_EVENTS.md](DOUBLE_EVENTS.md).

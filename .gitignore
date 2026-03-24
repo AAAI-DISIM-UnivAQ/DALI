@@ -1,6 +1,7 @@
 .DS_Store
 .idea
 .venv/
+.vscode/
 
 Examples/win/advanced/.DS_Store
 Examples/win/advanced/temp_scripts/
