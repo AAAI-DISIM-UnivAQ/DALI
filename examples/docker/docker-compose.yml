@@ -1,0 +1,77 @@
+# DALI MAS — Docker Compose (Advanced Example)
+#
+# Containers:
+#   dali-mas  — runs the full MAS (LINDA server + all agents) via startmas.sh
+#   dali-ui   — runs the interactive user agent (reads stdin, needs TTY)
+#
+# Usage:
+#   docker compose up --build -d
+#
+# Then, in a separate terminal, launch the interactive UI:
+#   docker compose run --rm dali-ui
+
+name: dali
+
+x-license-env: &license-env
+  SICSTUS_LICENSE_SITE:     ${SICSTUS_LICENSE_SITE}
+  SICSTUS_LICENSE_EXPIRY:   ${SICSTUS_LICENSE_EXPIRY}
+  SICSTUS_LICENSE_KEY:      ${SICSTUS_LICENSE_KEY}
+
+services:
+
+  dali-mas:
+    build:
+      context: ../..
+      dockerfile: examples/docker/Dockerfile
+    image: dali-mas:latest
+    container_name: dali-mas
+    entrypoint: ["/entrypoint-mas.sh"]
+    environment:
+      <<: *license-env
+      EXAMPLE_DIR: /dali/examples/docker
+      PYTHONUNBUFFERED: "1"
+      TMUX_TMPDIR: /tmp/tmux-shared
+    volumes:
+      - shared:/dali/shared
+      - .:/dali/examples/docker
+      - tmux-shared:/tmp/tmux-shared
+    networks:
+      - dali-net
+    healthcheck:
+      test: ["CMD-SHELL", "test -s /dali/shared/server.txt"]
+      interval: 1s
+      timeout: 2s
+      retries: 20
+
+  dali-ui:
+    build:
+      context: ../..
+      dockerfile: examples/docker/Dockerfile
+    image: dali-ui:latest
+    container_name: dali-ui
+    entrypoint: ["/entrypoint-ui.sh"]
+    environment:
+      <<: *license-env
+      SERVER_TXT: /dali/shared/server.txt
+      EXAMPLE_DIR: /dali/examples/docker
+      PYTHONUNBUFFERED: "1"
+      TMUX_TMPDIR: /tmp/tmux-shared
+    depends_on:
+      dali-mas:
+        condition: service_healthy
+    volumes:
+      - shared:/dali/shared
+      - .:/dali/examples/docker
+      - tmux-shared:/tmp/tmux-shared
+    networks:
+      - dali-net
+    ports:
+      - "5000:5000"
+
+volumes:
+  shared:
+  tmux-shared:
+
+networks:
+  dali-net:
+    driver: bridge
